@@ -1,7 +1,7 @@
 import {Player} from '../types/SharedTypes';
 
 export function populatePlayerList(players: Player[]): void {
-  const playerLobbyList = document.getElementById('game-lobby-list');
+  const playerLobbyList = document.getElementById('waiting-room-list');
   if (playerLobbyList) {
     while (playerLobbyList.firstChild) {
       playerLobbyList.removeChild(playerLobbyList.firstChild);

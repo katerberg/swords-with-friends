@@ -1,6 +1,6 @@
 import './index.scss';
 import './start-screen.scss';
-import './game-lobby.scss';
+import './waiting-room.scss';
 import './games-lobby.scss';
 import * as paper from 'paper';
 import {io} from 'socket.io-client';
@@ -49,7 +49,7 @@ async function handleCreateGame(): Promise<void> {
     populatePlayerList(game.players);
   });
   const startScreen = document.getElementById('start-screen');
-  const gameLobby = document.getElementById('game-lobby');
+  const gameLobby = document.getElementById('waiting-room');
   if (startScreen && gameLobby) {
     gameLobby.classList.add('visible');
     startScreen.classList.remove('visible');
@@ -65,7 +65,7 @@ async function joinGame(gameId: string): Promise<void> {
     },
   }).then((response) => response.json());
   const gamesLobby = document.getElementById('games-lobby');
-  const gameLobby = document.getElementById('game-lobby');
+  const gameLobby = document.getElementById('waiting-room');
   if (gamesLobby && gameLobby) {
     gameLobby.classList.add('visible');
     gamesLobby.classList.remove('visible');
