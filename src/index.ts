@@ -5,7 +5,6 @@ import {BLACK} from './colors';
 
 // screen.orientation?.lock('portrait');
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let socketId: paper.PointText;
 
 function initCanvasSize(canvas: HTMLCanvasElement): void {
@@ -17,7 +16,9 @@ function initCanvasSize(canvas: HTMLCanvasElement): void {
   canvas.style.height = `${height}`; //actual height of canvas
   globalThis.gameElement = canvas;
 }
+
 function drawSocketId(socket: string): void {
+  socketId?.remove();
   socketId = new paper.PointText({
     point: paper.view.center.transform(new paper.Matrix().translate(0, 230)),
     justification: 'center',
