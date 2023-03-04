@@ -1,6 +1,7 @@
 import './index.scss';
+import {io} from 'socket.io-client';
 
-screen.orientation?.lock?.('portrait');
+// screen.orientation?.lock('portrait');
 
 function initCanvasSize(canvas: HTMLCanvasElement): void {
   const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -20,5 +21,7 @@ window.addEventListener('load', () => {
     };
 
     initCanvasSize(gameElement);
+
+    global.socket = io('http://localhost:8081');
   }
 });
