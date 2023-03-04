@@ -50,14 +50,6 @@ type GamesHash = {[key: string]: Game};
 
 const games: GamesHash = {};
 
-// function calculateRandomX(): number {
-//   return Math.floor(Math.random() * 988) + 200;
-// }
-
-// function calculateRandomY(): number {
-//   return Math.floor(Math.random() * 550) + 40;
-// }
-
 io.on('connection', (socket) => {
   console.log('a user connected', socket.id); //eslint-disable-line no-console
   // // Update all other players of the new player
@@ -83,7 +75,7 @@ app.post('/api/games', (req, res) => {
   games[id] = {gameId: id, players: [player], status: GameStatus.WaitingForPlayers};
   console.log('new game', player.playerId, id); //eslint-disable-line no-console
   io.emit('currentGames', Object.values(games));
-  res.send('null');
+  res.send(games[id]);
   res.status(201).end();
 });
 

@@ -46,13 +46,29 @@ function drawSocketId(socket: string): void {
   });
 }
 
+function populateGameList(players: Player[]): void {
+  const playerLobbyList = document.getElementById('game-lobby-list');
+  if (playerLobbyList) {
+    while (playerLobbyList.firstChild) {
+      playerLobbyList.removeChild(playerLobbyList.firstChild);
+    }
+
+    let playerList = '<div>';
+    players.forEach((player) => {
+      playerList += `<div>${player.playerId}</div>`;
+    });
+    playerList += '</div>';
+    playerLobbyList.innerHTML = playerList;
+  }
+}
+
 async function handleCreateGame(): Promise<void> {
-  await fetch('http://localhost:8081/api/games', {
+  const createdGame: Game = await fetch('http://localhost:8081/api/games', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-  });
+  }).then((response) => response.json());
   globalThis.socket.on('currentGames', (gamesList) => {
     drawSocketId(globalThis.socket.id);
     console.log('games', gamesList); //eslint-disable-line no-console
@@ -66,6 +82,7 @@ async function handleCreateGame(): Promise<void> {
     gameLobby.classList.add('visible');
     startScreen.classList.remove('visible');
   }
+  populateGameList(createdGame.players);
 }
 
 function populateGamesList(games: Game[]): void {
