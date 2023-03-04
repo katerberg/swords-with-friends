@@ -2,6 +2,7 @@ import * as http from 'http';
 import {AddressInfo} from 'net';
 import * as express from 'express';
 import {Server} from 'socket.io';
+import {v4 as uuid} from 'uuid';
 
 const app = express();
 const server = new http.Server(app);
@@ -18,8 +19,19 @@ app.get('/', (req, res) => {
   res.sendFile(`${__dirname}/index.html`);
 });
 
-type Player = {x: number; y: number; playerId: string};
-type Game = {players: Player[]};
+type Player = {
+  x: number;
+  y: number;
+  playerId: string;
+  isHost: boolean;
+};
+enum GameStatus {
+  WaitingForPlayers,
+  Ongoing,
+  Saved,
+  Done,
+}
+type Game = {gameId: string; players: Player[]; status: GameStatus};
 type GamesHash = {[key: string]: Game};
 
 const games: GamesHash = {};
@@ -34,8 +46,6 @@ const games: GamesHash = {};
 
 io.on('connection', (socket) => {
   console.log('a user connected', socket.id); //eslint-disable-line no-console
-  // Send the games options to the new player
-  socket.emit('currentGames', games);
   // // Update all other players of the new player
   // socket.broadcast.emit('newPlayer', players[socket.id]);
   //   socket.on('disconnect', () => {
@@ -45,6 +55,13 @@ io.on('connection', (socket) => {
   //     io.emit('disconnect', socket.id);
   //   });
 
+  socket.on('createGame', () => {
+    const id = uuid();
+    const player = {playerId: uuid(), x: 0, y: 0, isHost: true};
+    games[id] = {gameId: id, players: [player], status: GameStatus.WaitingForPlayers};
+    console.log('new game', player.playerId, id); //eslint-disable-line no-console
+    socket.broadcast.emit('currentGames', games);
+  });
   // socket.on('projectileFiring', (serverProjectile) => {
   //   if (players[socket.id]) {
   //     socket.broadcast.emit('projectileFired', {

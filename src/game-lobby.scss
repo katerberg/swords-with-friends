@@ -1,0 +1,16 @@
+.game-lobby {
+  height: 100%;
+  width: 100%;
+  background-color: #cfcfcf;
+  z-index: 100;
+  display: none;
+
+  &.visible {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .title {
+    font-size: 5vh;
+  }
+}

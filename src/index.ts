@@ -1,4 +1,6 @@
 import './index.scss';
+import './start-screen.scss';
+import './game-lobby.scss';
 import * as paper from 'paper';
 import {io} from 'socket.io-client';
 import {BLACK} from './colors';
@@ -29,6 +31,16 @@ function drawSocketId(socket: string): void {
   });
 }
 
+function handleCreateGame(): void {
+  globalThis.socket.emit('createGame');
+  const startScreen = document.getElementById('start-screen');
+  const gameLobby = document.getElementById('game-lobby');
+  if (startScreen && gameLobby) {
+    gameLobby.classList.add('visible');
+    startScreen.classList.remove('visible');
+  }
+}
+
 window.addEventListener('load', () => {
   const gameElement = document.getElementById('game-canvas') as HTMLCanvasElement;
   if (gameElement) {
@@ -38,6 +50,11 @@ window.addEventListener('load', () => {
 
     initCanvasSize(gameElement);
     paper.setup(globalThis.gameElement);
+
+    const createGameButton = document.getElementById('create-game');
+    if (createGameButton) {
+      createGameButton.onclick = handleCreateGame;
+    }
 
     globalThis.socket = io('http://localhost:8081');
     globalThis.socket.on('currentGames', (gamesList) => {

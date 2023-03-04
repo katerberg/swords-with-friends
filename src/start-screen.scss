@@ -1,0 +1,18 @@
+.start-screen {
+  height: 100%;
+  width: 100%;
+  background-color: tomato;
+  z-index: 100;
+  display: none;
+
+  &.visible {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+
+  #create-game {
+    margin-bottom: 10vh;
+    height: 10vh;
+    font-size: 5vh;
+  }
+}
