@@ -69,6 +69,7 @@ server.listen(8081, () => {
   console.log(`Listening on ${address.port}`); //eslint-disable-line no-console
 });
 
+// Create a game
 app.post('/api/games', (req, res) => {
   const id = uuid();
   const player = {playerId: uuid(), x: 0, y: 0, isHost: true};
@@ -79,4 +80,19 @@ app.post('/api/games', (req, res) => {
   res.status(201).end();
 });
 
+// Join a game
+app.post('/api/games/:gameId', (req, res) => {
+  const {gameId} = req.params;
+  if (!games[gameId]) {
+    res.send({text: 'Game not found'});
+    return res.status(404).end();
+  }
+  const player = {playerId: uuid(), x: 0, y: 0, isHost: false};
+  games[gameId].players.push(player);
+  console.log('joined game', player.playerId, gameId); //eslint-disable-line no-console
+  io.emit('joinedGame', games[gameId]);
+  res.send(games[gameId]);
+});
+
+// List games
 app.get('/api/games', (_req, res) => res.send(Object.values(games)));

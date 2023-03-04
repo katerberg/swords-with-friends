@@ -74,7 +74,7 @@ async function handleCreateGame(): Promise<void> {
     console.log('games', gamesList); //eslint-disable-line no-console
   });
   globalThis.socket.on('joinedGame', (game) => {
-    console.log('game join', game); //eslint-disable-line no-console
+    populateGameList(game.players);
   });
   const startScreen = document.getElementById('start-screen');
   const gameLobby = document.getElementById('game-lobby');
@@ -83,6 +83,30 @@ async function handleCreateGame(): Promise<void> {
     startScreen.classList.remove('visible');
   }
   populateGameList(createdGame.players);
+}
+
+async function joinGame(gameId: string): Promise<void> {
+  const joinedGame: Game = await fetch(`http://localhost:8081/api/games/${gameId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  }).then((response) => response.json());
+  const gamesLobby = document.getElementById('games-lobby');
+  const gameLobby = document.getElementById('game-lobby');
+  if (gamesLobby && gameLobby) {
+    gameLobby.classList.add('visible');
+    gamesLobby.classList.remove('visible');
+  }
+  populateGameList(joinedGame.players);
+}
+
+function joinGameHandler(event: MouseEvent): void {
+  const button = event.target as HTMLElement;
+  const gameId = button.getAttribute('data-game-id');
+  if (gameId) {
+    joinGame(gameId);
+  }
 }
 
 function populateGamesList(games: Game[]): void {
@@ -94,10 +118,17 @@ function populateGamesList(games: Game[]): void {
 
     let gameList = '<div>';
     games.forEach((game) => {
-      gameList += `<div>${game.gameId}</div>`;
+      gameList += `<div><span>${game.gameId}</span><button class="join" data-game-id="${game.gameId}">Join</button></div>`;
     });
     gameList += '</div>';
     gamesLobbyList.innerHTML = gameList;
+    const allButtons: NodeListOf<HTMLElement> = document.querySelectorAll('button[class=join]');
+
+    for (let i = 0; i < allButtons.length; i++) {
+      if (allButtons[i]) {
+        allButtons[i].onclick = joinGameHandler;
+      }
+    }
   }
 }
 
@@ -115,9 +146,7 @@ async function openGamesList(): Promise<void> {
     },
   }).then((response) => response.json());
   populateGamesList(games);
-  console.log('games', games); //eslint-disable-line no-console
   globalThis.socket.on('currentGames', (gamesList) => {
-    console.log('games', gamesList); //eslint-disable-line no-console
     populateGamesList(gamesList);
   });
 }
