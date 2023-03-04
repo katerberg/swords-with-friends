@@ -16,5 +16,11 @@
 
   #waiting-room-list {
     display: flex;
+    flex-direction: column;
+  }
+
+  #start-game {
+    margin-top: 2vh;
+    font-size: 5vh;
   }
 }

@@ -38,14 +38,29 @@ type GamesHash = {[key: string]: Game};
 
 const games: GamesHash = {};
 
+function getAvailableGames(): Game[] {
+  return Object.values(games).filter((game) => game.status === GameStatus.WaitingForPlayers);
+}
+
 io.on('connection', (socket) => {
   console.log('a user connected', socket.id); //eslint-disable-line no-console
+
   socket.on('changeName', (gameId, name) => {
     const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
     if (playerIndex !== undefined) {
       console.log('changing name for ', games[gameId].players[playerIndex].name, name); //eslint-disable-line no-console
       games[gameId].players[playerIndex].name = name;
       socket.broadcast.emit('nameChanged', gameId, games[gameId].players);
+    }
+  });
+
+  socket.on('startGame', (gameId) => {
+    const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
+    if (playerIndex !== undefined && games[gameId].players[playerIndex]?.isHost) {
+      console.log('starting game', gameId); //eslint-disable-line no-console
+      games[gameId].status = GameStatus.Ongoing;
+      socket.broadcast.emit('gameStarted', gameId);
+      socket.broadcast.emit('currentGames', getAvailableGames());
     }
   });
 });
@@ -64,7 +79,7 @@ app.post('/api/games', (req, res) => {
   const player = {playerId: uuid(), x: 0, y: 0, isHost: true, name: getRandomName(), socketId: req.query.socketId};
   games[id] = {gameId: id, players: [player], status: GameStatus.WaitingForPlayers};
   console.log('new game', player.playerId, id); //eslint-disable-line no-console
-  io.emit('currentGames', Object.values(games));
+  io.emit('currentGames', getAvailableGames());
   res.send(games[id]);
   res.status(201).end();
 });
@@ -85,5 +100,5 @@ app.post('/api/games/:gameId', (req, res) => {
   res.send(games[gameId]);
 });
 
-// List games
-app.get('/api/games', (_req, res) => res.send(Object.values(games)));
+// List available games
+app.get('/api/games', (_req, res) => res.send(getAvailableGames()));
