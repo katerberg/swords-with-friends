@@ -22,6 +22,10 @@ window.addEventListener('load', () => {
 
     initCanvasSize(gameElement);
 
-    global.socket = io('http://localhost:8081');
+    globalThis.socket = io('http://localhost:8081');
+    // receive a message from the server
+    globalThis.socket.on('newPlayer', (playerList) => {
+      console.log('new player', playerList); //eslint-disable-line no-console
+    });
   }
 });

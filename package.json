@@ -31,6 +31,7 @@
     "socket.io-client": "^4.6.1",
     "style-loader": "^3.3.1",
     "ts-loader": "^9.4.2",
+    "ts-node": "^10.9.1",
     "typescript": "^4.9.4",
     "uuid": "^9.0.0",
     "webpack": "^5.75.0",
@@ -42,11 +43,11 @@
     "prebuild": "mkdir -p dist && cp -r src/images/ dist/images/",
     "build": "webpack --config ./webpack.config.js --mode production",
     "start": "concurrently -k 'npm run start:server' 'npm run start:ui'",
-    "start:server": "nodemon server.js",
+    "start:server": "nodemon server/index.ts",
     "start:ui": "webpack-dev-server --config ./webpack.config.js --mode development",
     "lint": "npm run lint:base -- --fix",
     "lint:ci": "npm run lint:base",
-    "lint:base": "eslint --ext js,ts src"
+    "lint:base": "eslint --ext js,ts src server"
   },
   "author": "katerberg@fastmail.fm",
   "license": "AGPL-3.0-or-later"
