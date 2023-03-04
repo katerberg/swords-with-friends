@@ -19,30 +19,25 @@ app.get('/', (req, res) => {
 });
 
 type Player = {x: number; y: number; playerId: string};
-type PlayersHash = {[key: string]: Player};
+type Game = {players: Player[]};
+type GamesHash = {[key: string]: Game};
 
-const players: PlayersHash = {};
+const games: GamesHash = {};
 
-function calculateRandomX(): number {
-  return Math.floor(Math.random() * 988) + 200;
-}
+// function calculateRandomX(): number {
+//   return Math.floor(Math.random() * 988) + 200;
+// }
 
-function calculateRandomY(): number {
-  return Math.floor(Math.random() * 550) + 40;
-}
+// function calculateRandomY(): number {
+//   return Math.floor(Math.random() * 550) + 40;
+// }
 
 io.on('connection', (socket) => {
   console.log('a user connected', socket.id); //eslint-disable-line no-console
-  // Create a new player and add it to our players object
-  players[socket.id] = {
-    x: calculateRandomX(),
-    y: calculateRandomY(),
-    playerId: socket.id,
-  };
-  // Send the players object to the new player
-  socket.emit('currentPlayers', players);
-  // Update all other players of the new player
-  socket.broadcast.emit('newPlayer', players[socket.id]);
+  // Send the games options to the new player
+  socket.emit('currentGames', games);
+  // // Update all other players of the new player
+  // socket.broadcast.emit('newPlayer', players[socket.id]);
   //   socket.on('disconnect', () => {
   //     console.log('user disconnected', socket.id); //eslint-disable-line no-console
   //     delete players[socket.id];
@@ -50,14 +45,14 @@ io.on('connection', (socket) => {
   //     io.emit('disconnect', socket.id);
   //   });
 
-  socket.on('projectileFiring', (serverProjectile) => {
-    if (players[socket.id]) {
-      socket.broadcast.emit('projectileFired', {
-        ...serverProjectile,
-        playerId: socket.id,
-      });
-    }
-  });
+  // socket.on('projectileFiring', (serverProjectile) => {
+  //   if (players[socket.id]) {
+  //     socket.broadcast.emit('projectileFired', {
+  //       ...serverProjectile,
+  //       playerId: socket.id,
+  //     });
+  //   }
+  // });
 });
 
 server.listen(8081, () => {
