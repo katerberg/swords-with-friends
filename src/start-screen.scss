@@ -10,9 +10,12 @@
     flex-direction: column-reverse;
   }
 
-  #create-game {
-    margin-bottom: 10vh;
+  button {
+    margin-bottom: 2vh;
     height: 10vh;
     font-size: 5vh;
+    &:first-child {
+      margin-bottom: 10vh;
+    }
   }
 }

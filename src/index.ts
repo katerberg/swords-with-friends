@@ -1,9 +1,24 @@
 import './index.scss';
 import './start-screen.scss';
 import './game-lobby.scss';
+import './games-lobby.scss';
 import * as paper from 'paper';
 import {io} from 'socket.io-client';
 import {BLACK} from './colors';
+
+type Player = {
+  x: number;
+  y: number;
+  playerId: string;
+  isHost: boolean;
+};
+enum GameStatus {
+  WaitingForPlayers,
+  Ongoing,
+  Saved,
+  Done,
+}
+type Game = {gameId: string; players: Player[]; status: GameStatus};
 
 // screen.orientation?.lock('portrait');
 
@@ -31,14 +46,63 @@ function drawSocketId(socket: string): void {
   });
 }
 
-function handleCreateGame(): void {
-  globalThis.socket.emit('createGame');
+async function handleCreateGame(): Promise<void> {
+  await fetch('http://localhost:8081/api/games', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  globalThis.socket.on('currentGames', (gamesList) => {
+    drawSocketId(globalThis.socket.id);
+    console.log('games', gamesList); //eslint-disable-line no-console
+  });
+  globalThis.socket.on('joinedGame', (game) => {
+    console.log('game join', game); //eslint-disable-line no-console
+  });
   const startScreen = document.getElementById('start-screen');
   const gameLobby = document.getElementById('game-lobby');
   if (startScreen && gameLobby) {
     gameLobby.classList.add('visible');
     startScreen.classList.remove('visible');
   }
+}
+
+function populateGamesList(games: Game[]): void {
+  const gamesLobbyList = document.getElementById('games-lobby-list');
+  if (gamesLobbyList) {
+    while (gamesLobbyList.firstChild) {
+      gamesLobbyList.removeChild(gamesLobbyList.firstChild);
+    }
+
+    let gameList = '<div>';
+    games.forEach((game) => {
+      gameList += `<div>${game.gameId}</div>`;
+    });
+    gameList += '</div>';
+    gamesLobbyList.innerHTML = gameList;
+  }
+}
+
+async function openGamesList(): Promise<void> {
+  const startScreen = document.getElementById('start-screen');
+  const gamesLobbyScreen = document.getElementById('games-lobby');
+  if (startScreen && gamesLobbyScreen) {
+    gamesLobbyScreen.classList.add('visible');
+    startScreen.classList.remove('visible');
+  }
+  const games = await fetch('http://localhost:8081/api/games', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  }).then((response) => response.json());
+  populateGamesList(games);
+  console.log('games', games); //eslint-disable-line no-console
+  globalThis.socket.on('currentGames', (gamesList) => {
+    console.log('games', gamesList); //eslint-disable-line no-console
+    populateGamesList(gamesList);
+  });
 }
 
 window.addEventListener('load', () => {
@@ -56,13 +120,10 @@ window.addEventListener('load', () => {
       createGameButton.onclick = handleCreateGame;
     }
 
+    const openGamesListButton = document.getElementById('open-games-list');
+    if (openGamesListButton) {
+      openGamesListButton.onclick = openGamesList;
+    }
     globalThis.socket = io('http://localhost:8081');
-    globalThis.socket.on('currentGames', (gamesList) => {
-      drawSocketId(globalThis.socket.id);
-      console.log('games', gamesList); //eslint-disable-line no-console
-    });
-    globalThis.socket.on('newPlayer', (playerList) => {
-      console.log('new player', playerList); //eslint-disable-line no-console
-    });
   }
 });
