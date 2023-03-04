@@ -3,6 +3,7 @@ import {AddressInfo} from 'net';
 import * as express from 'express';
 import {Server} from 'socket.io';
 import {v4 as uuid} from 'uuid';
+import {Game, GameStatus} from '../types/SharedTypes';
 
 const app = express();
 const server = new http.Server(app);
@@ -32,20 +33,6 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
   res.sendFile(`${__dirname}/index.html`);
 });
-
-type Player = {
-  x: number;
-  y: number;
-  playerId: string;
-  isHost: boolean;
-};
-enum GameStatus {
-  WaitingForPlayers,
-  Ongoing,
-  Saved,
-  Done,
-}
-type Game = {gameId: string; players: Player[]; status: GameStatus};
 type GamesHash = {[key: string]: Game};
 
 const games: GamesHash = {};

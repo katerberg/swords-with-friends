@@ -47,7 +47,7 @@
     "start:ui": "webpack-dev-server --config ./webpack.config.js --mode development",
     "lint": "npm run lint:base -- --fix",
     "lint:ci": "npm run lint:base",
-    "lint:base": "eslint --ext js,ts src server"
+    "lint:base": "eslint --ext js,ts src server types"
   },
   "author": "katerberg@fastmail.fm",
   "license": "AGPL-3.0-or-later"

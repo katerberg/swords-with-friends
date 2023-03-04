@@ -4,21 +4,9 @@ import './game-lobby.scss';
 import './games-lobby.scss';
 import * as paper from 'paper';
 import {io} from 'socket.io-client';
+import {Game} from '../types/SharedTypes';
 import {BLACK} from './colors';
-
-type Player = {
-  x: number;
-  y: number;
-  playerId: string;
-  isHost: boolean;
-};
-enum GameStatus {
-  WaitingForPlayers,
-  Ongoing,
-  Saved,
-  Done,
-}
-type Game = {gameId: string; players: Player[]; status: GameStatus};
+import {populatePlayerList} from './waiting-room';
 
 // screen.orientation?.lock('portrait');
 
@@ -46,22 +34,6 @@ function drawSocketId(socket: string): void {
   });
 }
 
-function populateGameList(players: Player[]): void {
-  const playerLobbyList = document.getElementById('game-lobby-list');
-  if (playerLobbyList) {
-    while (playerLobbyList.firstChild) {
-      playerLobbyList.removeChild(playerLobbyList.firstChild);
-    }
-
-    let playerList = '<div>';
-    players.forEach((player) => {
-      playerList += `<div>${player.playerId}</div>`;
-    });
-    playerList += '</div>';
-    playerLobbyList.innerHTML = playerList;
-  }
-}
-
 async function handleCreateGame(): Promise<void> {
   const createdGame: Game = await fetch('http://localhost:8081/api/games', {
     method: 'POST',
@@ -74,7 +46,7 @@ async function handleCreateGame(): Promise<void> {
     console.log('games', gamesList); //eslint-disable-line no-console
   });
   globalThis.socket.on('joinedGame', (game) => {
-    populateGameList(game.players);
+    populatePlayerList(game.players);
   });
   const startScreen = document.getElementById('start-screen');
   const gameLobby = document.getElementById('game-lobby');
@@ -82,7 +54,7 @@ async function handleCreateGame(): Promise<void> {
     gameLobby.classList.add('visible');
     startScreen.classList.remove('visible');
   }
-  populateGameList(createdGame.players);
+  populatePlayerList(createdGame.players);
 }
 
 async function joinGame(gameId: string): Promise<void> {
@@ -98,7 +70,7 @@ async function joinGame(gameId: string): Promise<void> {
     gameLobby.classList.add('visible');
     gamesLobby.classList.remove('visible');
   }
-  populateGameList(joinedGame.players);
+  populatePlayerList(joinedGame.players);
 }
 
 function joinGameHandler(event: MouseEvent): void {
