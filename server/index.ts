@@ -4,6 +4,7 @@ import * as express from 'express';
 import {Server} from 'socket.io';
 import {v4 as uuid} from 'uuid';
 import {Game, GameStatus} from '../types/SharedTypes';
+import {getRandomName} from './data';
 
 const app = express();
 const server = new http.Server(app);
@@ -39,16 +40,14 @@ const games: GamesHash = {};
 
 io.on('connection', (socket) => {
   console.log('a user connected', socket.id); //eslint-disable-line no-console
-  // // Update all other players of the new player
-
-  // socket.on('projectileFiring', (serverProjectile) => {
-  //   if (players[socket.id]) {
-  //     socket.broadcast.emit('projectileFired', {
-  //       ...serverProjectile,
-  //       playerId: socket.id,
-  //     });
-  //   }
-  // });
+  socket.on('changeName', (gameId, name) => {
+    const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
+    if (playerIndex !== undefined) {
+      console.log('changing name for ', games[gameId].players[playerIndex].name, name); //eslint-disable-line no-console
+      games[gameId].players[playerIndex].name = name;
+      socket.broadcast.emit('nameChanged', gameId, games[gameId].players);
+    }
+  });
 });
 
 server.listen(8081, () => {
@@ -58,8 +57,11 @@ server.listen(8081, () => {
 
 // Create a game
 app.post('/api/games', (req, res) => {
+  if (!req.query.socketId || typeof req.query.socketId !== 'string') {
+    return res.status(400).send({text: 'socketId is required'});
+  }
   const id = uuid();
-  const player = {playerId: uuid(), x: 0, y: 0, isHost: true};
+  const player = {playerId: uuid(), x: 0, y: 0, isHost: true, name: getRandomName(), socketId: req.query.socketId};
   games[id] = {gameId: id, players: [player], status: GameStatus.WaitingForPlayers};
   console.log('new game', player.playerId, id); //eslint-disable-line no-console
   io.emit('currentGames', Object.values(games));
@@ -71,10 +73,12 @@ app.post('/api/games', (req, res) => {
 app.post('/api/games/:gameId', (req, res) => {
   const {gameId} = req.params;
   if (!games[gameId]) {
-    res.send({text: 'Game not found'});
-    return res.status(404).end();
+    return res.status(404).send({text: 'Game not found'});
   }
-  const player = {playerId: uuid(), x: 0, y: 0, isHost: false};
+  if (!req.query.socketId || typeof req.query.socketId !== 'string') {
+    return res.status(400).send({text: 'socketId is required'});
+  }
+  const player = {playerId: uuid(), x: 0, y: 0, isHost: false, name: getRandomName(), socketId: req.query.socketId};
   games[gameId].players.push(player);
   console.log('joined game', player.playerId, gameId); //eslint-disable-line no-console
   io.emit('joinedGame', games[gameId]);

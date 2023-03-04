@@ -5,12 +5,9 @@ import './games-lobby.scss';
 import * as paper from 'paper';
 import {io} from 'socket.io-client';
 import {Game} from '../types/SharedTypes';
-import {BLACK} from './colors';
 import {populatePlayerList} from './waiting-room';
 
 // screen.orientation?.lock('portrait');
-
-let socketId: paper.PointText;
 
 function initCanvasSize(canvas: HTMLCanvasElement): void {
   const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -22,29 +19,19 @@ function initCanvasSize(canvas: HTMLCanvasElement): void {
   globalThis.gameElement = canvas;
 }
 
-function drawSocketId(socket: string): void {
-  socketId?.remove();
-  socketId = new paper.PointText({
-    point: paper.view.center.transform(new paper.Matrix().translate(0, 230)),
-    justification: 'center',
-    fontSize: 20,
-    fillColor: BLACK,
-    content: `Socket ID
-    ${socket}`,
-  });
+function populateGameGlobals(gameId: string, playerId: string): void {
+  globalThis.playerId = playerId;
+  globalThis.currentGameId = gameId;
 }
 
 async function handleCreateGame(): Promise<void> {
-  const createdGame: Game = await fetch('http://localhost:8081/api/games', {
+  const createdGame: Game = await fetch(`http://localhost:8081/api/games?socketId=${globalThis.socket.id}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
   }).then((response) => response.json());
-  globalThis.socket.on('currentGames', (gamesList) => {
-    drawSocketId(globalThis.socket.id);
-    console.log('games', gamesList); //eslint-disable-line no-console
-  });
+  populateGameGlobals(createdGame.gameId, createdGame.players[createdGame.players.length - 1].playerId);
   globalThis.socket.on('joinedGame', (game) => {
     populatePlayerList(game.players);
   });
@@ -58,7 +45,7 @@ async function handleCreateGame(): Promise<void> {
 }
 
 async function joinGame(gameId: string): Promise<void> {
-  const joinedGame: Game = await fetch(`http://localhost:8081/api/games/${gameId}`, {
+  const joinedGame: Game = await fetch(`http://localhost:8081/api/games/${gameId}?socketId=${globalThis.socket.id}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -70,6 +57,7 @@ async function joinGame(gameId: string): Promise<void> {
     gameLobby.classList.add('visible');
     gamesLobby.classList.remove('visible');
   }
+  populateGameGlobals(joinedGame.gameId, joinedGame.players[joinedGame.players.length - 1].playerId);
   populatePlayerList(joinedGame.players);
 }
 
