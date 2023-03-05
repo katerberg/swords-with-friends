@@ -4,7 +4,7 @@ import './waiting-room.scss';
 import './games-lobby.scss';
 import * as paper from 'paper';
 import {io} from 'socket.io-client';
-import {Game} from '../types/SharedTypes';
+import {Game, Messages} from '../types/SharedTypes';
 import {swapScreens} from './screen-manager';
 import {populatePlayerList} from './waiting-room';
 
@@ -33,7 +33,7 @@ async function handleCreateGame(): Promise<void> {
     },
   }).then((response) => response.json());
   populateGameGlobals(createdGame.gameId, createdGame.players[createdGame.players.length - 1].playerId);
-  globalThis.socket.on('playersChangedInGame', (game) => {
+  globalThis.socket.on(Messages.PlayersChangedInGame, (game) => {
     populatePlayerList(game.players);
   });
   swapScreens('start-screen', 'waiting-room');
@@ -92,21 +92,21 @@ async function openGamesList(): Promise<void> {
     },
   }).then((response) => response.json());
   populateGamesList(games);
-  globalThis.socket.off('currentGames');
-  globalThis.socket.on('currentGames', (gamesList) => {
+  globalThis.socket.off(Messages.CurrentGames);
+  globalThis.socket.on(Messages.CurrentGames, (gamesList) => {
     populateGamesList(gamesList);
   });
 }
 
 function cancelGamesLobby(): void {
-  globalThis.socket.off('currentGames');
+  globalThis.socket.off(Messages.CurrentGames);
   swapScreens('games-lobby', 'start-screen');
 }
 
 function cancelWaitingRoom(): void {
-  globalThis.socket.emit('leaveGame', currentGameId);
-  globalThis.socket.off('gameStarted');
-  globalThis.socket.off('nameChanged');
+  globalThis.socket.emit(Messages.LeaveGame, currentGameId);
+  globalThis.socket.off(Messages.GameStarted);
+  globalThis.socket.off(Messages.NameChanged);
   swapScreens('waiting-room', 'start-screen');
 }
 

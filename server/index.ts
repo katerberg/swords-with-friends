@@ -3,7 +3,7 @@ import {AddressInfo} from 'net';
 import * as express from 'express';
 import {Server} from 'socket.io';
 import {v4 as uuid} from 'uuid';
-import {Game, GameStatus} from '../types/SharedTypes';
+import {Game, GameStatus, Messages} from '../types/SharedTypes';
 import {getRandomName} from './data';
 
 const app = express();
@@ -45,37 +45,37 @@ function getAvailableGames(): Game[] {
 io.on('connection', (socket) => {
   console.log('a user connected', socket.id); //eslint-disable-line no-console
 
-  socket.on('leaveGame', (gameId: string) => {
+  socket.on(Messages.LeaveGame, (gameId: string) => {
     const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
     if (playerIndex !== undefined) {
       console.log('removing player from ', gameId); //eslint-disable-line no-console
       if (games[gameId].players[playerIndex]?.isHost) {
         delete games[gameId];
-        io.emit('gameClosed', gameId);
-        io.emit('currentGames', getAvailableGames());
+        io.emit(Messages.GameClosed, gameId);
+        io.emit(Messages.CurrentGames, getAvailableGames());
       } else {
         games[gameId].players.splice(playerIndex, 1);
-        io.emit('playersChangedInGame', games[gameId]);
+        io.emit(Messages.PlayersChangedInGame, games[gameId]);
       }
     }
   });
 
-  socket.on('changeName', (gameId: string, name: string) => {
+  socket.on(Messages.ChangeName, (gameId: string, name: string) => {
     const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
     if (playerIndex !== undefined) {
       console.log('changing name for ', games[gameId].players[playerIndex].name, name); //eslint-disable-line no-console
       games[gameId].players[playerIndex].name = name;
-      socket.broadcast.emit('nameChanged', gameId, games[gameId].players);
+      socket.broadcast.emit(Messages.NameChanged, gameId, games[gameId].players);
     }
   });
 
-  socket.on('startGame', (gameId: string) => {
+  socket.on(Messages.StartGame, (gameId: string) => {
     const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
     if (playerIndex !== undefined && games[gameId].players[playerIndex]?.isHost) {
       console.log('starting game', gameId); //eslint-disable-line no-console
       games[gameId].status = GameStatus.Ongoing;
-      socket.broadcast.emit('gameStarted', gameId);
-      socket.broadcast.emit('currentGames', getAvailableGames());
+      socket.broadcast.emit(Messages.GameStarted, gameId);
+      socket.broadcast.emit(Messages.CurrentGames, getAvailableGames());
     }
   });
 });
@@ -92,9 +92,9 @@ app.post('/api/games', (req, res) => {
   }
   const id = uuid();
   const player = {playerId: uuid(), x: 0, y: 0, isHost: true, name: getRandomName(), socketId: req.query.socketId};
-  games[id] = {gameId: id, players: [player], status: GameStatus.WaitingForPlayers};
+  games[id] = {gameId: id, players: [player], status: GameStatus.WaitingForPlayers, startTime: new Date()};
   console.log('new game', player.playerId, id); //eslint-disable-line no-console
-  io.emit('currentGames', getAvailableGames());
+  io.emit(Messages.CurrentGames, getAvailableGames());
   res.send(games[id]);
   res.status(201).end();
 });
@@ -111,7 +111,7 @@ app.post('/api/games/:gameId', (req, res) => {
   const player = {playerId: uuid(), x: 0, y: 0, isHost: false, name: getRandomName(), socketId: req.query.socketId};
   games[gameId].players.push(player);
   console.log('joined game', player.playerId, gameId); //eslint-disable-line no-console
-  io.emit('playersChangedInGame', games[gameId]);
+  io.emit(Messages.PlayersChangedInGame, games[gameId]);
   res.send(games[gameId]);
 });
 
