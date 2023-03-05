@@ -1,3 +1,8 @@
+export type PlayerAction = {
+  name: string;
+  target?: Coordinate;
+};
+
 export type Player = {
   x: number;
   y: number;
@@ -9,6 +14,7 @@ export type Player = {
   currentHp: number;
   color: string;
   textColor: string;
+  currentAction: PlayerAction | null;
 };
 
 export enum CellType {
@@ -38,7 +44,13 @@ export enum GameStatus {
   Done,
 }
 
-export type Game = {gameId: string; players: Player[]; status: GameStatus; startTime: Date};
+export type Game = {
+  gameId: string;
+  players: Player[];
+  gameStatus: GameStatus;
+  startTime: Date;
+  turn: number;
+};
 
 export enum Messages {
   LeaveGame = 'leaveGame',
@@ -51,6 +63,7 @@ export enum Messages {
   NameChanged = 'nameChanged',
   MovePlayer = 'movePlayer',
   PlayerMoved = 'playerMoved',
+  PlayerActionQueued = 'playerActionQueued',
 }
 
 export type GamesHash = {[key: string]: Game};
