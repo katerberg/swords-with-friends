@@ -4,18 +4,10 @@
   background-color: tomato;
   z-index: 100;
   display: none;
+  padding: 2vh;
 
   &.visible {
     display: flex;
     flex-direction: column-reverse;
-  }
-
-  button {
-    margin-bottom: 2vh;
-    height: 10vh;
-    font-size: 5vh;
-    &:first-child {
-      margin-bottom: 10vh;
-    }
   }
 }
