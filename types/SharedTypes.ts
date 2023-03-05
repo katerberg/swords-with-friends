@@ -18,6 +18,7 @@ export type Player = {
   color: string;
   textColor: string;
   currentAction: PlayerAction | null;
+  mapLevel: number;
 };
 
 export enum CellType {

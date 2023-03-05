@@ -41,6 +41,7 @@ function createPlayer(socketId: string, isHost = false): Player {
     color,
     textColor: contrast(color),
     currentAction: null,
+    mapLevel: 0,
   };
 }
 
