@@ -54,3 +54,9 @@ export enum Messages {
 }
 
 export type GamesHash = {[key: string]: Game};
+
+export type OnFrameEvent = {
+  delta: number;
+  time: number;
+  count: number;
+};
