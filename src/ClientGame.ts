@@ -1,6 +1,6 @@
 import * as paper from 'paper';
 import {MAX_X, MAX_Y} from '../types/consts';
-import {Cell, CellType, Coordinate, Game, MapLevel, Messages, Player} from '../types/SharedTypes';
+import {Cell, CellType, Coordinate, Game, MapLevel, Messages, Player, PlayerAction} from '../types/SharedTypes';
 import {BLACK, WHITE} from './colors';
 
 const xVisibleCells = 7;
@@ -64,11 +64,37 @@ export class ClientGame {
       }
     }
     globalThis.socket.on(Messages.TurnEnd, this.handleTurnEnd.bind(this));
+    globalThis.socket.on(Messages.PlayerActionQueued, this.handlePlayerActionQueue.bind(this));
     this.drawMap();
   }
 
   private get currentPlayer(): Player {
     return this.players.find((player) => player.playerId === globalThis.playerId) as Player;
+  }
+
+  private resetAllBadgeContent(): void {
+    this.playerBadges.forEach((badgeGroup) => {
+      const text = badgeGroup.lastChild as paper.PointText;
+      text.content = '...';
+      text.fontSize = 10;
+    });
+  }
+
+  private setBadgeContent(playerId: string, content: string): void {
+    const index = this.players.findIndex((player) => playerId === player.playerId);
+    if (index === -1) {
+      return;
+    }
+    const text = this.playerBadges[index].lastChild as paper.PointText;
+    text.fontSize = 20;
+    text.content = content;
+  }
+
+  private handlePlayerActionQueue(gameId: string, actionQueued: {action: PlayerAction; playerId: string}): void {
+    if (gameId !== globalThis.currentGameId) {
+      return;
+    }
+    this.setBadgeContent(actionQueued.playerId, '✓');
   }
 
   private handleTurnEnd(gameId: string, game: Game): void {
@@ -81,6 +107,7 @@ export class ClientGame {
       thisPlayer.x = updatedPlayer.x;
       thisPlayer.y = updatedPlayer.y;
     });
+    this.resetAllBadgeContent();
     this.drawMap();
   }
 
