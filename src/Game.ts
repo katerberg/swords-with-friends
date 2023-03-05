@@ -1,9 +1,11 @@
 import * as paper from 'paper';
 import {Player} from '../types/SharedTypes';
-import {BLACK} from './colors';
+import {BLACK, WHITE} from './colors';
 
 const xVisibleCells = 7;
-const yVisibleCells = 13;
+const yVisibleCells = 9;
+const cellPadding = 1;
+
 export class Game {
   path: paper.PointText;
 
@@ -41,13 +43,17 @@ export class Game {
 
   private drawCell(x: number, y: number, cell: string): void {
     const {width} = globalThis.gameElement.getBoundingClientRect();
-    const cellPadding = 0;
-    const cellWidth = width / 7 - cellPadding * 2 * xVisibleCells;
+    const cellWidth = (width - cellPadding * 2 * xVisibleCells) / xVisibleCells;
+    const xFromCenter = (xVisibleCells - 1) / 2;
+    const yFromCenter = (yVisibleCells - 1) / 2;
     const myCircle = new paper.Path.Circle(
-      new paper.Point(cellWidth / 2 + (x + 3) * cellWidth, cellWidth / 2 + (y + 3) * cellWidth),
+      new paper.Point(
+        cellWidth / 2 + (x + xFromCenter) * cellWidth + cellPadding + cellPadding * 2 * (x + xFromCenter),
+        cellWidth / 2 + (y + yFromCenter) * cellWidth + cellPadding + cellPadding * 2 * (y + yFromCenter),
+      ),
       cellWidth / 2,
     );
-    myCircle.fillColor = BLACK;
+    myCircle.fillColor = x === 0 && y === 0 ? WHITE : BLACK;
     myCircle.strokeColor = new paper.Color(cell);
     this.drawnMap[`${x},${y}`] = myCircle;
   }
