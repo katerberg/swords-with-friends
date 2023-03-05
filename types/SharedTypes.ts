@@ -11,6 +11,24 @@ export type Player = {
   textColor: string;
 };
 
+export enum CellType {
+  Earth,
+}
+
+export type Cell = {
+  x: number;
+  y: number;
+  isEntrance: boolean;
+  isExit: boolean;
+  isPassable: boolean;
+  isWalkable: boolean;
+  type: CellType;
+};
+
+export type MapLevel = {
+  [key: Coordinate]: Cell;
+};
+
 export type Coordinate = `${number},${number}`;
 
 export enum GameStatus {

@@ -92,7 +92,7 @@ io.on('connection', (socket) => {
       console.debug('moving player', x, y); //eslint-disable-line no-console
       games[gameId].players[playerIndex].x = x;
       games[gameId].players[playerIndex].y = y;
-      socket.emit(Messages.PlayerMoved, gameId, games[gameId].players[playerIndex]);
+      io.emit(Messages.PlayerMoved, gameId, games[gameId].players[playerIndex]);
     }
   });
 });
@@ -104,7 +104,7 @@ server.listen(8081, () => {
 
 // Create a game
 app.post('/api/games', (req, res) => {
-  if (!req.query.socketId || typeof req.query.socketId !== 'string') {
+  if (!req.query.socketId || typeof req.query.socketId !== 'string' || req.query.socketId === 'undefined') {
     return res.status(400).send({text: 'socketId is required'});
   }
   const id = uuid();
@@ -126,10 +126,11 @@ app.post('/api/games/:gameId', (req, res) => {
   if (!games[gameId]) {
     return res.status(404).send({text: 'Game not found'});
   }
-  if (!req.query.socketId || typeof req.query.socketId !== 'string') {
+  if (!req.query.socketId || typeof req.query.socketId !== 'string' || req.query.socketId === 'undefined') {
     return res.status(400).send({text: 'socketId is required'});
   }
   const player = createPlayer(req.query.socketId);
+  player.x = games[gameId].players[games[gameId].players.length - 1].x - 1;
   games[gameId].players.push(player);
   console.log('joined game', player.name, gameId); //eslint-disable-line no-console
   io.emit(Messages.PlayersChangedInGame, games[gameId]);

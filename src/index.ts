@@ -7,7 +7,7 @@ import {io} from 'socket.io-client';
 import {Game, Messages} from '../types/SharedTypes';
 import {isDebug} from './debug';
 import {swapScreens} from './screen-manager';
-import {populatePlayerList} from './waiting-room';
+import {handleStartGame, populatePlayerList} from './waiting-room';
 
 // screen.orientation?.lock('portrait');
 
@@ -111,6 +111,16 @@ function cancelWaitingRoom(): void {
   swapScreens('waiting-room', 'start-screen');
 }
 
+function jumpToNewGame(): void {
+  if (!globalThis.socket.id) {
+    setTimeout(jumpToNewGame, 10);
+    return;
+  }
+  handleCreateGame().then(() => {
+    handleStartGame();
+  });
+}
+
 window.addEventListener('load', () => {
   const gameElement = document.getElementById('game-canvas') as HTMLCanvasElement;
   if (gameElement) {
@@ -144,11 +154,7 @@ window.addEventListener('load', () => {
     globalThis.socket = io('http://localhost:8081');
 
     if (isDebug('newGame')) {
-      document.getElementById('start-game')?.click();
-      createGameButton?.click();
-      setTimeout(() => {
-        document.getElementById('start-game')?.click();
-      }, 100);
+      setTimeout(jumpToNewGame, 1);
     }
   }
 });

@@ -30,7 +30,7 @@ async function startGame(): Promise<void> {
   globalThis.game = new Game(players);
 }
 
-function handleStartGame(): void {
+export function handleStartGame(): void {
   globalThis.socket.emit(Messages.StartGame, globalThis.currentGameId);
   startGame();
 }

@@ -1,16 +1,18 @@
 import * as paper from 'paper';
 import {MAX_X, MAX_Y} from '../types/consts';
-import {Coordinate, Messages, Player} from '../types/SharedTypes';
+import {Cell, CellType, Coordinate, MapLevel, Messages, Player} from '../types/SharedTypes';
 import {BLACK, WHITE} from './colors';
 
 const xVisibleCells = 7;
-const yVisibleCells = 9;
+const yVisibleCells = 11;
 const cellPadding = 1;
 
 export class Game {
   path: paper.PointText;
 
-  map: {[key: Coordinate]: string};
+  map: MapLevel[];
+
+  level: number;
 
   drawnMap: {[key: Coordinate]: paper.Path};
 
@@ -27,10 +29,19 @@ export class Game {
     });
     this.players = players;
     this.drawnMap = {};
-    this.map = {};
+    this.level = 0;
+    this.map = [{}];
     for (let x = 0; x <= MAX_X; x++) {
       for (let y = 0; y <= MAX_Y; y++) {
-        this.map[`${x},${y}`] = 'red';
+        this.map[this.level][`${x},${y}`] = {
+          type: CellType.Earth,
+          x,
+          y,
+          isPassable: true,
+          isWalkable: true,
+          isEntrance: false,
+          isExit: false,
+        };
       }
     }
     globalThis.socket.on(Messages.PlayerMoved, this.handlePlayerMoved.bind(this));
@@ -65,29 +76,32 @@ export class Game {
     }
   }
 
-  private drawCell(x: number, y: number, cell: string): void {
+  private drawCell(offsetX: number, offsetY: number, cell: Cell): void {
     const {width} = globalThis.gameElement.getBoundingClientRect();
     const cellWidth = (width - cellPadding * 2 * xVisibleCells) / xVisibleCells;
     const xFromCenter = (xVisibleCells - 1) / 2;
     const yFromCenter = (yVisibleCells - 1) / 2;
     const circlePoint = new paper.Point(
-      cellWidth / 2 + (x + xFromCenter) * cellWidth + cellPadding + cellPadding * 2 * (x + xFromCenter),
-      cellWidth / 2 + (y + yFromCenter) * cellWidth + cellPadding + cellPadding * 2 * (y + yFromCenter),
+      cellWidth / 2 + (offsetX + xFromCenter) * cellWidth + cellPadding + cellPadding * 2 * (offsetX + xFromCenter),
+      cellWidth / 2 + (offsetY + yFromCenter) * cellWidth + cellPadding + cellPadding * 2 * (offsetY + yFromCenter),
     );
     const myCircle = new paper.Path.Circle(circlePoint, cellWidth / 2);
+    const occupyingPlayer = this.players.find(
+      (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y,
+    );
     const player = this.currentPlayer;
     const text = new paper.PointText({
       point: circlePoint,
       justification: 'center',
       fontSize: 10,
-      fillColor: x === 0 && y === 0 ? new paper.Color(this.currentPlayer.textColor) : WHITE,
-      content: `${x + player.x},${y + player.y}`,
+      fillColor: occupyingPlayer ? new paper.Color(occupyingPlayer.textColor) : WHITE,
+      content: `${offsetX + player.x},${offsetY + player.y}`,
     });
     myCircle.addChild(text);
-    myCircle.fillColor = x === 0 && y === 0 ? new paper.Color(this.currentPlayer.color) : BLACK;
-    myCircle.strokeColor = new paper.Color(cell);
-    myCircle.onClick = (): void => this.handleCellClick(x, y);
-    this.drawnMap[`${x},${y}`] = myCircle;
+    myCircle.fillColor = occupyingPlayer ? new paper.Color(occupyingPlayer.color) : BLACK;
+    myCircle.strokeColor = new paper.Color('red');
+    myCircle.onClick = (): void => this.handleCellClick(offsetX, offsetY);
+    this.drawnMap[`${offsetX},${offsetY}`] = myCircle;
   }
 
   private drawMap(): void {
@@ -98,15 +112,14 @@ export class Game {
     const player = this.currentPlayer;
     const xFromCenter = (xVisibleCells - 1) / 2;
     const yFromCenter = (yVisibleCells - 1) / 2;
-    for (let x = -1 * xFromCenter; x <= xFromCenter; x++) {
+    for (let offsetX = -1 * xFromCenter; offsetX <= xFromCenter; offsetX++) {
       for (let y = -1 * yFromCenter; y <= yFromCenter; y++) {
-        const cell = this.map[`${player.x + x},${player.y + y}`];
+        const cell = this.map[this.level][`${player.x + offsetX},${player.y + y}`];
         if (cell !== undefined) {
           //Tile
-          this.drawCell(x, y, cell);
+          this.drawCell(offsetX, y, cell);
         } else {
           //Wall
-          this.drawCell(x, y, cell);
         }
       }
     }
