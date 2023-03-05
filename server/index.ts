@@ -19,8 +19,12 @@ const io = new Server(server, {
 
 const games: GamesHash = {};
 
+export function getGames(): GamesHash {
+  return games;
+}
+
 function getAvailableGames(): Game[] {
-  return Object.values(games).filter((game) => game.status === GameStatus.WaitingForPlayers);
+  return Object.values(games).filter((game) => game.gameStatus === GameStatus.WaitingForPlayers);
 }
 
 function createPlayer(socketId: string, isHost = false): Player {
@@ -36,6 +40,7 @@ function createPlayer(socketId: string, isHost = false): Player {
     currentHp: 10,
     color,
     textColor: contrast(color),
+    currentAction: null,
   };
 }
 
@@ -71,12 +76,12 @@ io.on('connection', (socket) => {
     const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
     if (playerIndex !== undefined && games[gameId].players[playerIndex]?.isHost) {
       console.log('starting game', gameId); //eslint-disable-line no-console
-      games[gameId].status = GameStatus.Ongoing;
+      games[gameId].gameStatus = GameStatus.Ongoing;
       socket.broadcast.emit(Messages.GameStarted, gameId);
       socket.broadcast.emit(Messages.CurrentGames, getAvailableGames());
     }
   });
-  handleGameActions(io, socket, games);
+  handleGameActions(io, socket);
 });
 
 server.listen(8081, () => {
@@ -93,8 +98,9 @@ app.post('/api/games', (req, res) => {
   games[id] = {
     gameId: id,
     players: [createPlayer(req.query.socketId, true)],
-    status: GameStatus.WaitingForPlayers,
+    gameStatus: GameStatus.WaitingForPlayers,
     startTime: new Date(),
+    turn: 0,
   };
   console.log('new game', id); //eslint-disable-line no-console
   io.emit(Messages.CurrentGames, getAvailableGames());
