@@ -1,13 +1,13 @@
 import * as http from 'http';
 import {AddressInfo} from 'net';
-import * as express from 'express';
 import {Server} from 'socket.io';
 import {v4 as uuid} from 'uuid';
 import {MAX_X, MAX_Y} from '../types/consts';
 import {Game, GameStatus, Messages} from '../types/SharedTypes';
 import {getRandomName} from './data';
+import {setup} from './express';
 
-const app = express();
+const app = setup();
 const server = new http.Server(app);
 const io = new Server(server, {
   cors: {
@@ -16,25 +16,6 @@ const io = new Server(server, {
   },
 });
 
-app.use(express.static(`${__dirname}/public`));
-
-app.use((req, res, next) => {
-  const allowedOrigins = ['http://localhost:8080', 'http://127.0.0.1:8080', 'http://0.0.0.0:8080'];
-  const {origin} = req.headers;
-  if (origin) {
-    if (allowedOrigins.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-  }
-  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  return next();
-});
-
-app.get('/', (req, res) => {
-  res.sendFile(`${__dirname}/index.html`);
-});
 type GamesHash = {[key: string]: Game};
 
 const games: GamesHash = {};
