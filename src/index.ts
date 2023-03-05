@@ -70,7 +70,9 @@ function populateGamesList(games: Game[]): void {
 
     let gameList = '<div>';
     games.forEach((game) => {
-      gameList += `<div><span>${game.gameId}</span><button class="join" data-game-id="${game.gameId}">Join</button></div>`;
+      gameList += `<div><span>${
+        game.players.find((player) => player.isHost)?.name
+      }’s Game</span><button class="join" data-game-id="${game.gameId}">Join</button></div>`;
     });
     gameList += '</div>';
     gamesLobbyList.innerHTML = gameList;

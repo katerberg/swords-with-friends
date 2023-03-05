@@ -73,6 +73,7 @@ io.on('connection', (socket) => {
       console.log('changing name for ', games[gameId].players[playerIndex].name, name); //eslint-disable-line no-console
       games[gameId].players[playerIndex].name = name;
       socket.broadcast.emit(Messages.NameChanged, gameId, games[gameId].players);
+      socket.broadcast.emit(Messages.CurrentGames, getAvailableGames());
     }
   });
 
