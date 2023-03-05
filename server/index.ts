@@ -2,11 +2,11 @@ import * as http from 'http';
 import {AddressInfo} from 'net';
 import {Server} from 'socket.io';
 import {v4 as uuid} from 'uuid';
-import {MAX_X, MAX_Y} from '../types/consts';
-import {Game, GameStatus, Messages, Player} from '../types/SharedTypes';
+import {Game, GamesHash, GameStatus, Messages, Player} from '../types/SharedTypes';
 import {contrast, getRandomColor} from './color';
 import {getRandomName} from './data';
 import {setup} from './express';
+import {handleGameActions} from './gameActions';
 
 const app = setup();
 const server = new http.Server(app);
@@ -17,16 +17,10 @@ const io = new Server(server, {
   },
 });
 
-type GamesHash = {[key: string]: Game};
-
 const games: GamesHash = {};
 
 function getAvailableGames(): Game[] {
   return Object.values(games).filter((game) => game.status === GameStatus.WaitingForPlayers);
-}
-
-function isValidCoordinate(x: number, y: number): boolean {
-  return x >= 0 && x <= MAX_X && y >= 0 && y <= MAX_Y;
 }
 
 function createPlayer(socketId: string, isHost = false): Player {
@@ -82,16 +76,7 @@ io.on('connection', (socket) => {
       socket.broadcast.emit(Messages.CurrentGames, getAvailableGames());
     }
   });
-
-  socket.on(Messages.MovePlayer, (gameId: string, x: number, y: number) => {
-    const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
-    if (playerIndex !== undefined && isValidCoordinate(x, y)) {
-      console.debug('moving player', x, y); //eslint-disable-line no-console
-      games[gameId].players[playerIndex].x = x;
-      games[gameId].players[playerIndex].y = y;
-      io.emit(Messages.PlayerMoved, gameId, games[gameId].players[playerIndex]);
-    }
-  });
+  handleGameActions(io, socket, games);
 });
 
 server.listen(8081, () => {

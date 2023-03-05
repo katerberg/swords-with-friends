@@ -52,3 +52,5 @@ export enum Messages {
   MovePlayer = 'movePlayer',
   PlayerMoved = 'playerMoved',
 }
+
+export type GamesHash = {[key: string]: Game};

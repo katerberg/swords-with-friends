@@ -88,7 +88,9 @@ export class Game {
     myCircle.addChild(text);
     myCircle.fillColor = occupyingPlayer ? new paper.Color(occupyingPlayer.color) : BLACK;
     myCircle.strokeColor = BLACK;
-    myCircle.onClick = (): void => this.handleCellClick(offsetX, offsetY);
+    const clickHandler = (): void => this.handleCellClick(offsetX, offsetY);
+    text.onClick = clickHandler;
+    myCircle.onClick = clickHandler;
     this.drawnMap[`${offsetX},${offsetY}`] = myCircle;
   }
 
