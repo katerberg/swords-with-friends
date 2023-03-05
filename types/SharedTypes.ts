@@ -5,6 +5,10 @@ export type Player = {
   name: string;
   isHost: boolean;
   socketId?: string;
+  maxHp: number;
+  currentHp: number;
+  color: string;
+  textColor: string;
 };
 
 export type Coordinate = `${number},${number}`;

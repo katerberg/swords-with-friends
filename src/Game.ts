@@ -53,7 +53,7 @@ export class Game {
 
   private handleCellClick(x: number, y: number): void {
     if (x === 0 && y === 0) {
-      return console.log('wait');
+      return;
     }
     if (Math.abs(x) < 2 && Math.abs(y) < 2) {
       globalThis.socket.emit(
@@ -80,11 +80,11 @@ export class Game {
       point: circlePoint,
       justification: 'center',
       fontSize: 10,
-      fillColor: x === 0 && y === 0 ? BLACK : WHITE,
+      fillColor: x === 0 && y === 0 ? new paper.Color(this.currentPlayer.textColor) : WHITE,
       content: `${x + player.x},${y + player.y}`,
     });
     myCircle.addChild(text);
-    myCircle.fillColor = x === 0 && y === 0 ? WHITE : BLACK;
+    myCircle.fillColor = x === 0 && y === 0 ? new paper.Color(this.currentPlayer.color) : BLACK;
     myCircle.strokeColor = new paper.Color(cell);
     myCircle.onClick = (): void => this.handleCellClick(x, y);
     this.drawnMap[`${x},${y}`] = myCircle;
