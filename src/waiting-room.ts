@@ -1,8 +1,15 @@
 import {Player} from '../types/SharedTypes';
 import {Game} from './Game';
+import {swapScreens} from './screen-manager';
 
 function nameChange(newName: string): void {
   globalThis.socket.emit('changeName', globalThis.currentGameId, newName);
+}
+
+function leaveGame(): void {
+  globalThis.socket.off('gameStarted');
+  globalThis.socket.off('nameChanged');
+  swapScreens('waiting-room', 'start-screen');
 }
 
 function startGame(): void {
@@ -55,15 +62,22 @@ export function populatePlayerList(players: Player[]): void {
       };
     }
   }
-  socket.off('gameStarted');
-  socket.on('gameStarted', (gameId: string): void => {
+  globalThis.socket.off('gameClosed');
+  globalThis.socket.on('gameClosed', (gameId: string): void => {
+    if (globalThis.currentGameId === gameId) {
+      leaveGame();
+    }
+  });
+
+  globalThis.socket.off('gameStarted');
+  globalThis.socket.on('gameStarted', (gameId: string): void => {
     if (globalThis.currentGameId === gameId) {
       startGame();
     }
   });
 
-  socket.off('nameChanged');
-  socket.on('nameChanged', (gameId: string, newPlayers: Player[]): void => {
+  globalThis.socket.off('nameChanged');
+  globalThis.socket.on('nameChanged', (gameId: string, newPlayers: Player[]): void => {
     if (globalThis.currentGameId === gameId) {
       populatePlayerList(newPlayers);
     }

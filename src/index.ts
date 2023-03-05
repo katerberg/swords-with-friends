@@ -5,6 +5,7 @@ import './games-lobby.scss';
 import * as paper from 'paper';
 import {io} from 'socket.io-client';
 import {Game} from '../types/SharedTypes';
+import {swapScreens} from './screen-manager';
 import {populatePlayerList} from './waiting-room';
 
 // screen.orientation?.lock('portrait');
@@ -32,15 +33,10 @@ async function handleCreateGame(): Promise<void> {
     },
   }).then((response) => response.json());
   populateGameGlobals(createdGame.gameId, createdGame.players[createdGame.players.length - 1].playerId);
-  globalThis.socket.on('joinedGame', (game) => {
+  globalThis.socket.on('playersChangedInGame', (game) => {
     populatePlayerList(game.players);
   });
-  const startScreen = document.getElementById('start-screen');
-  const gameLobby = document.getElementById('waiting-room');
-  if (startScreen && gameLobby) {
-    gameLobby.classList.add('visible');
-    startScreen.classList.remove('visible');
-  }
+  swapScreens('start-screen', 'waiting-room');
   populatePlayerList(createdGame.players);
 }
 
@@ -51,12 +47,7 @@ async function joinGame(gameId: string): Promise<void> {
       'Content-Type': 'application/json',
     },
   }).then((response) => response.json());
-  const gamesLobby = document.getElementById('games-lobby');
-  const gameLobby = document.getElementById('waiting-room');
-  if (gamesLobby && gameLobby) {
-    gameLobby.classList.add('visible');
-    gamesLobby.classList.remove('visible');
-  }
+  swapScreens('games-lobby', 'waiting-room');
   populateGameGlobals(joinedGame.gameId, joinedGame.players[joinedGame.players.length - 1].playerId);
   populatePlayerList(joinedGame.players);
 }
@@ -93,12 +84,7 @@ function populateGamesList(games: Game[]): void {
 }
 
 async function openGamesList(): Promise<void> {
-  const startScreen = document.getElementById('start-screen');
-  const gamesLobbyScreen = document.getElementById('games-lobby');
-  if (startScreen && gamesLobbyScreen) {
-    gamesLobbyScreen.classList.add('visible');
-    startScreen.classList.remove('visible');
-  }
+  swapScreens('start-screen', 'games-lobby');
   const games = await fetch('http://localhost:8081/api/games', {
     method: 'GET',
     headers: {
@@ -106,9 +92,22 @@ async function openGamesList(): Promise<void> {
     },
   }).then((response) => response.json());
   populateGamesList(games);
+  globalThis.socket.off('currentGames');
   globalThis.socket.on('currentGames', (gamesList) => {
     populateGamesList(gamesList);
   });
+}
+
+function cancelGamesLobby(): void {
+  globalThis.socket.off('currentGames');
+  swapScreens('games-lobby', 'start-screen');
+}
+
+function cancelWaitingRoom(): void {
+  globalThis.socket.emit('leaveGame', currentGameId);
+  globalThis.socket.off('gameStarted');
+  globalThis.socket.off('nameChanged');
+  swapScreens('waiting-room', 'start-screen');
 }
 
 window.addEventListener('load', () => {
@@ -130,6 +129,17 @@ window.addEventListener('load', () => {
     if (openGamesListButton) {
       openGamesListButton.onclick = openGamesList;
     }
+
+    const gamesLobbyCancelButton = document.getElementById('games-lobby-cancel-button');
+    if (gamesLobbyCancelButton) {
+      gamesLobbyCancelButton.onclick = cancelGamesLobby;
+    }
+
+    const waitingRoomCancelButton = document.getElementById('waiting-room-cancel-button');
+    if (waitingRoomCancelButton) {
+      waitingRoomCancelButton.onclick = cancelWaitingRoom;
+    }
+
     globalThis.socket = io('http://localhost:8081');
   }
 });

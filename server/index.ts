@@ -45,7 +45,22 @@ function getAvailableGames(): Game[] {
 io.on('connection', (socket) => {
   console.log('a user connected', socket.id); //eslint-disable-line no-console
 
-  socket.on('changeName', (gameId, name) => {
+  socket.on('leaveGame', (gameId: string) => {
+    const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
+    if (playerIndex !== undefined) {
+      console.log('removing player from ', gameId); //eslint-disable-line no-console
+      if (games[gameId].players[playerIndex]?.isHost) {
+        delete games[gameId];
+        io.emit('gameClosed', gameId);
+        io.emit('currentGames', getAvailableGames());
+      } else {
+        games[gameId].players.splice(playerIndex, 1);
+        io.emit('playersChangedInGame', games[gameId]);
+      }
+    }
+  });
+
+  socket.on('changeName', (gameId: string, name: string) => {
     const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
     if (playerIndex !== undefined) {
       console.log('changing name for ', games[gameId].players[playerIndex].name, name); //eslint-disable-line no-console
@@ -54,7 +69,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('startGame', (gameId) => {
+  socket.on('startGame', (gameId: string) => {
     const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
     if (playerIndex !== undefined && games[gameId].players[playerIndex]?.isHost) {
       console.log('starting game', gameId); //eslint-disable-line no-console
@@ -96,7 +111,7 @@ app.post('/api/games/:gameId', (req, res) => {
   const player = {playerId: uuid(), x: 0, y: 0, isHost: false, name: getRandomName(), socketId: req.query.socketId};
   games[gameId].players.push(player);
   console.log('joined game', player.playerId, gameId); //eslint-disable-line no-console
-  io.emit('joinedGame', games[gameId]);
+  io.emit('playersChangedInGame', games[gameId]);
   res.send(games[gameId]);
 });
 
