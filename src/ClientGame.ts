@@ -34,7 +34,6 @@ export class ClientGame {
         };
       }
     }
-    globalThis.socket.on(Messages.PlayerMoved, this.handlePlayerMoved.bind(this));
     globalThis.socket.on(Messages.TurnEnd, this.handleTurnEnd.bind(this));
     this.drawMap();
   }
@@ -53,16 +52,6 @@ export class ClientGame {
       thisPlayer.x = updatedPlayer.x;
       thisPlayer.y = updatedPlayer.y;
     });
-    this.drawMap();
-  }
-
-  private handlePlayerMoved(gameId: string, player: Player): void {
-    if (gameId !== globalThis.currentGameId) {
-      return;
-    }
-    const index = this.players.findIndex((currentPlayer) => currentPlayer.playerId === player.playerId);
-    this.players[index].x = player.x;
-    this.players[index].y = player.y;
     this.drawMap();
   }
 

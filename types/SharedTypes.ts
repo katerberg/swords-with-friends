@@ -65,7 +65,6 @@ export enum Messages {
   ChangeName = 'changeName',
   NameChanged = 'nameChanged',
   MovePlayer = 'movePlayer',
-  PlayerMoved = 'playerMoved',
   PlayerActionQueued = 'playerActionQueued',
   TurnEnd = 'turnEnd',
 }

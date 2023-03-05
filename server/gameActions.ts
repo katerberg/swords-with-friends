@@ -1,19 +1,23 @@
 import {Server, Socket} from 'socket.io';
 import {MAX_X, MAX_Y} from '../types/consts';
-import {Messages, Player, PlayerAction, PlayerActionName} from '../types/SharedTypes';
+import {Game, Messages, Player, PlayerAction, PlayerActionName} from '../types/SharedTypes';
 import {getGames} from '.';
 
 function isValidCoordinate(x: number, y: number): boolean {
   return x >= 0 && x <= MAX_X && y >= 0 && y <= MAX_Y;
 }
 
+function isFreeCell(x: number, y: number, game: Game): boolean {
+  return isValidCoordinate(x, y) && game.players.every((player) => player.x !== x || player.y !== y);
+}
+
 function handlePlayerMovementAction(gameId: string, player: Player): void {
   const [x, y] = (player.currentAction?.target as string).split(',');
   const targetX = Number.parseInt(x, 10);
   const targetY = Number.parseInt(y, 10);
-  if (isValidCoordinate(targetX, targetY)) {
+  const game = getGames()[gameId];
+  if (isFreeCell(targetX, targetY, game)) {
     if (Math.abs(targetX - player.x) <= 1 && Math.abs(targetY - player.y) <= 1) {
-      const game = getGames()[gameId];
       const gamePlayer = game.players.find((loopPlayer) => loopPlayer.playerId === player.playerId);
       if (gamePlayer) {
         gamePlayer.x = targetX;
@@ -57,7 +61,6 @@ export function handleGameActions(io: Server, socket: Socket): void {
         playerId: games[gameId].players[playerIndex].playerId,
       });
       checkTurnEnd(gameId, io);
-      // io.emit(Messages.PlayerMoved, gameId, games[gameId].players[playerIndex]);
     }
   });
 }
