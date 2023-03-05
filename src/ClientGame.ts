@@ -1,13 +1,13 @@
 import * as paper from 'paper';
 import {MAX_X, MAX_Y} from '../types/consts';
-import {Cell, CellType, Coordinate, MapLevel, Messages, Player} from '../types/SharedTypes';
+import {Cell, CellType, Coordinate, Game, MapLevel, Messages, Player} from '../types/SharedTypes';
 import {BLACK, WHITE} from './colors';
 
 const xVisibleCells = 7;
 const yVisibleCells = 11;
 const cellPadding = 1;
 
-export class Game {
+export class ClientGame {
   map: MapLevel[];
 
   level: number;
@@ -35,6 +35,7 @@ export class Game {
       }
     }
     globalThis.socket.on(Messages.PlayerMoved, this.handlePlayerMoved.bind(this));
+    globalThis.socket.on(Messages.TurnEnd, this.handleTurnEnd.bind(this));
     this.drawMap();
   }
 
@@ -42,8 +43,21 @@ export class Game {
     return this.players.find((player) => player.playerId === globalThis.playerId) as Player;
   }
 
-  private handlePlayerMoved(game: string, player: Player): void {
-    if (game !== globalThis.currentGameId) {
+  private handleTurnEnd(gameId: string, game: Game): void {
+    if (gameId !== globalThis.currentGameId) {
+      return;
+    }
+
+    this.players.forEach((thisPlayer) => {
+      const updatedPlayer = game.players.find((gamePlayer) => gamePlayer.playerId === thisPlayer.playerId) as Player;
+      thisPlayer.x = updatedPlayer.x;
+      thisPlayer.y = updatedPlayer.y;
+    });
+    this.drawMap();
+  }
+
+  private handlePlayerMoved(gameId: string, player: Player): void {
+    if (gameId !== globalThis.currentGameId) {
       return;
     }
     const index = this.players.findIndex((currentPlayer) => currentPlayer.playerId === player.playerId);

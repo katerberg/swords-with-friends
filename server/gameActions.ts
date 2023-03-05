@@ -1,16 +1,47 @@
 import {Server, Socket} from 'socket.io';
 import {MAX_X, MAX_Y} from '../types/consts';
-import {Messages, PlayerAction} from '../types/SharedTypes';
+import {Messages, Player, PlayerAction, PlayerActionName} from '../types/SharedTypes';
 import {getGames} from '.';
 
 function isValidCoordinate(x: number, y: number): boolean {
   return x >= 0 && x <= MAX_X && y >= 0 && y <= MAX_Y;
 }
 
-function checkTurnEnd(gameId: string): void {
+function handlePlayerMovementAction(gameId: string, player: Player): void {
+  const [x, y] = (player.currentAction?.target as string).split(',');
+  const targetX = Number.parseInt(x, 10);
+  const targetY = Number.parseInt(y, 10);
+  if (isValidCoordinate(targetX, targetY)) {
+    if (Math.abs(targetX - player.x) <= 1 && Math.abs(targetY - player.y) <= 1) {
+      const game = getGames()[gameId];
+      const gamePlayer = game.players.find((loopPlayer) => loopPlayer.playerId === player.playerId);
+      if (gamePlayer) {
+        gamePlayer.x = targetX;
+        gamePlayer.y = targetY;
+      }
+    }
+  }
+  player.currentAction = null;
+}
+
+function executeQueuedActions(gameId: string): void {
+  const game = getGames()[gameId];
+  game.players.forEach((player) => {
+    switch (player.currentAction?.name) {
+      case PlayerActionName.Move:
+        handlePlayerMovementAction(gameId, player);
+        break;
+      default:
+        console.warn('invalid action', gameId, player.playerId); // eslint-disable-line no-console
+    }
+  });
+}
+
+function checkTurnEnd(gameId: string, io: Server): void {
   const games = getGames();
   if (games[gameId]?.players.every((player) => player.currentAction !== null)) {
-    console.log('all actions ready');
+    executeQueuedActions(gameId);
+    io.emit(Messages.TurnEnd, gameId, games[gameId]);
   }
 }
 
@@ -19,13 +50,13 @@ export function handleGameActions(io: Server, socket: Socket): void {
     const games = getGames();
     const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
     if (playerIndex !== undefined && isValidCoordinate(x, y)) {
-      console.debug('moving player', x, y); //eslint-disable-line no-console
-      const action: PlayerAction = {name: 'Move', target: `${x},${y}`};
+      const action: PlayerAction = {name: PlayerActionName.Move, target: `${x},${y}`};
       games[gameId].players[playerIndex].currentAction = action;
-      io.emit(Messages.PlayerActionQueued, {gameId, action, playerId: games[gameId].players[playerIndex].playerId});
-      checkTurnEnd(gameId);
-      // games[gameId].players[playerIndex].x = x;
-      // games[gameId].players[playerIndex].y = y;
+      io.emit(Messages.PlayerActionQueued, gameId, {
+        action,
+        playerId: games[gameId].players[playerIndex].playerId,
+      });
+      checkTurnEnd(gameId, io);
       // io.emit(Messages.PlayerMoved, gameId, games[gameId].players[playerIndex]);
     }
   });

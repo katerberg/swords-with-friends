@@ -1,5 +1,8 @@
+export enum PlayerActionName {
+  Move,
+}
 export type PlayerAction = {
-  name: string;
+  name: PlayerActionName;
   target?: Coordinate;
 };
 
@@ -64,6 +67,7 @@ export enum Messages {
   MovePlayer = 'movePlayer',
   PlayerMoved = 'playerMoved',
   PlayerActionQueued = 'playerActionQueued',
+  TurnEnd = 'turnEnd',
 }
 
 export type GamesHash = {[key: string]: Game};

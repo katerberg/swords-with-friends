@@ -1,5 +1,5 @@
 import {Socket} from 'socket.io-client';
-import {Game} from './Game';
+import {Game} from './ClientGame';
 
 /*eslint-disable no-var*/
 export {};
@@ -7,7 +7,7 @@ export {};
 declare global {
   var gameElement: HTMLCanvasElement;
   var currentGameId: string;
-  var socket: Socket;
   var playerId: string;
   var game: Game;
+  var socket: Socket;
 }

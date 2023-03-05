@@ -1,5 +1,5 @@
 import {Messages, Player} from '../types/SharedTypes';
-import {Game} from './Game';
+import {ClientGame} from './ClientGame';
 import {swapScreens} from './screen-manager';
 
 function nameChange(newName: string): void {
@@ -27,7 +27,7 @@ async function startGame(): Promise<void> {
       },
     },
   ).then((response) => response.json());
-  globalThis.game = new Game(players);
+  globalThis.game = new ClientGame(players);
 }
 
 export function handleStartGame(): void {
