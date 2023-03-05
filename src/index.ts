@@ -5,6 +5,7 @@ import './games-lobby.scss';
 import * as paper from 'paper';
 import {io} from 'socket.io-client';
 import {Game, Messages} from '../types/SharedTypes';
+import {isDebug} from './debug';
 import {swapScreens} from './screen-manager';
 import {populatePlayerList} from './waiting-room';
 
@@ -141,5 +142,13 @@ window.addEventListener('load', () => {
     }
 
     globalThis.socket = io('http://localhost:8081');
+
+    if (isDebug('newGame')) {
+      document.getElementById('start-game')?.click();
+      createGameButton?.click();
+      setTimeout(() => {
+        document.getElementById('start-game')?.click();
+      }, 100);
+    }
   }
 });
