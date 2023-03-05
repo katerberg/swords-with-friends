@@ -3,7 +3,7 @@ import {AddressInfo} from 'net';
 import {Server} from 'socket.io';
 import {v4 as uuid} from 'uuid';
 import {MAX_X, MAX_Y} from '../types/consts';
-import {Game, GameStatus, Messages} from '../types/SharedTypes';
+import {Game, GameStatus, Messages, Player} from '../types/SharedTypes';
 import {getRandomName} from './data';
 import {setup} from './express';
 
@@ -26,6 +26,10 @@ function getAvailableGames(): Game[] {
 
 function isValidCoordinate(x: number, y: number): boolean {
   return x >= 0 && x <= MAX_X && y >= 0 && y <= MAX_Y;
+}
+
+function createPlayer(socketId: string, isHost = false): Player {
+  return {playerId: uuid(), x: 10, y: 10, isHost, name: getRandomName(), socketId};
 }
 
 io.on('connection', (socket) => {
@@ -87,9 +91,13 @@ app.post('/api/games', (req, res) => {
     return res.status(400).send({text: 'socketId is required'});
   }
   const id = uuid();
-  const player = {playerId: uuid(), x: 10, y: 10, isHost: true, name: getRandomName(), socketId: req.query.socketId};
-  games[id] = {gameId: id, players: [player], status: GameStatus.WaitingForPlayers, startTime: new Date()};
-  console.log('new game', player.playerId, id); //eslint-disable-line no-console
+  games[id] = {
+    gameId: id,
+    players: [createPlayer(req.query.socketId, true)],
+    status: GameStatus.WaitingForPlayers,
+    startTime: new Date(),
+  };
+  console.log('new game', id); //eslint-disable-line no-console
   io.emit(Messages.CurrentGames, getAvailableGames());
   res.send(games[id]);
   res.status(201).end();
@@ -104,9 +112,9 @@ app.post('/api/games/:gameId', (req, res) => {
   if (!req.query.socketId || typeof req.query.socketId !== 'string') {
     return res.status(400).send({text: 'socketId is required'});
   }
-  const player = {playerId: uuid(), x: 0, y: 0, isHost: false, name: getRandomName(), socketId: req.query.socketId};
+  const player = createPlayer(req.query.socketId);
   games[gameId].players.push(player);
-  console.log('joined game', player.playerId, gameId); //eslint-disable-line no-console
+  console.log('joined game', player.name, gameId); //eslint-disable-line no-console
   io.emit(Messages.PlayersChangedInGame, games[gameId]);
   res.send(games[gameId]);
 });
