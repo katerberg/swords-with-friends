@@ -6,18 +6,47 @@ import {BLACK, WHITE} from './colors';
 const xVisibleCells = 7;
 const yVisibleCells = 11;
 const cellPadding = 1;
+const badgePadding = 6;
+
+function getCellWidth(): number {
+  const {width} = globalThis.gameElement.getBoundingClientRect();
+  return (width - cellPadding * 2 * xVisibleCells) / xVisibleCells;
+}
 
 export class ClientGame {
   map: MapLevel[];
 
   level: number;
 
-  drawnMap: {[key: Coordinate]: paper.Path};
+  drawnMap: {[key: Coordinate]: paper.Group};
 
   players: Player[];
 
+  playerBadges: paper.Group[];
+
   constructor(players: Player[]) {
     this.players = players;
+    const {height, width} = globalThis.gameElement.getBoundingClientRect();
+    const cellWidth = getCellWidth();
+
+    this.playerBadges = players.map((player, i) => {
+      const circlePoint = new paper.Point(width - cellWidth, height - cellWidth - i * cellWidth - badgePadding * i);
+      const circle = new paper.Shape.Circle(circlePoint, cellWidth / 2);
+      circle.strokeWidth = 3;
+      circle.shadowColor = BLACK;
+      circle.shadowBlur = 12;
+      circle.fillColor = new paper.Color(player.color);
+      circle.strokeColor = BLACK;
+      const text = new paper.PointText({
+        point: circlePoint,
+        justification: 'center',
+        fontSize: 10,
+        fillColor: new paper.Color(player.textColor),
+        content: '...',
+      });
+      return new paper.Group([circle, text]);
+    });
+
     this.drawnMap = {};
     this.level = 0;
     this.map = [{}];
@@ -68,19 +97,18 @@ export class ClientGame {
   }
 
   private drawCell(offsetX: number, offsetY: number, cell: Cell): void {
-    const {width} = globalThis.gameElement.getBoundingClientRect();
-    const cellWidth = (width - cellPadding * 2 * xVisibleCells) / xVisibleCells;
+    const cellWidth = getCellWidth();
     const xFromCenter = (xVisibleCells - 1) / 2;
     const yFromCenter = (yVisibleCells - 1) / 2;
     const circlePoint = new paper.Point(
       cellWidth / 2 + (offsetX + xFromCenter) * cellWidth + cellPadding + cellPadding * 2 * (offsetX + xFromCenter),
       cellWidth / 2 + (offsetY + yFromCenter) * cellWidth + cellPadding + cellPadding * 2 * (offsetY + yFromCenter),
     );
-    const myCircle = new paper.Path.Circle(circlePoint, cellWidth / 2);
     const occupyingPlayer = this.players.find(
       (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y,
     );
     const player = this.currentPlayer;
+    const myCircle = new paper.Path.Circle(circlePoint, cellWidth / 2);
     const text = new paper.PointText({
       point: circlePoint,
       justification: 'center',
@@ -88,13 +116,11 @@ export class ClientGame {
       fillColor: occupyingPlayer ? new paper.Color(occupyingPlayer.textColor) : WHITE,
       content: `${offsetX + player.x},${offsetY + player.y}`,
     });
-    myCircle.addChild(text);
     myCircle.fillColor = occupyingPlayer ? new paper.Color(occupyingPlayer.color) : BLACK;
     myCircle.strokeColor = BLACK;
-    const clickHandler = (): void => this.handleCellClick(offsetX, offsetY);
-    text.onClick = clickHandler;
-    myCircle.onClick = clickHandler;
-    this.drawnMap[`${offsetX},${offsetY}`] = myCircle;
+    const circleGroup = new paper.Group([myCircle, text]);
+    circleGroup.onClick = (): void => this.handleCellClick(offsetX, offsetY);
+    this.drawnMap[`${offsetX},${offsetY}`] = circleGroup;
   }
 
   private drawMap(): void {
@@ -116,5 +142,8 @@ export class ClientGame {
         }
       }
     }
+    this.playerBadges.forEach((badge) => {
+      badge.bringToFront();
+    });
   }
 }
