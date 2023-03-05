@@ -4,7 +4,7 @@ import {Server} from 'socket.io';
 import {v4 as uuid} from 'uuid';
 import {MAX_X, MAX_Y} from '../types/consts';
 import {Game, GameStatus, Messages, Player} from '../types/SharedTypes';
-import {contrast} from './color';
+import {contrast, getRandomColor} from './color';
 import {getRandomName} from './data';
 import {setup} from './express';
 
@@ -27,15 +27,6 @@ function getAvailableGames(): Game[] {
 
 function isValidCoordinate(x: number, y: number): boolean {
   return x >= 0 && x <= MAX_X && y >= 0 && y <= MAX_Y;
-}
-
-function getRandomColor(): string {
-  const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
-
-  const h = randomInt(0, 360);
-  const s = randomInt(42, 98);
-  const l = randomInt(40, 90);
-  return `hsl(${h},${s}%,${l}%)`;
 }
 
 function createPlayer(socketId: string, isHost = false): Player {

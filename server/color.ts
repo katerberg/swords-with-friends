@@ -23,6 +23,7 @@ function hexToRgb(hex: string): RGB | undefined {
 
   return undefined;
 }
+
 export function contrast(colorHex: string | undefined, threshold = 128): string {
   if (colorHex === undefined) {
     return '#000';
@@ -35,4 +36,13 @@ export function contrast(colorHex: string | undefined, threshold = 128): string 
   }
 
   return rgbToYIQ(rgb) >= threshold ? '#000' : '#fff';
+}
+
+export function getRandomColor(): string {
+  const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
+
+  const h = randomInt(0, 360);
+  const s = randomInt(42, 98);
+  const l = randomInt(40, 90);
+  return `hsl(${h},${s}%,${l}%)`;
 }
