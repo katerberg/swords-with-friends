@@ -91,7 +91,7 @@ app.post('/api/games', (req, res) => {
     return res.status(400).send({text: 'socketId is required'});
   }
   const id = uuid();
-  const player = {playerId: uuid(), x: 0, y: 0, isHost: true, name: getRandomName(), socketId: req.query.socketId};
+  const player = {playerId: uuid(), x: 10, y: 10, isHost: true, name: getRandomName(), socketId: req.query.socketId};
   games[id] = {gameId: id, players: [player], status: GameStatus.WaitingForPlayers, startTime: new Date()};
   console.log('new game', player.playerId, id); //eslint-disable-line no-console
   io.emit(Messages.CurrentGames, getAvailableGames());
@@ -113,6 +113,18 @@ app.post('/api/games/:gameId', (req, res) => {
   console.log('joined game', player.playerId, gameId); //eslint-disable-line no-console
   io.emit(Messages.PlayersChangedInGame, games[gameId]);
   res.send(games[gameId]);
+});
+
+// List players in a game
+app.get('/api/games/:gameId/players', (req, res) => {
+  const {gameId} = req.params;
+  if (!games[gameId]) {
+    return res.status(404).send({text: 'Game not found'});
+  }
+  if (!req.query.socketId || typeof req.query.socketId !== 'string') {
+    return res.status(400).send({text: 'socketId is required'});
+  }
+  res.send(games[gameId].players);
 });
 
 // List available games

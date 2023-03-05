@@ -12,12 +12,22 @@ function leaveGame(): void {
   swapScreens('waiting-room', 'start-screen');
 }
 
-function startGame(): void {
+async function startGame(): Promise<void> {
   const gameLobby = document.getElementById('waiting-room');
   if (gameLobby) {
     gameLobby.classList.remove('visible');
   }
-  globalThis.game = new Game();
+
+  const players: Player[] = await fetch(
+    `http://localhost:8081/api/games/${globalThis.currentGameId}/players?socketId=${globalThis.socket.id}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    },
+  ).then((response) => response.json());
+  globalThis.game = new Game(players);
 }
 
 function handleStartGame(): void {
