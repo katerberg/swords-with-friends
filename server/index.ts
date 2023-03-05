@@ -3,6 +3,7 @@ import {AddressInfo} from 'net';
 import * as express from 'express';
 import {Server} from 'socket.io';
 import {v4 as uuid} from 'uuid';
+import {MAX_X, MAX_Y} from '../types/consts';
 import {Game, GameStatus, Messages} from '../types/SharedTypes';
 import {getRandomName} from './data';
 
@@ -42,6 +43,10 @@ function getAvailableGames(): Game[] {
   return Object.values(games).filter((game) => game.status === GameStatus.WaitingForPlayers);
 }
 
+function isValidCoordinate(x: number, y: number): boolean {
+  return x >= 0 && x <= MAX_X && y >= 0 && y <= MAX_Y;
+}
+
 io.on('connection', (socket) => {
   console.log('a user connected', socket.id); //eslint-disable-line no-console
 
@@ -76,6 +81,16 @@ io.on('connection', (socket) => {
       games[gameId].status = GameStatus.Ongoing;
       socket.broadcast.emit(Messages.GameStarted, gameId);
       socket.broadcast.emit(Messages.CurrentGames, getAvailableGames());
+    }
+  });
+
+  socket.on(Messages.MovePlayer, (gameId: string, x: number, y: number) => {
+    const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
+    if (playerIndex !== undefined && isValidCoordinate(x, y)) {
+      console.debug('moving player', x, y); //eslint-disable-line no-console
+      games[gameId].players[playerIndex].x = x;
+      games[gameId].players[playerIndex].y = y;
+      socket.emit(Messages.PlayerMoved, gameId, games[gameId].players[playerIndex]);
     }
   });
 });

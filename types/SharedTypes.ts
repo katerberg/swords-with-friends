@@ -7,6 +7,8 @@ export type Player = {
   socketId?: string;
 };
 
+export type Coordinate = `${number},${number}`;
+
 export enum GameStatus {
   WaitingForPlayers,
   Ongoing,
@@ -25,4 +27,6 @@ export enum Messages {
   PlayersChangedInGame = 'playersChangedInGame',
   ChangeName = 'changeName',
   NameChanged = 'nameChanged',
+  MovePlayer = 'movePlayer',
+  PlayerMoved = 'playerMoved',
 }
