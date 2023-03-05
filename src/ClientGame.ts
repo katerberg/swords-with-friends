@@ -1,7 +1,6 @@
 import * as paper from 'paper';
-import {MAX_X, MAX_Y} from '../types/consts';
-import {Cell, CellType, Coordinate, Game, MapLevel, Messages, Player, PlayerAction} from '../types/SharedTypes';
-import {BLACK, WHITE} from './colors';
+import {Cell, Coordinate, DungeonMap, Game, Messages, Player, PlayerAction} from '../types/SharedTypes';
+import {BLACK, EARTH, SLATE} from './colors';
 
 const xVisibleCells = 7;
 const yVisibleCells = 11;
@@ -14,7 +13,7 @@ function getCellWidth(): number {
 }
 
 export class ClientGame {
-  map: MapLevel[];
+  dungeonMap: DungeonMap;
 
   level: number;
 
@@ -24,12 +23,12 @@ export class ClientGame {
 
   playerBadges: paper.Group[];
 
-  constructor(players: Player[]) {
-    this.players = players;
+  constructor(game: Game) {
+    this.players = game.players;
     const {height, width} = globalThis.gameElement.getBoundingClientRect();
     const cellWidth = getCellWidth();
 
-    this.playerBadges = players.map((player, i) => {
+    this.playerBadges = game.players.map((player, i) => {
       const circlePoint = new paper.Point(width - cellWidth, height - cellWidth - i * cellWidth - badgePadding * i);
       const circle = new paper.Shape.Circle(circlePoint, cellWidth / 2);
       circle.strokeWidth = 3;
@@ -49,20 +48,8 @@ export class ClientGame {
 
     this.drawnMap = {};
     this.level = 0;
-    this.map = [{}];
-    for (let x = 0; x <= MAX_X; x++) {
-      for (let y = 0; y <= MAX_Y; y++) {
-        this.map[this.level][`${x},${y}`] = {
-          type: CellType.Earth,
-          x,
-          y,
-          isPassable: true,
-          isWalkable: true,
-          isEntrance: false,
-          isExit: false,
-        };
-      }
-    }
+    this.dungeonMap = game.dungeonMap;
+
     globalThis.socket.on(Messages.TurnEnd, this.handleTurnEnd.bind(this));
     globalThis.socket.on(Messages.PlayerActionQueued, this.handlePlayerActionQueue.bind(this));
     this.drawMap();
@@ -134,18 +121,11 @@ export class ClientGame {
     const occupyingPlayer = this.players.find(
       (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y,
     );
-    const player = this.currentPlayer;
     const myCircle = new paper.Path.Circle(circlePoint, cellWidth / 2);
-    const text = new paper.PointText({
-      point: circlePoint,
-      justification: 'center',
-      fontSize: 10,
-      fillColor: occupyingPlayer ? new paper.Color(occupyingPlayer.textColor) : WHITE,
-      content: `${offsetX + player.x},${offsetY + player.y}`,
-    });
-    myCircle.fillColor = occupyingPlayer ? new paper.Color(occupyingPlayer.color) : BLACK;
+    const fillColor = cell.isPassable ? EARTH : SLATE;
+    myCircle.fillColor = occupyingPlayer ? new paper.Color(occupyingPlayer.color) : fillColor;
     myCircle.strokeColor = BLACK;
-    const circleGroup = new paper.Group([myCircle, text]);
+    const circleGroup = new paper.Group([myCircle]);
     circleGroup.onClick = (): void => this.handleCellClick(offsetX, offsetY);
     this.drawnMap[`${offsetX},${offsetY}`] = circleGroup;
   }
@@ -160,12 +140,12 @@ export class ClientGame {
     const yFromCenter = (yVisibleCells - 1) / 2;
     for (let offsetX = -1 * xFromCenter; offsetX <= xFromCenter; offsetX++) {
       for (let y = -1 * yFromCenter; y <= yFromCenter; y++) {
-        const cell = this.map[this.level][`${player.x + offsetX},${player.y + y}`];
+        const cell = this.dungeonMap[this.level][`${player.x + offsetX},${player.y + y}`];
         if (cell !== undefined) {
           //Tile
           this.drawCell(offsetX, y, cell);
         } else {
-          //Wall
+          // Out of bounds
         }
       }
     }

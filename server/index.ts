@@ -5,6 +5,7 @@ import {v4 as uuid} from 'uuid';
 import {Game, GamesHash, GameStatus, Messages, Player} from '../types/SharedTypes';
 import {contrast, getRandomColor} from './color';
 import {getRandomName} from './data';
+import {createMap} from './dungeonMap';
 import {setup} from './express';
 import {handleGameActions} from './gameActions';
 
@@ -78,7 +79,7 @@ io.on('connection', (socket) => {
     if (playerIndex !== undefined && games[gameId].players[playerIndex]?.isHost) {
       console.log('starting game', gameId); //eslint-disable-line no-console
       games[gameId].gameStatus = GameStatus.Ongoing;
-      socket.broadcast.emit(Messages.GameStarted, gameId);
+      io.emit(Messages.GameStarted, gameId, games[gameId]);
       socket.broadcast.emit(Messages.CurrentGames, getAvailableGames());
     }
   });
@@ -95,17 +96,18 @@ app.post('/api/games', (req, res) => {
   if (!req.query.socketId || typeof req.query.socketId !== 'string' || req.query.socketId === 'undefined') {
     return res.status(400).send({text: 'socketId is required'});
   }
-  const id = uuid();
-  games[id] = {
-    gameId: id,
+  const gameId = uuid();
+  games[gameId] = {
+    gameId,
     players: [createPlayer(req.query.socketId, true)],
     gameStatus: GameStatus.WaitingForPlayers,
     startTime: new Date(),
     turn: 0,
+    dungeonMap: createMap(),
   };
-  console.log('new game', id); //eslint-disable-line no-console
+  console.log('new game', gameId); //eslint-disable-line no-console
   io.emit(Messages.CurrentGames, getAvailableGames());
-  res.send(games[id]);
+  res.send(games[gameId]);
   res.status(201).end();
 });
 
@@ -124,18 +126,6 @@ app.post('/api/games/:gameId', (req, res) => {
   console.log('joined game', player.name, gameId); //eslint-disable-line no-console
   io.emit(Messages.PlayersChangedInGame, games[gameId]);
   res.send(games[gameId]);
-});
-
-// List players in a game
-app.get('/api/games/:gameId/players', (req, res) => {
-  const {gameId} = req.params;
-  if (!games[gameId]) {
-    return res.status(404).send({text: 'Game not found'});
-  }
-  if (!req.query.socketId || typeof req.query.socketId !== 'string') {
-    return res.status(400).send({text: 'socketId is required'});
-  }
-  res.send(games[gameId].players);
 });
 
 // List available games

@@ -1,4 +1,4 @@
-import {Messages, Player} from '../types/SharedTypes';
+import {Game, Messages, Player} from '../types/SharedTypes';
 import {ClientGame} from './ClientGame';
 import {swapScreens} from './screen-manager';
 
@@ -12,27 +12,21 @@ function leaveGame(): void {
   swapScreens('waiting-room', 'start-screen');
 }
 
-async function startGame(): Promise<void> {
+async function startGame(game: Game): Promise<void> {
   const gameLobby = document.getElementById('waiting-room');
   if (gameLobby) {
     gameLobby.classList.remove('visible');
   }
 
-  const players: Player[] = await fetch(
-    `http://localhost:8081/api/games/${globalThis.currentGameId}/players?socketId=${globalThis.socket.id}`,
-    {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    },
-  ).then((response) => response.json());
-  globalThis.game = new ClientGame(players);
+  globalThis.game = new ClientGame(game);
 }
 
 export function handleStartGame(): void {
   globalThis.socket.emit(Messages.StartGame, globalThis.currentGameId);
-  startGame();
+  const gameLobby = document.getElementById('waiting-room');
+  if (gameLobby) {
+    gameLobby.classList.remove('visible');
+  }
 }
 
 export function populatePlayerList(players: Player[]): void {
@@ -80,9 +74,9 @@ export function populatePlayerList(players: Player[]): void {
   });
 
   globalThis.socket.off(Messages.GameStarted);
-  globalThis.socket.on(Messages.GameStarted, (gameId: string): void => {
+  globalThis.socket.on(Messages.GameStarted, (gameId: string, game: Game): void => {
     if (globalThis.currentGameId === gameId) {
-      startGame();
+      startGame(game);
     }
   });
 

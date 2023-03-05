@@ -23,6 +23,7 @@ export type Player = {
 
 export enum CellType {
   Earth,
+  Wall,
 }
 
 export type Cell = {
@@ -34,6 +35,8 @@ export type Cell = {
   isWalkable: boolean;
   type: CellType;
 };
+
+export type DungeonMap = MapLevel[];
 
 export type MapLevel = {
   [key: Coordinate]: Cell;
@@ -54,6 +57,7 @@ export type Game = {
   gameStatus: GameStatus;
   startTime: Date;
   turn: number;
+  dungeonMap: DungeonMap;
 };
 
 export enum Messages {
