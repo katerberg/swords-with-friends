@@ -8,8 +8,6 @@ const yVisibleCells = 11;
 const cellPadding = 1;
 
 export class Game {
-  path: paper.PointText;
-
   map: MapLevel[];
 
   level: number;
@@ -19,14 +17,6 @@ export class Game {
   players: Player[];
 
   constructor(players: Player[]) {
-    this.path = new paper.PointText({
-      point: paper.view.center.transform(new paper.Matrix().translate(0, 230)),
-      justification: 'center',
-      fontSize: 20,
-      fillColor: BLACK,
-      content: `Game ID
-                ${globalThis.currentGameId}`,
-    });
     this.players = players;
     this.drawnMap = {};
     this.level = 0;
@@ -62,17 +52,15 @@ export class Game {
     this.drawMap();
   }
 
-  private handleCellClick(x: number, y: number): void {
-    if (x === 0 && y === 0) {
-      return;
-    }
-    if (Math.abs(x) < 2 && Math.abs(y) < 2) {
-      globalThis.socket.emit(
-        Messages.MovePlayer,
-        globalThis.currentGameId,
-        this.currentPlayer.x + x,
-        this.currentPlayer.y + y,
-      );
+  private handleCellClick(xOffset: number, yOffset: number): void {
+    if (Math.abs(xOffset) < 2 && Math.abs(yOffset) < 2) {
+      const x = this.currentPlayer.x + xOffset;
+      const y = this.currentPlayer.y + yOffset;
+      if (this.players.find((player) => player.x === x && player.y === y)) {
+        return;
+      }
+
+      globalThis.socket.emit(Messages.MovePlayer, globalThis.currentGameId, x, y);
     }
   }
 
@@ -99,7 +87,7 @@ export class Game {
     });
     myCircle.addChild(text);
     myCircle.fillColor = occupyingPlayer ? new paper.Color(occupyingPlayer.color) : BLACK;
-    myCircle.strokeColor = new paper.Color('red');
+    myCircle.strokeColor = BLACK;
     myCircle.onClick = (): void => this.handleCellClick(offsetX, offsetY);
     this.drawnMap[`${offsetX},${offsetY}`] = myCircle;
   }
