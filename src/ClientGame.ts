@@ -132,9 +132,6 @@ export class ClientGame {
   private handleCellClick(xOffset: number, yOffset: number): void {
     const x = this.currentPlayer.x + xOffset;
     const y = this.currentPlayer.y + yOffset;
-    if (this.players.find((player) => player.x === x && player.y === y)) {
-      return;
-    }
     if (!this.dungeonMap[this.level].cells[`${x},${y}`].isPassable) {
       return;
     }
@@ -165,25 +162,25 @@ export class ClientGame {
     );
     const circlePoint = new paper.Point(coordX, coordY);
 
-    let raster: paper.Raster;
+    let cellBackgroundRaster: paper.Raster;
     switch (cell.type) {
       case CellType.VerticalDoor:
       case CellType.HorizontalDoor:
       case CellType.Earth:
-        raster = new paper.Raster('dirt01');
+        cellBackgroundRaster = new paper.Raster('dirt01');
         break;
       case CellType.Wall:
       default:
-        raster = new paper.Raster('ground01');
+        cellBackgroundRaster = new paper.Raster('ground01');
         break;
     }
-    raster.strokeWidth = 0;
-    raster.position = circlePoint;
-    raster.scale(cellWidth / raster.width + 0.003);
-    raster.strokeWidth = 0;
+    cellBackgroundRaster.strokeWidth = 0;
+    cellBackgroundRaster.position = circlePoint;
+    cellBackgroundRaster.scale(cellWidth / cellBackgroundRaster.width + 0.003);
+    cellBackgroundRaster.strokeWidth = 0;
     const clickHandler = (): void => this.handleCellClick(offsetX, offsetY);
-    raster.onClick = clickHandler;
-    this.drawnTiles[cellCoords] = new paper.Group([raster]);
+    cellBackgroundRaster.onClick = clickHandler;
+    this.drawnTiles[cellCoords] = new paper.Group([cellBackgroundRaster]);
     if (cell.type === CellType.VerticalDoor || cell.type === CellType.HorizontalDoor) {
       const door = new paper.Raster('door');
       if (cell.type === CellType.HorizontalDoor) {
@@ -201,16 +198,16 @@ export class ClientGame {
     if (occupyingPlayer) {
       const playerRaster = new paper.Raster('character-swordwoman');
       playerRaster.position = circlePoint;
-      const playerRasterScale = (getCellWidth() / raster.width) * 0.8;
+      const playerRasterScale = (getCellWidth() / cellBackgroundRaster.width) * 0.8;
       playerRaster.scale(playerRasterScale);
       playerRaster.shadowColor = WHITE;
       playerRaster.shadowBlur = 22;
-      const circleGroup = new paper.Group([
+      const playerGroup = new paper.Group([
         getBacking(occupyingPlayer.color, circlePoint, playerRaster.width * playerRasterScale),
         playerRaster,
       ]);
-      circleGroup.onClick = clickHandler;
-      this.drawnMap[cellCoords] = circleGroup;
+      playerGroup.onClick = clickHandler;
+      this.drawnMap[cellCoords] = playerGroup;
     }
   }
 
@@ -231,10 +228,10 @@ export class ClientGame {
       raster.scale(rasterScale);
       raster.shadowColor = WHITE;
       raster.shadowBlur = 42;
-      this.drawnMonsters[monster.monsterId] = new paper.Group([
-        getBacking('#fff', circlePoint, rasterScale * raster.width),
-        raster,
-      ]);
+      const monsterGroup = new paper.Group([getBacking('#fff', circlePoint, rasterScale * raster.width), raster]);
+      monsterGroup.onClick = (): void =>
+        this.handleCellClick(monster.x - this.currentPlayer.x, monster.y - this.currentPlayer.y);
+      this.drawnMonsters[monster.monsterId] = monsterGroup;
     });
   }
 
