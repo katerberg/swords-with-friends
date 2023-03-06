@@ -1,6 +1,13 @@
 import * as ROT from 'rot-js';
+import {v4 as uuid} from 'uuid';
 import {MAX_LEVEL, MAX_X, MAX_Y} from '../types/consts';
-import {CellType, DungeonMap} from '../types/SharedTypes';
+import {coordsToNumberCoords} from '../types/math';
+import {CellType, Coordinate, DungeonMap, Monster, MonsterType} from '../types/SharedTypes';
+
+function createMonster(coordinate: Coordinate): Monster {
+  const {x, y} = coordsToNumberCoords(coordinate);
+  return {x, y, type: MonsterType.Goblin, maxHp: 5, currentHp: 5, monsterId: uuid()};
+}
 
 export function createMap(): DungeonMap {
   const dungeonMap: DungeonMap = [];
@@ -42,6 +49,9 @@ export function createMap(): DungeonMap {
           dungeonMap[i].cells[`${doorx},${doory}`].type = CellType.VerticalDoor;
         }
       });
+    });
+    dungeonMap[i].monsterSpawn.forEach((ms) => {
+      dungeonMap[i].monsters.push(createMonster(ms));
     });
   }
   return dungeonMap;

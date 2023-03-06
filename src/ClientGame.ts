@@ -1,4 +1,3 @@
-/* eslint-disable no-case-declarations */
 import * as paper from 'paper';
 import {coordsToNumberCoords} from '../types/math';
 import {
@@ -8,12 +7,14 @@ import {
   DungeonMap,
   Game,
   Messages,
+  MonsterType,
   NumberCoordinates,
   Player,
   PlayerAction,
   PlayerActionName,
 } from '../types/SharedTypes';
-import {BLACK} from './colors';
+import {BLACK, WHITE} from './colors';
+import {getBacking} from './drawing';
 
 const xVisibleCells = 7;
 const yVisibleCells = 11;
@@ -33,6 +34,8 @@ export class ClientGame {
   drawnTiles: {[key: Coordinate]: paper.Group};
 
   drawnMap: {[key: Coordinate]: paper.Group};
+
+  drawnMonsters: {[key: string]: paper.Group};
 
   drawnMovementPaths: {[playerId: string]: paper.Group};
 
@@ -64,6 +67,7 @@ export class ClientGame {
     });
 
     this.drawnMap = {};
+    this.drawnMonsters = {};
     this.drawnMovementPaths = {};
     this.drawnTiles = {};
     this.level = 0;
@@ -174,7 +178,7 @@ export class ClientGame {
         break;
     }
     raster.position = circlePoint;
-    raster.scale(cellWidth / raster.width);
+    raster.scale(Math.ceil((cellWidth / raster.width) * 10000) / 10000);
     raster.strokeWidth = 0;
     const clickHandler = (): void => this.handleCellClick(offsetX, offsetY);
     raster.onClick = clickHandler;
@@ -194,13 +198,43 @@ export class ClientGame {
       (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y,
     );
     if (occupyingPlayer) {
-      const myCircle = new paper.Path.Circle(circlePoint, cellWidth / 2);
-      myCircle.fillColor = new paper.Color(occupyingPlayer.color);
-      myCircle.strokeColor = BLACK;
-      const circleGroup = new paper.Group([myCircle]);
+      const playerRaster = new paper.Raster('character-swordwoman');
+      playerRaster.position = circlePoint;
+      const playerRasterScale = (getCellWidth() / raster.width) * 0.8;
+      playerRaster.scale(playerRasterScale);
+      playerRaster.shadowColor = WHITE;
+      playerRaster.shadowBlur = 42;
+      const circleGroup = new paper.Group([
+        getBacking(occupyingPlayer.color, circlePoint, playerRaster.width * playerRasterScale),
+        playerRaster,
+      ]);
       circleGroup.onClick = clickHandler;
       this.drawnMap[cellCoords] = circleGroup;
     }
+  }
+
+  private drawMonsters(): void {
+    this.dungeonMap[this.level].monsters.forEach((monster) => {
+      let raster: paper.Raster;
+      switch (monster.type) {
+        case MonsterType.Goblin:
+          raster = new paper.Raster('character-goblin');
+          break;
+        default:
+          return;
+      }
+      const {x: coordX, y: coordY} = this.getCellCenterPointFromCoordinates(`${monster.x},${monster.y}`);
+      const circlePoint = new paper.Point(coordX, coordY);
+      raster.position = circlePoint;
+      const rasterScale = (getCellWidth() / raster.width) * 0.8;
+      raster.scale(rasterScale);
+      raster.shadowColor = WHITE;
+      raster.shadowBlur = 42;
+      this.drawnMonsters[monster.monsterId] = new paper.Group([
+        getBacking('#fff', circlePoint, rasterScale * raster.width),
+        raster,
+      ]);
+    });
   }
 
   private drawPlayerPath(player: Player): void {
@@ -229,7 +263,7 @@ export class ClientGame {
     this.drawnMovementPaths[player.playerId] = pathGroup;
   }
 
-  private drawMap(): void {
+  private clearExistingDrawings(): void {
     Object.entries(this.drawnMap).forEach(([key, cell]) => {
       cell.remove();
       delete this.drawnMap[key as Coordinate];
@@ -242,6 +276,15 @@ export class ClientGame {
       path.remove();
       delete this.drawnMovementPaths[key as string];
     });
+    Object.entries(this.drawnMonsters).forEach(([key, image]) => {
+      image.remove();
+      delete this.drawnMonsters[key as string];
+    });
+  }
+
+  private drawMap(): void {
+    this.clearExistingDrawings();
+
     const {currentPlayer} = this;
     const xFromCenter = (xVisibleCells - 1) / 2;
     const yFromCenter = (yVisibleCells - 1) / 2;
@@ -256,6 +299,9 @@ export class ClientGame {
         }
       }
     }
+
+    this.drawMonsters();
+
     this.players.forEach((player) => {
       if (player.currentAction?.name === PlayerActionName.Move && player.currentAction?.path?.length) {
         this.drawPlayerPath(player);

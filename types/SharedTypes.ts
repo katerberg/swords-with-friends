@@ -39,7 +39,15 @@ export type Cell = {
   type: CellType;
 };
 
+export enum MonsterType {
+  Goblin,
+}
+
 export type Monster = {
+  monsterId: string;
+  type: MonsterType;
+  maxHp: number;
+  currentHp: number;
   x: number;
   y: number;
 };
