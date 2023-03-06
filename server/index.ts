@@ -15,7 +15,7 @@ const app = setup();
 const server = new http.Server(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:8080', 'http://0.0.0.0:8080'],
+    origin: ['http://localhost:8080', 'http://0.0.0.0:8080', 'http://192.168.50.132:8080'],
     methods: ['GET', 'POST'],
   },
 });
