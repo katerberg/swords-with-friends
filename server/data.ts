@@ -261,3 +261,5 @@ export const names = [
 export function getRandomName(): string {
   return names[Math.floor(Math.random() * names.length)];
 }
+
+export const getRandomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;

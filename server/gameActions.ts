@@ -8,7 +8,12 @@ function isValidCoordinate(x: number, y: number): boolean {
 }
 
 function isFreeCell(x: number, y: number, game: Game): boolean {
-  return isValidCoordinate(x, y) && game.players.every((player) => player.x !== x || player.y !== y);
+  const dungeonMap = game.dungeonMap[game.players[0].mapLevel];
+  return (
+    isValidCoordinate(x, y) &&
+    game.players.every((player) => player.x !== x || player.y !== y) &&
+    dungeonMap[`${x},${y}`].isPassable
+  );
 }
 
 function handlePlayerMovementAction(gameId: string, player: Player): void {
