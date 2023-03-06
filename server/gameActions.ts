@@ -8,11 +8,11 @@ function isValidCoordinate(x: number, y: number): boolean {
 }
 
 export function isFreeCell(x: number, y: number, game: Game): boolean {
-  const dungeonMap = game.dungeonMap[game.players[0].mapLevel];
+  const mapLevel = game.players.length === 0 ? 0 : game.players[0].mapLevel;
   return (
     isValidCoordinate(x, y) &&
     game.players.every((player) => player.x !== x || player.y !== y) &&
-    dungeonMap[`${x},${y}`].isPassable
+    game.dungeonMap[mapLevel][`${x},${y}`].isPassable
   );
 }
 

@@ -42,6 +42,7 @@ export type MapLevel = {
   [key: Coordinate]: Cell;
 };
 
+export type NumberCoordinates = {x: number; y: number};
 export type Coordinate = `${number},${number}`;
 
 export enum GameStatus {

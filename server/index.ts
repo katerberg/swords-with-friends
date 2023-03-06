@@ -3,7 +3,7 @@ import {AddressInfo} from 'net';
 import {Server} from 'socket.io';
 import {v4 as uuid} from 'uuid';
 import {MAX_X, MAX_Y} from '../types/consts';
-import {Game, GamesHash, GameStatus, Messages, Player} from '../types/SharedTypes';
+import {Game, GamesHash, GameStatus, Messages, NumberCoordinates, Player} from '../types/SharedTypes';
 import {contrast, getRandomColor} from './color';
 import {getRandomInt, getRandomName} from './data';
 import {createMap} from './dungeonMap';
@@ -29,13 +29,13 @@ function getAvailableGames(): Game[] {
   return Object.values(games).filter((game) => game.gameStatus === GameStatus.WaitingForPlayers);
 }
 
-function getRandomSpace(): {x: number; y: number} {
+function getRandomSpace(): NumberCoordinates {
   const x = getRandomInt(0, MAX_X - 1);
   const y = getRandomInt(0, MAX_Y - 1);
   return {x, y};
 }
 
-function getRandomStartingLocation(game: Game): {x: number; y: number} {
+function getRandomStartingLocation(game: Game): NumberCoordinates {
   const {x, y} = getRandomSpace();
   if (isFreeCell(x, y, game)) {
     return {x, y};
@@ -43,9 +43,47 @@ function getRandomStartingLocation(game: Game): {x: number; y: number} {
   return getRandomStartingLocation(game);
 }
 
+function getSpiralAroundPoint(): NumberCoordinates[] {
+  let x = 0;
+  let y = 0;
+  let delta = [0, -1];
+  // spiral width
+  const width = 6;
+  // spiral height
+  const height = 6;
+
+  const points = [];
+  for (let i = Math.pow(Math.max(width, height), 4); i > 0; i--) {
+    if ((-1 * width) / 2 < x && x <= width / 2 && (-1 * height) / 2 < y && y <= height / 2) {
+      points.push({x, y});
+    }
+
+    if (x === y || (x < 0 && x === -y) || (x > 0 && x === 1 - y)) {
+      // change direction
+      delta = [-delta[1], delta[0]];
+    }
+
+    x += delta[0];
+    y += delta[1];
+  }
+  return points;
+}
+
+function getStartLocationNearHost(game: Game): NumberCoordinates {
+  const {x, y} = game.players.find((p) => p.isHost) as Player;
+
+  const spiral = getSpiralAroundPoint();
+  for (let i = 0; i < spiral.length; i++) {
+    if (isFreeCell(x + spiral[i].x, y + spiral[i].y, game)) {
+      return {x: x + spiral[i].x, y: y + spiral[i].y};
+    }
+  }
+  return getRandomStartingLocation(game);
+}
+
 function createPlayer(socketId: string, game: Game, isHost = false): Player {
   const color = getRandomColor();
-  const {x, y} = getRandomStartingLocation(game);
+  const {x, y} = isHost ? getRandomStartingLocation(game) : getStartLocationNearHost(game);
   return {
     playerId: uuid(),
     x,
