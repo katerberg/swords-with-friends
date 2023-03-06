@@ -57,6 +57,7 @@ export type Game = {
   players: Player[];
   gameStatus: GameStatus;
   startTime: Date;
+  lastActionTime: Date;
   turn: number;
   dungeonMap: DungeonMap;
 };

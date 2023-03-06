@@ -39,7 +39,7 @@ export class ClientGame {
       const text = new paper.PointText({
         point: circlePoint,
         justification: 'center',
-        fontSize: 10,
+        fontSize: 20,
         fillColor: new paper.Color(player.textColor),
         content: '...',
       });
@@ -60,10 +60,11 @@ export class ClientGame {
   }
 
   private resetAllBadgeContent(): void {
-    this.playerBadges.forEach((badgeGroup) => {
+    this.playerBadges.forEach((badgeGroup, i) => {
       const text = badgeGroup.lastChild as paper.PointText;
-      text.content = '...';
-      text.fontSize = 10;
+      if (this.players[i].currentAction === null) {
+        text.content = '...';
+      }
     });
   }
 
@@ -73,7 +74,6 @@ export class ClientGame {
       return;
     }
     const text = this.playerBadges[index].lastChild as paper.PointText;
-    text.fontSize = 20;
     text.content = content;
   }
 
@@ -93,21 +93,23 @@ export class ClientGame {
       const updatedPlayer = game.players.find((gamePlayer) => gamePlayer.playerId === thisPlayer.playerId) as Player;
       thisPlayer.x = updatedPlayer.x;
       thisPlayer.y = updatedPlayer.y;
+      thisPlayer.currentAction = updatedPlayer.currentAction;
     });
     this.resetAllBadgeContent();
     this.drawMap();
   }
 
   private handleCellClick(xOffset: number, yOffset: number): void {
-    if (Math.abs(xOffset) < 2 && Math.abs(yOffset) < 2) {
-      const x = this.currentPlayer.x + xOffset;
-      const y = this.currentPlayer.y + yOffset;
-      if (this.players.find((player) => player.x === x && player.y === y)) {
-        return;
-      }
-
-      globalThis.socket.emit(Messages.MovePlayer, globalThis.currentGameId, x, y);
+    const x = this.currentPlayer.x + xOffset;
+    const y = this.currentPlayer.y + yOffset;
+    if (this.players.find((player) => player.x === x && player.y === y)) {
+      return;
     }
+    if (!this.dungeonMap[this.level][`${x},${y}`].isPassable) {
+      return;
+    }
+
+    globalThis.socket.emit(Messages.MovePlayer, globalThis.currentGameId, x, y);
   }
 
   private drawCell(offsetX: number, offsetY: number, cell: Cell): void {

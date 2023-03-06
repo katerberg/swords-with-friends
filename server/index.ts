@@ -156,6 +156,7 @@ app.post('/api/games', (req, res) => {
     players: [],
     gameStatus: GameStatus.WaitingForPlayers,
     startTime: new Date(),
+    lastActionTime: new Date(),
     turn: 0,
     dungeonMap: createMap(),
   };
@@ -176,7 +177,6 @@ app.post('/api/games/:gameId', (req, res) => {
     return res.status(400).send({text: 'socketId is required'});
   }
   const player = createPlayer(req.query.socketId, games[gameId]);
-  player.x = games[gameId].players[games[gameId].players.length - 1].x - 1;
   games[gameId].players.push(player);
   console.log('joined game', player.name, gameId); //eslint-disable-line no-console
   io.emit(Messages.PlayersChangedInGame, games[gameId]);
