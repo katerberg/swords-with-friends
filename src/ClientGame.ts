@@ -1,10 +1,11 @@
+/* eslint-disable no-case-declarations */
 import * as paper from 'paper';
-import {Cell, Coordinate, DungeonMap, Game, Messages, Player, PlayerAction} from '../types/SharedTypes';
-import {BLACK, EARTH, SLATE} from './colors';
+import {Cell, CellType, Coordinate, DungeonMap, Game, Messages, Player, PlayerAction} from '../types/SharedTypes';
+import {BLACK} from './colors';
 
 const xVisibleCells = 7;
 const yVisibleCells = 11;
-const cellPadding = 1;
+const cellPadding = 0;
 const badgePadding = 6;
 
 function getCellWidth(): number {
@@ -16,6 +17,8 @@ export class ClientGame {
   dungeonMap: DungeonMap;
 
   level: number;
+
+  drawnTiles: {[key: Coordinate]: paper.Raster};
 
   drawnMap: {[key: Coordinate]: paper.Group};
 
@@ -47,6 +50,7 @@ export class ClientGame {
     });
 
     this.drawnMap = {};
+    this.drawnTiles = {};
     this.level = 0;
     this.dungeonMap = game.dungeonMap;
 
@@ -113,6 +117,7 @@ export class ClientGame {
   }
 
   private drawCell(offsetX: number, offsetY: number, cell: Cell): void {
+    const cellCoords: Coordinate = `${offsetX},${offsetY}`;
     const cellWidth = getCellWidth();
     const xFromCenter = (xVisibleCells - 1) / 2;
     const yFromCenter = (yVisibleCells - 1) / 2;
@@ -120,20 +125,43 @@ export class ClientGame {
       cellWidth / 2 + (offsetX + xFromCenter) * cellWidth + cellPadding + cellPadding * 2 * (offsetX + xFromCenter),
       cellWidth / 2 + (offsetY + yFromCenter) * cellWidth + cellPadding + cellPadding * 2 * (offsetY + yFromCenter),
     );
+
+    let raster: paper.Raster;
+    switch (cell.type) {
+      case CellType.Earth:
+        raster = new paper.Raster('dirt01');
+        break;
+      case CellType.Wall:
+      default:
+        raster = new paper.Raster('ground01');
+        break;
+    }
+    raster.position = circlePoint;
+    raster.scale(cellWidth / raster.width);
+    raster.strokeWidth = 0;
+    const clickHandler = (): void => this.handleCellClick(offsetX, offsetY);
+    raster.onClick = clickHandler;
+    this.drawnTiles[cellCoords] = raster;
+
     const occupyingPlayer = this.players.find(
       (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y,
     );
-    const myCircle = new paper.Path.Circle(circlePoint, cellWidth / 2);
-    const fillColor = cell.isPassable ? EARTH : SLATE;
-    myCircle.fillColor = occupyingPlayer ? new paper.Color(occupyingPlayer.color) : fillColor;
-    myCircle.strokeColor = BLACK;
-    const circleGroup = new paper.Group([myCircle]);
-    circleGroup.onClick = (): void => this.handleCellClick(offsetX, offsetY);
-    this.drawnMap[`${offsetX},${offsetY}`] = circleGroup;
+    if (occupyingPlayer) {
+      const myCircle = new paper.Path.Circle(circlePoint, cellWidth / 2);
+      myCircle.fillColor = new paper.Color(occupyingPlayer.color);
+      myCircle.strokeColor = BLACK;
+      const circleGroup = new paper.Group([myCircle]);
+      circleGroup.onClick = clickHandler;
+      this.drawnMap[cellCoords] = circleGroup;
+    }
   }
 
   private drawMap(): void {
     Object.entries(this.drawnMap).forEach(([key, cell]) => {
+      cell.remove();
+      delete this.drawnMap[key as Coordinate];
+    });
+    Object.entries(this.drawnTiles).forEach(([key, cell]) => {
       cell.remove();
       delete this.drawnMap[key as Coordinate];
     });
