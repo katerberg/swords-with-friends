@@ -119,6 +119,7 @@ export class ClientGame {
       return;
     }
 
+    this.dungeonMap = game.dungeonMap;
     this.players.forEach((thisPlayer) => {
       const updatedPlayer = game.players.find((gamePlayer) => gamePlayer.playerId === thisPlayer.playerId) as Player;
       thisPlayer.x = updatedPlayer.x;

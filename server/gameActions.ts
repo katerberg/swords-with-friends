@@ -2,7 +2,7 @@ import * as ROT from 'rot-js';
 import {Server, Socket} from 'socket.io';
 import {AUTO_MOVE_DELAY, MAX_X, MAX_Y} from '../types/consts';
 import {coordsToNumberCoords} from '../types/math';
-import {Coordinate, Game, Messages, Player, PlayerAction, PlayerActionName} from '../types/SharedTypes';
+import {Coordinate, Game, Messages, Monster, Player, PlayerAction, PlayerActionName} from '../types/SharedTypes';
 import {getGames} from '.';
 
 function isValidCoordinate(x: number, y: number): boolean {
@@ -13,9 +13,24 @@ export function isFreeCell(x: number, y: number, game: Game): boolean {
   const mapLevel = game.players.length === 0 ? 0 : game.players[0].mapLevel;
   return (
     isValidCoordinate(x, y) &&
+    game.dungeonMap[mapLevel].monsters.every((monster) => monster.x !== x || monster.y !== y) &&
     game.players.every((player) => player.x !== x || player.y !== y) &&
     game.dungeonMap[mapLevel].cells[`${x},${y}`].isPassable
   );
+}
+
+function isPathableCell(x: number, y: number, game: Game): boolean {
+  const mapLevel = game.players.length === 0 ? 0 : game.players[0].mapLevel;
+  return (
+    isValidCoordinate(x, y) &&
+    game.players.every((player) => player.x !== x || player.y !== y) &&
+    game.dungeonMap[mapLevel].cells[`${x},${y}`].isPassable
+  );
+}
+
+function getMonsterInCell(x: number, y: number, game: Game): Monster | null {
+  const mapLevel = game.players.length === 0 ? 0 : game.players[0].mapLevel;
+  return game.dungeonMap[mapLevel].monsters.find((monster) => monster.x === x || monster.y === y) || null;
 }
 
 function calculatePath(game: Game, player: Player, targetX: number, targetY: number): Coordinate[] {
@@ -24,7 +39,7 @@ function calculatePath(game: Game, player: Player, targetX: number, targetY: num
     targetX,
     targetY,
     (astarX: number, astarY: number): boolean =>
-      (astarX === player.x && astarY === player.y) || isFreeCell(astarX, astarY, game),
+      (astarX === player.x && astarY === player.y) || isPathableCell(astarX, astarY, game),
   );
   const path: Coordinate[] = [];
   aStar.compute(player.x, player.y, (computeX, computeY) => {
@@ -36,18 +51,34 @@ function calculatePath(game: Game, player: Player, targetX: number, targetY: num
   return path;
 }
 
+function handlePlayerAttack(game: Game, player: Player, monster: Monster): void {
+  monster.currentHp -= player.attackStrength;
+  if (monster.currentHp <= 0) {
+    const monsterList = game.dungeonMap[player.mapLevel].monsters;
+    const index = monsterList.findIndex((m) => m.monsterId);
+    if (index >= 0) {
+      monsterList.splice(index, 1);
+    }
+  }
+}
+
 function handlePlayerMovementAction(gameId: string, player: Player): void {
   const {x, y} = coordsToNumberCoords(player.currentAction?.target as Coordinate);
   const game = getGames()[gameId];
   const gamePlayer = game.players.find((loopPlayer) => loopPlayer.playerId === player.playerId);
   if (gamePlayer) {
-    if (!isFreeCell(x, y, game)) {
+    if (!isPathableCell(x, y, game)) {
       gamePlayer.currentAction = null;
       return;
     }
     if (Math.abs(x - player.x) <= 1 && Math.abs(y - player.y) <= 1) {
-      gamePlayer.x = x;
-      gamePlayer.y = y;
+      const monster = getMonsterInCell(x, y, game);
+      if (!monster) {
+        gamePlayer.x = x;
+        gamePlayer.y = y;
+      } else {
+        handlePlayerAttack(game, player, monster);
+      }
       player.currentAction = null;
     } else if (gamePlayer.currentAction?.path?.length && gamePlayer.currentAction?.path?.length > 0) {
       const target = gamePlayer.currentAction.path.shift();

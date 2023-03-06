@@ -16,6 +16,7 @@ export type Player = {
   socketId?: string;
   maxHp: number;
   currentHp: number;
+  attackStrength: number;
   color: string;
   textColor: string;
   currentAction: PlayerAction | null;
@@ -48,6 +49,7 @@ export type Monster = {
   type: MonsterType;
   maxHp: number;
   currentHp: number;
+  attackStrength: number;
   x: number;
   y: number;
 };

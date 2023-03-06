@@ -92,6 +92,7 @@ function createPlayer(socketId: string, game: Game, isHost = false): Player {
     isHost,
     name: getRandomName(),
     socketId,
+    attackStrength: 5,
     maxHp: 10,
     currentHp: 10,
     color,
