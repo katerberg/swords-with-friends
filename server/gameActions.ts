@@ -9,8 +9,12 @@ function isValidCoordinate(x: number, y: number): boolean {
   return x >= 0 && x <= MAX_X && y >= 0 && y <= MAX_Y;
 }
 
+function getMapLevel(game: Game): number {
+  return game.players.length === 0 ? 0 : game.players[0].mapLevel;
+}
+
 export function isFreeCell(x: number, y: number, game: Game): boolean {
-  const mapLevel = game.players.length === 0 ? 0 : game.players[0].mapLevel;
+  const mapLevel = getMapLevel(game);
   return (
     isValidCoordinate(x, y) &&
     game.dungeonMap[mapLevel].monsters.every((monster) => monster.x !== x || monster.y !== y) &&
@@ -20,17 +24,15 @@ export function isFreeCell(x: number, y: number, game: Game): boolean {
 }
 
 function isPathableCell(x: number, y: number, game: Game): boolean {
-  const mapLevel = game.players.length === 0 ? 0 : game.players[0].mapLevel;
   return (
     isValidCoordinate(x, y) &&
     game.players.every((player) => player.x !== x || player.y !== y) &&
-    game.dungeonMap[mapLevel].cells[`${x},${y}`].isPassable
+    game.dungeonMap[getMapLevel(game)].cells[`${x},${y}`].isPassable
   );
 }
 
 function getMonsterInCell(x: number, y: number, game: Game): Monster | null {
-  const mapLevel = game.players.length === 0 ? 0 : game.players[0].mapLevel;
-  return game.dungeonMap[mapLevel].monsters.find((monster) => monster.x === x || monster.y === y) || null;
+  return game.dungeonMap[getMapLevel(game)].monsters.find((monster) => monster.x === x || monster.y === y) || null;
 }
 
 function calculatePath(game: Game, player: Player, targetX: number, targetY: number): Coordinate[] {
@@ -121,11 +123,15 @@ function executeQueuedActions(gameId: string, io: Server): void {
     }, AUTO_MOVE_DELAY);
   }
 }
+function executeMonsterActions(gameId: string): void {
+  const game = getGames()[gameId];
+}
 
 function checkTurnEnd(gameId: string, io: Server): void {
   const games = getGames();
   if (games[gameId]?.players.every((player) => player.currentAction !== null)) {
     executeQueuedActions(gameId, io);
+    executeMonsterActions(gameId);
     io.emit(Messages.TurnEnd, gameId, games[gameId]);
   }
 }
