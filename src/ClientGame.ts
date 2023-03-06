@@ -204,7 +204,7 @@ export class ClientGame {
       const playerRasterScale = (getCellWidth() / raster.width) * 0.8;
       playerRaster.scale(playerRasterScale);
       playerRaster.shadowColor = WHITE;
-      playerRaster.shadowBlur = 42;
+      playerRaster.shadowBlur = 22;
       const circleGroup = new paper.Group([
         getBacking(occupyingPlayer.color, circlePoint, playerRaster.width * playerRasterScale),
         playerRaster,

@@ -55,7 +55,7 @@ export function populatePlayerList(players: Player[]): void {
     if (isHost) {
       const startGameButton = document.getElementById('start-game');
       if (startGameButton) {
-        startGameButton.onclick = handleStartGame;
+        startGameButton.ontouchend = handleStartGame;
       }
     }
     const input = document.getElementById('name-change-input');

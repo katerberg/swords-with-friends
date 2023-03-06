@@ -4,6 +4,7 @@ import './waiting-room.scss';
 import './games-lobby.scss';
 import * as paper from 'paper';
 import {io} from 'socket.io-client';
+import {API_BASE, SOCKET_BASE} from '../types/consts';
 import {Game, Messages} from '../types/SharedTypes';
 import {isDebug} from './debug';
 import {swapScreens} from './screen-manager';
@@ -27,7 +28,7 @@ function populateGameGlobals(gameId: string, playerId: string): void {
 }
 
 async function handleCreateGame(): Promise<void> {
-  const createdGame: Game = await fetch(`http://localhost:8081/api/games?socketId=${globalThis.socket.id}`, {
+  const createdGame: Game = await fetch(`${API_BASE}/games?socketId=${globalThis.socket.id}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -42,7 +43,7 @@ async function handleCreateGame(): Promise<void> {
 }
 
 async function joinGame(gameId: string): Promise<void> {
-  const joinedGame: Game = await fetch(`http://localhost:8081/api/games/${gameId}?socketId=${globalThis.socket.id}`, {
+  const joinedGame: Game = await fetch(`${API_BASE}/games/${gameId}?socketId=${globalThis.socket.id}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -53,7 +54,7 @@ async function joinGame(gameId: string): Promise<void> {
   populatePlayerList(joinedGame.players);
 }
 
-function joinGameHandler(event: MouseEvent): void {
+function joinGameHandler(event: TouchEvent | MouseEvent): void {
   const button = event.target as HTMLElement;
   const gameId = button.getAttribute('data-game-id');
   if (gameId) {
@@ -80,7 +81,7 @@ function populateGamesList(games: Game[]): void {
 
     for (let i = 0; i < allButtons.length; i++) {
       if (allButtons[i]) {
-        allButtons[i].onclick = joinGameHandler;
+        allButtons[i].ontouchend = joinGameHandler;
       }
     }
   }
@@ -88,7 +89,7 @@ function populateGamesList(games: Game[]): void {
 
 async function openGamesList(): Promise<void> {
   swapScreens('start-screen', 'games-lobby');
-  const games = await fetch('http://localhost:8081/api/games', {
+  const games = await fetch(`${API_BASE}/games`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -135,25 +136,25 @@ window.addEventListener('load', () => {
 
     const createGameButton = document.getElementById('create-game');
     if (createGameButton) {
-      createGameButton.onclick = handleCreateGame;
+      createGameButton.ontouchend = handleCreateGame;
     }
 
     const openGamesListButton = document.getElementById('open-games-list');
     if (openGamesListButton) {
-      openGamesListButton.onclick = openGamesList;
+      openGamesListButton.ontouchend = openGamesList;
     }
 
     const gamesLobbyCancelButton = document.getElementById('games-lobby-cancel-button');
     if (gamesLobbyCancelButton) {
-      gamesLobbyCancelButton.onclick = cancelGamesLobby;
+      gamesLobbyCancelButton.ontouchend = cancelGamesLobby;
     }
 
     const waitingRoomCancelButton = document.getElementById('waiting-room-cancel-button');
     if (waitingRoomCancelButton) {
-      waitingRoomCancelButton.onclick = cancelWaitingRoom;
+      waitingRoomCancelButton.ontouchend = cancelWaitingRoom;
     }
 
-    globalThis.socket = io('http://localhost:8081');
+    globalThis.socket = io(SOCKET_BASE);
 
     if (isDebug('newGame')) {
       setTimeout(jumpToNewGame, 1);
