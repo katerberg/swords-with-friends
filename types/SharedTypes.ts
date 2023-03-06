@@ -48,6 +48,8 @@ export type DungeonMap = MapLevel[];
 
 export type MapLevel = {
   monsters: Monster[];
+  playerSpawn: Coordinate;
+  monsterSpawn: Coordinate[];
   cells: {
     [key: Coordinate]: Cell;
   };

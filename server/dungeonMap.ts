@@ -8,7 +8,7 @@ export function createMap(): DungeonMap {
   const map = new ROT.Map.Digger(MAX_X, MAX_Y, {dugPercentage: 0.1, corridorLength: [0, 5]});
 
   for (let i = 0; i < MAX_LEVEL; i++) {
-    dungeonMap[i] = {cells: {}, monsters: []};
+    dungeonMap[i] = {cells: {}, monsters: [], playerSpawn: '0,0', monsterSpawn: []};
     const mapCreationCallback = (x: number, y: number, value: number): void => {
       const type = value === 0 ? CellType.Earth : CellType.Wall;
       dungeonMap[i].cells[`${x},${y}`] = {
@@ -24,7 +24,14 @@ export function createMap(): DungeonMap {
     map._options.dugPercentage = (i + 1) * 0.2;
     map.create(mapCreationCallback);
     const rooms = map.getRooms();
-    rooms.forEach((room) => {
+    rooms.forEach((room, roomI) => {
+      const [centerX, centerY] = room.getCenter();
+      if (roomI === 0) {
+        dungeonMap[i].playerSpawn = `${centerX},${centerY}`;
+      } else {
+        dungeonMap[i].monsterSpawn.push(`${centerX},${centerY}`);
+      }
+
       room.getDoors((doorx, doory) => {
         if (
           dungeonMap[i].cells[`${doorx - 1},${doory}`]?.type === CellType.Earth ||

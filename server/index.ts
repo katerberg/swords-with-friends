@@ -3,6 +3,7 @@ import {AddressInfo} from 'net';
 import {Server} from 'socket.io';
 import {v4 as uuid} from 'uuid';
 import {MAX_X, MAX_Y} from '../types/consts';
+import {coordsToNumberCoords} from '../types/math';
 import {Game, GamesHash, GameStatus, Messages, NumberCoordinates, Player} from '../types/SharedTypes';
 import {contrast, getRandomColor} from './color';
 import {getRandomInt, getRandomName} from './data';
@@ -83,7 +84,7 @@ function getStartLocationNearHost(game: Game): NumberCoordinates {
 
 function createPlayer(socketId: string, game: Game, isHost = false): Player {
   const color = getRandomColor();
-  const {x, y} = isHost ? getRandomStartingLocation(game) : getStartLocationNearHost(game);
+  const {x, y} = isHost ? coordsToNumberCoords(game.dungeonMap[0].playerSpawn) : getStartLocationNearHost(game);
   return {
     playerId: uuid(),
     x,
