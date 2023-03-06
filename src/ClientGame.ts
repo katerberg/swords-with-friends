@@ -177,8 +177,9 @@ export class ClientGame {
         raster = new paper.Raster('ground01');
         break;
     }
+    raster.strokeWidth = 0;
     raster.position = circlePoint;
-    raster.scale(Math.ceil((cellWidth / raster.width) * 10000) / 10000);
+    raster.scale(cellWidth / raster.width + 0.003);
     raster.strokeWidth = 0;
     const clickHandler = (): void => this.handleCellClick(offsetX, offsetY);
     raster.onClick = clickHandler;
