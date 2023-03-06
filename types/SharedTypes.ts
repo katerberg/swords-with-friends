@@ -4,6 +4,7 @@ export enum PlayerActionName {
 export type PlayerAction = {
   name: PlayerActionName;
   target?: Coordinate;
+  path?: Coordinate[];
 };
 
 export type Player = {

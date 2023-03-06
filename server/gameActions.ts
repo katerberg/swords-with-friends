@@ -1,7 +1,7 @@
 import * as ROT from 'rot-js';
 import {Server, Socket} from 'socket.io';
 import {AUTO_MOVE_DELAY, MAX_X, MAX_Y} from '../types/consts';
-import {Game, Messages, NumberCoordinates, Player, PlayerAction, PlayerActionName} from '../types/SharedTypes';
+import {Coordinate, Game, Messages, Player, PlayerAction, PlayerActionName} from '../types/SharedTypes';
 import {getGames} from '.';
 
 function isValidCoordinate(x: number, y: number): boolean {
@@ -17,37 +17,56 @@ export function isFreeCell(x: number, y: number, game: Game): boolean {
   );
 }
 
+function calculatePath(game: Game, player: Player, targetX: number, targetY: number): Coordinate[] {
+  //a star
+  const aStar = new ROT.Path.AStar(
+    targetX,
+    targetY,
+    (astarX: number, astarY: number): boolean =>
+      (astarX === player.x && astarY === player.y) || isFreeCell(astarX, astarY, game),
+  );
+  const path: Coordinate[] = [];
+  aStar.compute(player.x, player.y, (computeX, computeY) => {
+    path.push(`${computeX},${computeY}`);
+  });
+  if (path.length > 0) {
+    path.shift();
+  }
+  return path;
+}
+
 function handlePlayerMovementAction(gameId: string, player: Player): void {
   const [x, y] = (player.currentAction?.target as string).split(',');
   const targetX = Number.parseInt(x, 10);
   const targetY = Number.parseInt(y, 10);
   const game = getGames()[gameId];
-  if (isFreeCell(targetX, targetY, game)) {
-    const gamePlayer = game.players.find((loopPlayer) => loopPlayer.playerId === player.playerId);
-    if (gamePlayer) {
-      if (Math.abs(targetX - player.x) <= 1 && Math.abs(targetY - player.y) <= 1) {
-        gamePlayer.x = targetX;
-        gamePlayer.y = targetY;
-        player.currentAction = null;
-      } else {
-        //a star
-        const aStar = new ROT.Path.AStar(
-          targetX,
-          targetY,
-          (astarX: number, astarY: number): boolean =>
-            (astarX === gamePlayer.x && astarY === gamePlayer.y) || isFreeCell(astarX, astarY, game),
-        );
-        const path: NumberCoordinates[] = [];
-        aStar.compute(gamePlayer.x, gamePlayer.y, (computeX, computeY) => {
-          path.push({x: computeX, y: computeY});
-        });
-        if (path.length > 1) {
-          gamePlayer.x = path[1].x;
-          gamePlayer.y = path[1].y;
-        } else {
-          player.currentAction = null;
-        }
+  const gamePlayer = game.players.find((loopPlayer) => loopPlayer.playerId === player.playerId);
+  if (gamePlayer) {
+    if (!isFreeCell(targetX, targetY, game)) {
+      gamePlayer.currentAction = null;
+      return;
+    }
+    if (Math.abs(targetX - player.x) <= 1 && Math.abs(targetY - player.y) <= 1) {
+      gamePlayer.x = targetX;
+      gamePlayer.y = targetY;
+      player.currentAction = null;
+    } else if (gamePlayer.currentAction?.path?.length && gamePlayer.currentAction?.path?.length > 0) {
+      const target = gamePlayer.currentAction.path.shift();
+      if (!target) {
+        gamePlayer.currentAction = null;
+        return;
       }
+      const [stringX, stringY] = target.split(',');
+      const newX = Number.parseInt(stringX, 10);
+      const newY = Number.parseInt(stringY, 10);
+      if (!isFreeCell(newX, newY, game)) {
+        gamePlayer.currentAction = null;
+        return;
+      }
+      gamePlayer.x = newX;
+      gamePlayer.y = newY;
+    } else {
+      gamePlayer.currentAction = null;
     }
   }
 }
@@ -88,7 +107,11 @@ export function handleGameActions(io: Server, socket: Socket): void {
     const games = getGames();
     const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
     if (playerIndex !== undefined && isValidCoordinate(x, y)) {
-      const action: PlayerAction = {name: PlayerActionName.Move, target: `${x},${y}`};
+      const action: PlayerAction = {
+        name: PlayerActionName.Move,
+        target: `${x},${y}`,
+        path: calculatePath(games[gameId], games[gameId].players[playerIndex], x, y),
+      };
       games[gameId].players[playerIndex].currentAction = action;
       io.emit(Messages.PlayerActionQueued, gameId, {
         action,
