@@ -1,6 +1,18 @@
 /* eslint-disable no-case-declarations */
 import * as paper from 'paper';
-import {Cell, CellType, Coordinate, DungeonMap, Game, Messages, Player, PlayerAction} from '../types/SharedTypes';
+import {coordsToNumberCoords} from '../types/math';
+import {
+  Cell,
+  CellType,
+  Coordinate,
+  DungeonMap,
+  Game,
+  Messages,
+  NumberCoordinates,
+  Player,
+  PlayerAction,
+  PlayerActionName,
+} from '../types/SharedTypes';
 import {BLACK} from './colors';
 
 const xVisibleCells = 7;
@@ -21,6 +33,8 @@ export class ClientGame {
   drawnTiles: {[key: Coordinate]: paper.Raster};
 
   drawnMap: {[key: Coordinate]: paper.Group};
+
+  drawnMovementPaths: {[playerId: string]: paper.Group};
 
   players: Player[];
 
@@ -50,6 +64,7 @@ export class ClientGame {
     });
 
     this.drawnMap = {};
+    this.drawnMovementPaths = {};
     this.drawnTiles = {};
     this.level = 0;
     this.dungeonMap = game.dungeonMap;
@@ -85,6 +100,13 @@ export class ClientGame {
     if (gameId !== globalThis.currentGameId) {
       return;
     }
+    const player = this.players.find((p) => p.playerId === actionQueued.playerId);
+    if (player) {
+      player.currentAction = actionQueued.action;
+      if (actionQueued.action.name === PlayerActionName.Move) {
+        this.drawMap();
+      }
+    }
     this.setBadgeContent(actionQueued.playerId, '✓');
   }
 
@@ -116,15 +138,28 @@ export class ClientGame {
     globalThis.socket.emit(Messages.MovePlayer, globalThis.currentGameId, x, y);
   }
 
-  private drawCell(offsetX: number, offsetY: number, cell: Cell): void {
-    const cellCoords: Coordinate = `${offsetX},${offsetY}`;
+  private getCellCenterPointFromCoordinates(coordinates: Coordinate): NumberCoordinates {
+    const {currentPlayer} = this;
     const cellWidth = getCellWidth();
     const xFromCenter = (xVisibleCells - 1) / 2;
     const yFromCenter = (yVisibleCells - 1) / 2;
-    const circlePoint = new paper.Point(
-      cellWidth / 2 + (offsetX + xFromCenter) * cellWidth + cellPadding + cellPadding * 2 * (offsetX + xFromCenter),
-      cellWidth / 2 + (offsetY + yFromCenter) * cellWidth + cellPadding + cellPadding * 2 * (offsetY + yFromCenter),
+    const {x, y} = coordsToNumberCoords(coordinates);
+    const offsetX = currentPlayer.x - x;
+    const offsetY = currentPlayer.y - y;
+    return {
+      x: cellWidth / 2 + (offsetX + xFromCenter) * cellWidth + cellPadding + cellPadding * 2 * (offsetX + xFromCenter),
+      y: cellWidth / 2 + (offsetY + yFromCenter) * cellWidth + cellPadding + cellPadding * 2 * (offsetY + yFromCenter),
+    };
+  }
+
+  private drawCell(offsetX: number, offsetY: number, cell: Cell): void {
+    const {currentPlayer} = this;
+    const cellCoords: Coordinate = `${offsetX},${offsetY}`;
+    const cellWidth = getCellWidth();
+    const {x: coordX, y: coordY} = this.getCellCenterPointFromCoordinates(
+      `${currentPlayer.x + offsetX},${currentPlayer.y + offsetY}`,
     );
+    const circlePoint = new paper.Point(coordX, coordY);
 
     let raster: paper.Raster;
     switch (cell.type) {
@@ -156,6 +191,32 @@ export class ClientGame {
     }
   }
 
+  private drawPlayerPath(player: Player): void {
+    if (!player.currentAction?.path?.length || player.currentAction.path.length < 1) {
+      return;
+    }
+    const path = new paper.Path();
+    const {x: playerX, y: playerY} = this.getCellCenterPointFromCoordinates(`${player.x},${player.y}`);
+    path.add(new paper.Point(playerX, playerY));
+    player.currentAction.path.forEach((point) => {
+      const {x, y} = this.getCellCenterPointFromCoordinates(point);
+      path.add(new paper.Point(x, y));
+    });
+    path.strokeWidth = 10;
+    path.strokeColor = new paper.Color(player.color);
+    path.smooth();
+    const {x: endingX, y: endingY} = this.getCellCenterPointFromCoordinates(
+      player.currentAction.path[player.currentAction.path.length - 1],
+    );
+
+    const endingCircle = new paper.Path.Circle(new paper.Point(endingX, endingY), 10);
+    endingCircle.fillColor = new paper.Color(player.color);
+    endingCircle.strokeColor = new paper.Color(player.color);
+
+    const pathGroup = new paper.Group([path, endingCircle]);
+    this.drawnMovementPaths[player.playerId] = pathGroup;
+  }
+
   private drawMap(): void {
     Object.entries(this.drawnMap).forEach(([key, cell]) => {
       cell.remove();
@@ -163,22 +224,31 @@ export class ClientGame {
     });
     Object.entries(this.drawnTiles).forEach(([key, cell]) => {
       cell.remove();
-      delete this.drawnMap[key as Coordinate];
+      delete this.drawnTiles[key as Coordinate];
     });
-    const player = this.currentPlayer;
+    Object.entries(this.drawnMovementPaths).forEach(([key, path]) => {
+      path.remove();
+      delete this.drawnMovementPaths[key as string];
+    });
+    const {currentPlayer} = this;
     const xFromCenter = (xVisibleCells - 1) / 2;
     const yFromCenter = (yVisibleCells - 1) / 2;
     for (let offsetX = -1 * xFromCenter; offsetX <= xFromCenter; offsetX++) {
-      for (let y = -1 * yFromCenter; y <= yFromCenter; y++) {
-        const cell = this.dungeonMap[this.level][`${player.x + offsetX},${player.y + y}`];
+      for (let offSetY = -1 * yFromCenter; offSetY <= yFromCenter; offSetY++) {
+        const cell = this.dungeonMap[this.level][`${currentPlayer.x + offsetX},${currentPlayer.y + offSetY}`];
         if (cell !== undefined) {
           //Tile
-          this.drawCell(offsetX, y, cell);
+          this.drawCell(offsetX, offSetY, cell);
         } else {
           // Out of bounds
         }
       }
     }
+    this.players.forEach((player) => {
+      if (player.currentAction?.name === PlayerActionName.Move && player.currentAction?.path?.length) {
+        this.drawPlayerPath(player);
+      }
+    });
     this.playerBadges.forEach((badge) => {
       badge.bringToFront();
     });

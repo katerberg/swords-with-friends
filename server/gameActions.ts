@@ -1,6 +1,7 @@
 import * as ROT from 'rot-js';
 import {Server, Socket} from 'socket.io';
 import {AUTO_MOVE_DELAY, MAX_X, MAX_Y} from '../types/consts';
+import {coordsToNumberCoords} from '../types/math';
 import {Coordinate, Game, Messages, Player, PlayerAction, PlayerActionName} from '../types/SharedTypes';
 import {getGames} from '.';
 
@@ -36,19 +37,17 @@ function calculatePath(game: Game, player: Player, targetX: number, targetY: num
 }
 
 function handlePlayerMovementAction(gameId: string, player: Player): void {
-  const [x, y] = (player.currentAction?.target as string).split(',');
-  const targetX = Number.parseInt(x, 10);
-  const targetY = Number.parseInt(y, 10);
+  const {x, y} = coordsToNumberCoords(player.currentAction?.target as Coordinate);
   const game = getGames()[gameId];
   const gamePlayer = game.players.find((loopPlayer) => loopPlayer.playerId === player.playerId);
   if (gamePlayer) {
-    if (!isFreeCell(targetX, targetY, game)) {
+    if (!isFreeCell(x, y, game)) {
       gamePlayer.currentAction = null;
       return;
     }
-    if (Math.abs(targetX - player.x) <= 1 && Math.abs(targetY - player.y) <= 1) {
-      gamePlayer.x = targetX;
-      gamePlayer.y = targetY;
+    if (Math.abs(x - player.x) <= 1 && Math.abs(y - player.y) <= 1) {
+      gamePlayer.x = x;
+      gamePlayer.y = y;
       player.currentAction = null;
     } else if (gamePlayer.currentAction?.path?.length && gamePlayer.currentAction?.path?.length > 0) {
       const target = gamePlayer.currentAction.path.shift();
@@ -56,9 +55,7 @@ function handlePlayerMovementAction(gameId: string, player: Player): void {
         gamePlayer.currentAction = null;
         return;
       }
-      const [stringX, stringY] = target.split(',');
-      const newX = Number.parseInt(stringX, 10);
-      const newY = Number.parseInt(stringY, 10);
+      const {x: newX, y: newY} = coordsToNumberCoords(target);
       if (!isFreeCell(newX, newY, game)) {
         gamePlayer.currentAction = null;
         return;
@@ -113,6 +110,7 @@ export function handleGameActions(io: Server, socket: Socket): void {
         path: calculatePath(games[gameId], games[gameId].players[playerIndex], x, y),
       };
       games[gameId].players[playerIndex].currentAction = action;
+      console.log('emitting for', games[gameId].players[playerIndex].playerId);
       io.emit(Messages.PlayerActionQueued, gameId, {
         action,
         playerId: games[gameId].players[playerIndex].playerId,
