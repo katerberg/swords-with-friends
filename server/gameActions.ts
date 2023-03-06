@@ -7,7 +7,7 @@ function isValidCoordinate(x: number, y: number): boolean {
   return x >= 0 && x <= MAX_X && y >= 0 && y <= MAX_Y;
 }
 
-function isFreeCell(x: number, y: number, game: Game): boolean {
+export function isFreeCell(x: number, y: number, game: Game): boolean {
   const dungeonMap = game.dungeonMap[game.players[0].mapLevel];
   return (
     isValidCoordinate(x, y) &&

@@ -3,12 +3,12 @@ import {AddressInfo} from 'net';
 import {Server} from 'socket.io';
 import {v4 as uuid} from 'uuid';
 import {MAX_X, MAX_Y} from '../types/consts';
-import {Coordinate, Game, GamesHash, GameStatus, Messages, Player} from '../types/SharedTypes';
+import {Game, GamesHash, GameStatus, Messages, Player} from '../types/SharedTypes';
 import {contrast, getRandomColor} from './color';
 import {getRandomInt, getRandomName} from './data';
 import {createMap} from './dungeonMap';
 import {setup} from './express';
-import {handleGameActions} from './gameActions';
+import {handleGameActions, isFreeCell} from './gameActions';
 
 const app = setup();
 const server = new http.Server(app);
@@ -29,24 +29,23 @@ function getAvailableGames(): Game[] {
   return Object.values(games).filter((game) => game.gameStatus === GameStatus.WaitingForPlayers);
 }
 
-function getRandomSpace(): Coordinate {
+function getRandomSpace(): {x: number; y: number} {
   const x = getRandomInt(0, MAX_X - 1);
   const y = getRandomInt(0, MAX_Y - 1);
-  return `${x},${y}`;
+  return {x, y};
 }
 
-function getStartingLocation(game: Game): {x: number; y: number} {
-  const space = getRandomSpace();
-  if (game.dungeonMap[0][space].isPassable) {
-    const [x, y] = space.split(',');
-    return {x: Number.parseInt(x, 10), y: Number.parseInt(y, 10)};
+function getRandomStartingLocation(game: Game): {x: number; y: number} {
+  const {x, y} = getRandomSpace();
+  if (isFreeCell(x, y, game)) {
+    return {x, y};
   }
-  return getStartingLocation(game);
+  return getRandomStartingLocation(game);
 }
 
 function createPlayer(socketId: string, game: Game, isHost = false): Player {
   const color = getRandomColor();
-  const {x, y} = getStartingLocation(game);
+  const {x, y} = getRandomStartingLocation(game);
   return {
     playerId: uuid(),
     x,
