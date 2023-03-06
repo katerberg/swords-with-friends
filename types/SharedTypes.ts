@@ -23,6 +23,8 @@ export type Player = {
 };
 
 export enum CellType {
+  VerticalDoor,
+  HorizontalDoor,
   Earth,
   Wall,
 }
@@ -37,10 +39,18 @@ export type Cell = {
   type: CellType;
 };
 
+export type Monster = {
+  x: number;
+  y: number;
+};
+
 export type DungeonMap = MapLevel[];
 
 export type MapLevel = {
-  [key: Coordinate]: Cell;
+  monsters: Monster[];
+  cells: {
+    [key: Coordinate]: Cell;
+  };
 };
 
 export type NumberCoordinates = {x: number; y: number};

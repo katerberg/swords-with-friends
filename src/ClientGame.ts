@@ -30,7 +30,7 @@ export class ClientGame {
 
   level: number;
 
-  drawnTiles: {[key: Coordinate]: paper.Raster};
+  drawnTiles: {[key: Coordinate]: paper.Group};
 
   drawnMap: {[key: Coordinate]: paper.Group};
 
@@ -131,7 +131,7 @@ export class ClientGame {
     if (this.players.find((player) => player.x === x && player.y === y)) {
       return;
     }
-    if (!this.dungeonMap[this.level][`${x},${y}`].isPassable) {
+    if (!this.dungeonMap[this.level].cells[`${x},${y}`].isPassable) {
       return;
     }
 
@@ -163,6 +163,8 @@ export class ClientGame {
 
     let raster: paper.Raster;
     switch (cell.type) {
+      case CellType.VerticalDoor:
+      case CellType.HorizontalDoor:
       case CellType.Earth:
         raster = new paper.Raster('dirt01');
         break;
@@ -176,7 +178,17 @@ export class ClientGame {
     raster.strokeWidth = 0;
     const clickHandler = (): void => this.handleCellClick(offsetX, offsetY);
     raster.onClick = clickHandler;
-    this.drawnTiles[cellCoords] = raster;
+    this.drawnTiles[cellCoords] = new paper.Group([raster]);
+    if (cell.type === CellType.VerticalDoor || cell.type === CellType.HorizontalDoor) {
+      const door = new paper.Raster('door');
+      if (cell.type === CellType.HorizontalDoor) {
+        door.rotate(90);
+      }
+      door.position = circlePoint;
+      door.scale(cellWidth / door.width);
+      door.strokeWidth = 0;
+      door.onClick = clickHandler;
+    }
 
     const occupyingPlayer = this.players.find(
       (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y,
@@ -235,7 +247,7 @@ export class ClientGame {
     const yFromCenter = (yVisibleCells - 1) / 2;
     for (let offsetX = -1 * xFromCenter; offsetX <= xFromCenter; offsetX++) {
       for (let offSetY = -1 * yFromCenter; offSetY <= yFromCenter; offSetY++) {
-        const cell = this.dungeonMap[this.level][`${currentPlayer.x + offsetX},${currentPlayer.y + offSetY}`];
+        const cell = this.dungeonMap[this.level].cells[`${currentPlayer.x + offsetX},${currentPlayer.y + offSetY}`];
         if (cell !== undefined) {
           //Tile
           this.drawCell(offsetX, offSetY, cell);

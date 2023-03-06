@@ -14,7 +14,7 @@ export function isFreeCell(x: number, y: number, game: Game): boolean {
   return (
     isValidCoordinate(x, y) &&
     game.players.every((player) => player.x !== x || player.y !== y) &&
-    game.dungeonMap[mapLevel][`${x},${y}`].isPassable
+    game.dungeonMap[mapLevel].cells[`${x},${y}`].isPassable
   );
 }
 
@@ -110,7 +110,6 @@ export function handleGameActions(io: Server, socket: Socket): void {
         path: calculatePath(games[gameId], games[gameId].players[playerIndex], x, y),
       };
       games[gameId].players[playerIndex].currentAction = action;
-      console.log('emitting for', games[gameId].players[playerIndex].playerId);
       io.emit(Messages.PlayerActionQueued, gameId, {
         action,
         playerId: games[gameId].players[playerIndex].playerId,
