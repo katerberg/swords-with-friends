@@ -159,6 +159,45 @@ export class ClientGame {
     };
   }
 
+  private handlePotentialExit(
+    cell: Cell,
+    circlePoint: paper.Point,
+    cellCoords: Coordinate,
+    clickHandler: () => void,
+  ): void {
+    if (cell.type === CellType.Exit) {
+      const cellWidth = getCellWidth();
+      const exitSigil = new paper.Raster('cosmic09');
+      exitSigil.position = circlePoint;
+      exitSigil.scale(cellWidth / exitSigil.width);
+      exitSigil.strokeWidth = 0;
+      exitSigil.shadowColor = WHITE;
+      exitSigil.shadowBlur = 12;
+      exitSigil.onClick = clickHandler;
+      this.drawnTiles[cellCoords].addChild(exitSigil);
+    }
+  }
+
+  private handlePotentialDoor(
+    cell: Cell,
+    circlePoint: paper.Point,
+    cellCoords: Coordinate,
+    clickHandler: () => void,
+  ): void {
+    if (cell.type === CellType.VerticalDoor || cell.type === CellType.HorizontalDoor) {
+      const cellWidth = getCellWidth();
+      const door = new paper.Raster('door');
+      if (cell.type === CellType.HorizontalDoor) {
+        door.rotate(90);
+      }
+      door.position = circlePoint;
+      door.scale(cellWidth / door.width);
+      door.strokeWidth = 0;
+      door.onClick = clickHandler;
+      this.drawnTiles[cellCoords].addChild(door);
+    }
+  }
+
   private drawCell(offsetX: number, offsetY: number, cell: Cell): void {
     const {currentPlayer} = this;
     const cellCoords: Coordinate = `${offsetX},${offsetY}`;
@@ -173,6 +212,7 @@ export class ClientGame {
       case CellType.VerticalDoor:
       case CellType.HorizontalDoor:
       case CellType.Earth:
+      case CellType.Exit:
         cellBackgroundRaster = new paper.Raster('dirt01');
         break;
       case CellType.Wall:
@@ -187,17 +227,8 @@ export class ClientGame {
     const clickHandler = (): void => this.handleCellClick(offsetX, offsetY);
     cellBackgroundRaster.onClick = clickHandler;
     this.drawnTiles[cellCoords] = new paper.Group([cellBackgroundRaster]);
-    if (cell.type === CellType.VerticalDoor || cell.type === CellType.HorizontalDoor) {
-      const door = new paper.Raster('door');
-      if (cell.type === CellType.HorizontalDoor) {
-        door.rotate(90);
-      }
-      door.position = circlePoint;
-      door.scale(cellWidth / door.width);
-      door.strokeWidth = 0;
-      door.onClick = clickHandler;
-      this.drawnTiles[cellCoords].addChild(door);
-    }
+    this.handlePotentialExit(cell, circlePoint, cellCoords, clickHandler);
+    this.handlePotentialDoor(cell, circlePoint, cellCoords, clickHandler);
 
     const occupyingPlayer = this.players.find(
       (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y,

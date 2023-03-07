@@ -36,15 +36,15 @@ function getRandomSpace(): NumberCoordinates {
   return {x, y};
 }
 
-function getRandomStartingLocation(game: Game): NumberCoordinates {
+export function getRandomFreeLocation(game: Game): NumberCoordinates {
   const {x, y} = getRandomSpace();
   if (isFreeCell(x, y, game)) {
     return {x, y};
   }
-  return getRandomStartingLocation(game);
+  return getRandomFreeLocation(game);
 }
 
-function getSpiralAroundPoint(): NumberCoordinates[] {
+function getSpiral(): NumberCoordinates[] {
   let x = 0;
   let y = 0;
   let delta = [0, -1];
@@ -69,26 +69,24 @@ function getSpiralAroundPoint(): NumberCoordinates[] {
   }
   return points;
 }
+export function getSpiralAroundPoint({x, y}: NumberCoordinates): NumberCoordinates[] {
+  return getSpiral().map(({x: spiralX, y: spiralY}) => ({x: x + spiralX, y: y + spiralY}));
+}
 
 function getStartLocationNearHost(game: Game): NumberCoordinates {
   const {x, y} = game.players.find((p) => p.isHost) as Player;
 
-  const spiral = getSpiralAroundPoint();
-  for (let i = 0; i < spiral.length; i++) {
-    if (isFreeCell(x + spiral[i].x, y + spiral[i].y, game)) {
-      return {x: x + spiral[i].x, y: y + spiral[i].y};
-    }
-  }
-  return getRandomStartingLocation(game);
+  const firstFree = getSpiralAroundPoint({x, y}).find(({x: spiralX, y: spiralY}) => isFreeCell(spiralX, spiralY, game));
+  return firstFree ? firstFree : getRandomFreeLocation(game);
 }
 
 function createPlayer(socketId: string, game: Game, isHost = false): Player {
   const color = getRandomColor();
-  const {x, y} = isHost ? coordsToNumberCoords(game.dungeonMap[0].playerSpawn) : getStartLocationNearHost(game);
+  // const {x, y} = isHost ? coordsToNumberCoords(game.dungeonMap[0].playerSpawn) : getStartLocationNearHost(game);
   return {
     playerId: uuid(),
-    x,
-    y,
+    x: 0,
+    y: 0,
     isHost,
     character: CharacterName.SwordsWoman,
     name: getRandomName(),
@@ -145,6 +143,22 @@ io.on('connection', (socket) => {
     if (playerIndex !== undefined && games[gameId].players[playerIndex]?.isHost) {
       console.log('starting game', gameId); //eslint-disable-line no-console
       games[gameId].gameStatus = GameStatus.Ongoing;
+      games[gameId].dungeonMap = createMap(games[gameId]);
+      const {players} = games[gameId];
+      const host = players.find((p) => p.isHost);
+      if (host) {
+        host.x = coordsToNumberCoords(games[gameId].dungeonMap[0].playerSpawn).x;
+        host.y = coordsToNumberCoords(games[gameId].dungeonMap[0].playerSpawn).y;
+        players.forEach((p) => {
+          if (!p.isHost) {
+            const {x, y} = getStartLocationNearHost(games[gameId]);
+            p.x = x;
+            p.y = y;
+          }
+        });
+      } else {
+        console.error('No host found in creation'); //eslint-disable-line no-console
+      }
       io.emit(Messages.GameStarted, gameId, games[gameId]);
       socket.broadcast.emit(Messages.CurrentGames, getAvailableGames());
     }
@@ -170,7 +184,7 @@ app.post('/api/games', (req, res) => {
     startTime: new Date(),
     lastActionTime: new Date(),
     turn: 0,
-    dungeonMap: createMap(),
+    dungeonMap: [],
   };
   games[gameId].players.push(createPlayer(req.query.socketId, games[gameId], true));
   console.log('new game', gameId); //eslint-disable-line no-console

@@ -36,6 +36,7 @@ export enum CellType {
   VerticalDoor,
   HorizontalDoor,
   Earth,
+  Exit,
   Wall,
 }
 
@@ -70,6 +71,7 @@ export type MapLevel = {
   monsters: Monster[];
   playerSpawn: Coordinate;
   monsterSpawn: Coordinate[];
+  exit: Coordinate[];
   cells: {
     [key: Coordinate]: Cell;
   };

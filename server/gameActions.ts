@@ -21,9 +21,10 @@ export function isFreeCell(x: number, y: number, game: Game): boolean {
   const mapLevel = getMapLevel(game);
   return (
     isValidCoordinate(x, y) &&
-    game.dungeonMap[mapLevel].monsters.every((monster) => monster.x !== x || monster.y !== y) &&
+    (!game.dungeonMap?.[mapLevel] ||
+      game.dungeonMap[mapLevel].monsters.every((monster) => monster.x !== x || monster.y !== y)) &&
     game.players.every((player) => player.x !== x || player.y !== y) &&
-    game.dungeonMap[mapLevel].cells[`${x},${y}`].isPassable
+    (!game.dungeonMap?.[mapLevel] || game.dungeonMap[mapLevel].cells[`${x},${y}`].isPassable)
   );
 }
 

@@ -2,7 +2,9 @@ import * as ROT from 'rot-js';
 import {v4 as uuid} from 'uuid';
 import {MAX_LEVEL, MAX_X, MAX_Y} from '../types/consts';
 import {coordsToNumberCoords} from '../types/math';
-import {CellType, Coordinate, DungeonMap, Game, Monster, MonsterType} from '../types/SharedTypes';
+import {CellType, Coordinate, DungeonMap, Game, Monster, MonsterType, NumberCoordinates} from '../types/SharedTypes';
+import {isFreeCell} from './gameActions';
+import {getRandomFreeLocation, getSpiralAroundPoint} from '.';
 
 function createMonster(coordinate: Coordinate): Monster {
   const {x, y} = coordsToNumberCoords(coordinate);
@@ -17,13 +19,31 @@ export function getMapLevel(game: Game): number {
   return game.players.length === 0 ? 0 : game.players[0].mapLevel;
 }
 
-export function createMap(): DungeonMap {
+function getExits(centerPoint: NumberCoordinates, game: Game): Coordinate[] {
+  const spacesAroundExit = getSpiralAroundPoint(centerPoint);
+  const exits: Coordinate[] = [];
+  let exitI = 0;
+  while (exits.length < game.players.length) {
+    if (exitI < spacesAroundExit.length) {
+      if (isFreeCell(spacesAroundExit[exitI].x, spacesAroundExit[exitI].y, game)) {
+        exits.push(`${spacesAroundExit[exitI].x},${spacesAroundExit[exitI].y}`);
+      }
+      exitI++;
+    } else {
+      const freeLocation = getRandomFreeLocation(game);
+      exits.push(`${freeLocation.x},${freeLocation.y}`);
+    }
+  }
+  return exits;
+}
+
+export function createMap(game: Game): DungeonMap {
   const dungeonMap: DungeonMap = [];
 
   const map = new ROT.Map.Digger(MAX_X, MAX_Y, {dugPercentage: 0.1, corridorLength: [0, 5]});
 
   for (let i = 0; i < MAX_LEVEL; i++) {
-    dungeonMap[i] = {cells: {}, monsters: [], playerSpawn: '0,0', monsterSpawn: []};
+    dungeonMap[i] = {cells: {}, monsters: [], playerSpawn: '0,0', monsterSpawn: [], exit: []};
     const mapCreationCallback = (x: number, y: number, value: number): void => {
       const type = value === 0 ? CellType.Earth : CellType.Wall;
       dungeonMap[i].cells[`${x},${y}`] = {
@@ -58,6 +78,13 @@ export function createMap(): DungeonMap {
         }
       });
     });
+
+    const [exitX, exitY] = rooms[rooms.length - 1].getCenter();
+    getExits({x: exitX, y: exitY}, game).forEach((exit) => {
+      dungeonMap[i].exit.push(exit);
+      dungeonMap[i].cells[exit].type = CellType.Exit;
+    });
+
     dungeonMap[i].monsterSpawn.forEach((ms) => {
       dungeonMap[i].monsters.push(createMonster(ms));
     });
