@@ -16,7 +16,7 @@ import {
   PlayerActionName,
 } from '../types/SharedTypes';
 import {BLACK, WHITE} from './colors';
-import {getBacking} from './drawing';
+import {getBacking, getHpBar} from './drawing';
 import {loseGame, winGame} from './screen-manager';
 
 const xVisibleCells = 7;
@@ -243,6 +243,24 @@ export class ClientGame {
     }
   }
 
+  private drawPlayer(player: Player, circlePoint: paper.Point, cellCoords: Coordinate, clickHandler: () => void): void {
+    const playerRaster = new paper.Raster(player.currentHp > 0 ? player.character : CharacterName.Dead);
+    playerRaster.position = circlePoint;
+    const playerRasterScale = (getCellWidth() / playerRaster.width) * 0.8;
+    playerRaster.scale(playerRasterScale);
+    playerRaster.shadowColor = WHITE;
+    playerRaster.shadowBlur = 22;
+    const playerGroup = new paper.Group([
+      getBacking(player.color, circlePoint, playerRaster.width * playerRasterScale),
+      playerRaster,
+    ]);
+    if (player.currentHp < player.maxHp) {
+      playerGroup.addChild(getHpBar(player, circlePoint, playerRaster.width * playerRasterScale));
+    }
+    playerGroup.onClick = clickHandler;
+    this.drawnMap[cellCoords] = playerGroup;
+  }
+
   private drawCell(offsetX: number, offsetY: number, cell: Cell): void {
     const {currentPlayer} = this;
     const cellCoords: Coordinate = `${offsetX},${offsetY}`;
@@ -288,20 +306,7 @@ export class ClientGame {
           occupyingPlayer = standingPlayer;
         }
       }
-      const playerRaster = new paper.Raster(
-        occupyingPlayer.currentHp > 0 ? occupyingPlayer.character : CharacterName.Dead,
-      );
-      playerRaster.position = circlePoint;
-      const playerRasterScale = (getCellWidth() / cellBackgroundRaster.width) * 0.8;
-      playerRaster.scale(playerRasterScale);
-      playerRaster.shadowColor = WHITE;
-      playerRaster.shadowBlur = 22;
-      const playerGroup = new paper.Group([
-        getBacking(occupyingPlayer.color, circlePoint, playerRaster.width * playerRasterScale),
-        playerRaster,
-      ]);
-      playerGroup.onClick = clickHandler;
-      this.drawnMap[cellCoords] = playerGroup;
+      this.drawPlayer(occupyingPlayer, circlePoint, cellCoords, clickHandler);
     }
   }
 
