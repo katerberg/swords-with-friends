@@ -9,14 +9,13 @@ import {
   Game,
   ItemType,
   Messages,
-  MonsterType,
   NumberCoordinates,
   Player,
   PlayerAction,
   PlayerActionName,
 } from '../types/SharedTypes';
 import {BLACK, WHITE} from './colors';
-import {getBacking, getHpBar} from './drawing';
+import {getBacking, getHpBar, getMonster} from './drawing';
 import {loseGame, winGame} from './screen-manager';
 
 const xVisibleCells = 7;
@@ -24,7 +23,7 @@ const yVisibleCells = 11;
 const cellPadding = 0;
 const badgePadding = 6;
 
-function getCellWidth(): number {
+export function getCellWidth(): number {
   const {width} = globalThis.gameElement.getBoundingClientRect();
   return (width - cellPadding * 2 * xVisibleCells) / xVisibleCells;
 }
@@ -312,22 +311,7 @@ export class ClientGame {
 
   private drawMonsters(): void {
     this.dungeonMap[this.level].monsters.forEach((monster) => {
-      let raster: paper.Raster;
-      switch (monster.type) {
-        case MonsterType.Goblin:
-          raster = new paper.Raster('character-goblin');
-          break;
-        default:
-          return;
-      }
-      const {x: coordX, y: coordY} = this.getCellCenterPointFromCoordinates(`${monster.x},${monster.y}`);
-      const circlePoint = new paper.Point(coordX, coordY);
-      raster.position = circlePoint;
-      const rasterScale = (getCellWidth() / raster.width) * 0.8;
-      raster.scale(rasterScale);
-      raster.shadowColor = WHITE;
-      raster.shadowBlur = 42;
-      const monsterGroup = new paper.Group([getBacking('#fff', circlePoint, rasterScale * raster.width), raster]);
+      const monsterGroup = getMonster(monster, this.getCellCenterPointFromCoordinates(`${monster.x},${monster.y}`));
       monsterGroup.onClick = (): void =>
         this.handleCellClick(monster.x - this.currentPlayer.x, monster.y - this.currentPlayer.y);
       this.drawnMonsters[monster.monsterId] = monsterGroup;
