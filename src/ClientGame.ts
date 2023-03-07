@@ -3,6 +3,7 @@ import {coordsToNumberCoords} from '../types/math';
 import {
   Cell,
   CellType,
+  CharacterName,
   Coordinate,
   DungeonMap,
   Game,
@@ -202,7 +203,9 @@ export class ClientGame {
       (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y,
     );
     if (occupyingPlayer) {
-      const playerRaster = new paper.Raster(occupyingPlayer.currentHp > 0 ? 'character-swordwoman' : 'character-dead');
+      const playerRaster = new paper.Raster(
+        occupyingPlayer.currentHp > 0 ? occupyingPlayer.character : CharacterName.Dead,
+      );
       playerRaster.position = circlePoint;
       const playerRasterScale = (getCellWidth() / cellBackgroundRaster.width) * 0.8;
       playerRaster.scale(playerRasterScale);

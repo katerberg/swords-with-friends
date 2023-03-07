@@ -4,7 +4,7 @@ import {Server} from 'socket.io';
 import {v4 as uuid} from 'uuid';
 import {MAX_X, MAX_Y} from '../types/consts';
 import {coordsToNumberCoords} from '../types/math';
-import {Game, GamesHash, GameStatus, Messages, NumberCoordinates, Player} from '../types/SharedTypes';
+import {CharacterName, Game, GamesHash, GameStatus, Messages, NumberCoordinates, Player} from '../types/SharedTypes';
 import {contrast, getRandomColor} from './color';
 import {getRandomInt, getRandomName} from './data';
 import {createMap} from './dungeonMap';
@@ -90,6 +90,7 @@ function createPlayer(socketId: string, game: Game, isHost = false): Player {
     x,
     y,
     isHost,
+    character: CharacterName.SwordsWoman,
     name: getRandomName(),
     socketId,
     attackStrength: 5,
@@ -127,6 +128,15 @@ io.on('connection', (socket) => {
       games[gameId].players[playerIndex].name = name;
       socket.broadcast.emit(Messages.NameChanged, gameId, games[gameId].players);
       socket.broadcast.emit(Messages.CurrentGames, getAvailableGames());
+    }
+  });
+
+  socket.on(Messages.ChangeCharacter, (gameId: string, character: CharacterName) => {
+    const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
+    if (playerIndex !== undefined) {
+      console.log('changing character for ', games[gameId].players[playerIndex].name, character); //eslint-disable-line no-console
+      games[gameId].players[playerIndex].character = character;
+      socket.broadcast.emit(Messages.CharacterChanged, gameId, games[gameId].players);
     }
   });
 

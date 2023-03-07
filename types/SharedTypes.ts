@@ -2,16 +2,24 @@ export enum PlayerActionName {
   Move,
   LayDead,
 }
+
 export type PlayerAction = {
   name: PlayerActionName;
   target?: Coordinate;
   path?: Coordinate[];
 };
 
+export enum CharacterName {
+  Dead = 'character-dead',
+  SwordsMan = 'character-swordsman',
+  SwordsWoman = 'character-swordswoman',
+}
+
 export type Player = {
   x: number;
   y: number;
   playerId: string;
+  character: CharacterName;
   name: string;
   isHost: boolean;
   socketId?: string;
@@ -96,7 +104,9 @@ export enum Messages {
   StartGame = 'startGame',
   PlayersChangedInGame = 'playersChangedInGame',
   ChangeName = 'changeName',
+  ChangeCharacter = 'changeCharacter',
   NameChanged = 'nameChanged',
+  CharacterChanged = 'characterChanged',
   MovePlayer = 'movePlayer',
   PlayerActionQueued = 'playerActionQueued',
   TurnEnd = 'turnEnd',

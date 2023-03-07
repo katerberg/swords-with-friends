@@ -1,9 +1,13 @@
-import {Game, Messages, Player} from '../types/SharedTypes';
+import {CharacterName, Game, Messages, Player} from '../types/SharedTypes';
 import {ClientGame} from './ClientGame';
 import {swapScreens} from './screen-manager';
 
 function nameChange(newName: string): void {
   globalThis.socket.emit(Messages.ChangeName, globalThis.currentGameId, newName);
+}
+
+function characterChange(newCharacter: CharacterName): void {
+  globalThis.socket.emit(Messages.ChangeCharacter, globalThis.currentGameId, newCharacter);
 }
 
 function leaveGame(): void {
@@ -29,6 +33,17 @@ export function handleStartGame(): void {
   }
 }
 
+function getSrcFromCharacterName(character: CharacterName): string {
+  switch (character) {
+    case CharacterName.SwordsMan:
+      return './images/characters/swordsman.png';
+    case CharacterName.SwordsWoman:
+      return './images/characters/swordswoman.png';
+    default:
+      return './images/characters/dead.png';
+  }
+}
+
 export function populatePlayerList(players: Player[]): void {
   const playerLobbyList = document.getElementById('waiting-room-list');
   if (playerLobbyList) {
@@ -40,10 +55,14 @@ export function populatePlayerList(players: Player[]): void {
     let playerList = '<div class="player-list">';
     players.forEach((player) => {
       if (player.playerId === globalThis.playerId) {
-        playerList += `<div><input id="name-change-input" value="${player.name}" ></div>`;
+        playerList += `<div class="player-list-row"><img id="character-change-icon" class="character-change-icon" src="${getSrcFromCharacterName(
+          player.character,
+        )}" /><input id="name-change-input" value="${player.name}" ></div>`;
         ({isHost} = player);
       } else {
-        playerList += `<div>${player.name}${player.isHost ? '*' : ''}</div>`;
+        playerList += `<div class="player-list-row"><img class="character-change-icon" src="${getSrcFromCharacterName(
+          player.character,
+        )}" />${player.name}${player.isHost ? '*' : ''}</div>`;
       }
     });
     playerList += '</div>';
@@ -65,6 +84,23 @@ export function populatePlayerList(players: Player[]): void {
         nameChange(newName);
       };
     }
+
+    const characterIcon = document.getElementById('character-change-icon');
+    if (characterIcon) {
+      characterIcon.ontouchend = (): void => {
+        let newImage: string;
+        switch ((characterIcon as HTMLImageElement).src) {
+          case `${window.location.href}images/characters/swordswoman.png`:
+            newImage = './images/characters/swordsman.png';
+            characterChange(CharacterName.SwordsMan);
+            break;
+          default:
+            characterChange(CharacterName.SwordsWoman);
+            newImage = './images/characters/swordswoman.png';
+        }
+        (characterIcon as HTMLImageElement).src = newImage;
+      };
+    }
   }
   globalThis.socket.off(Messages.GameClosed);
   globalThis.socket.on(Messages.GameClosed, (gameId: string): void => {
@@ -77,6 +113,13 @@ export function populatePlayerList(players: Player[]): void {
   globalThis.socket.on(Messages.GameStarted, (gameId: string, game: Game): void => {
     if (globalThis.currentGameId === gameId) {
       startGame(game);
+    }
+  });
+
+  globalThis.socket.off(Messages.CharacterChanged);
+  globalThis.socket.on(Messages.CharacterChanged, (gameId: string, newPlayers: Player[]): void => {
+    if (globalThis.currentGameId === gameId) {
+      populatePlayerList(newPlayers);
     }
   });
 
