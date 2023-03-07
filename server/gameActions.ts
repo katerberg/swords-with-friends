@@ -63,7 +63,7 @@ function handlePlayerAttack(game: Game, player: Player, monster: Monster): void 
   monster.currentHp -= player.attackStrength;
   if (monster.currentHp <= 0) {
     const monsterList = game.dungeonMap[player.mapLevel].monsters;
-    const index = monsterList.findIndex((m) => m.monsterId);
+    const index = monsterList.findIndex((m) => m.monsterId === monster.monsterId);
     if (index >= 0) {
       monsterList.splice(index, 1);
     }
