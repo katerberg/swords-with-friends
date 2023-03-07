@@ -50,6 +50,7 @@ export type Monster = {
   maxHp: number;
   currentHp: number;
   attackStrength: number;
+  target: Coordinate | null;
   x: number;
   y: number;
 };

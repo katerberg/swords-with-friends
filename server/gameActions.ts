@@ -2,9 +2,18 @@ import * as ROT from 'rot-js';
 import {Server, Socket} from 'socket.io';
 import {AUTO_MOVE_DELAY} from '../types/consts';
 import {coordsToNumberCoords} from '../types/math';
-import {Coordinate, Game, Messages, Monster, Player, PlayerAction, PlayerActionName} from '../types/SharedTypes';
+import {
+  Coordinate,
+  Game,
+  Messages,
+  Monster,
+  NumberCoordinates,
+  Player,
+  PlayerAction,
+  PlayerActionName,
+} from '../types/SharedTypes';
 import {getMapLevel, isValidCoordinate} from './dungeonMap';
-import {getClosestPlayerToMonster, getMonsterInCell} from './monsters';
+import {getClosestPlayerToMonster, getMonsterInCell, handleMonsterActionTowardsTarget} from './monsters';
 import {getGames} from '.';
 
 export function isFreeCell(x: number, y: number, game: Game): boolean {
@@ -17,7 +26,7 @@ export function isFreeCell(x: number, y: number, game: Game): boolean {
   );
 }
 
-function isPathableCell(x: number, y: number, game: Game): boolean {
+function isPlayerPathableCell(x: number, y: number, game: Game): boolean {
   return (
     isValidCoordinate(x, y) &&
     game.players.every((player) => player.x !== x || player.y !== y) &&
@@ -25,16 +34,22 @@ function isPathableCell(x: number, y: number, game: Game): boolean {
   );
 }
 
-function calculatePath(game: Game, player: Player, targetX: number, targetY: number): Coordinate[] {
+export function calculatePath(
+  game: Game,
+  actor: NumberCoordinates,
+  targetX: number,
+  targetY: number,
+  pathableFunction: (x: number, y: number, game: Game) => boolean,
+): Coordinate[] {
   //a star
   const aStar = new ROT.Path.AStar(
     targetX,
     targetY,
     (astarX: number, astarY: number): boolean =>
-      (astarX === player.x && astarY === player.y) || isPathableCell(astarX, astarY, game),
+      (astarX === actor.x && astarY === actor.y) || pathableFunction(astarX, astarY, game),
   );
   const path: Coordinate[] = [];
-  aStar.compute(player.x, player.y, (computeX, computeY) => {
+  aStar.compute(actor.x, actor.y, (computeX, computeY) => {
     path.push(`${computeX},${computeY}`);
   });
   if (path.length > 0) {
@@ -59,7 +74,7 @@ function handlePlayerMovementAction(gameId: string, player: Player): void {
   const game = getGames()[gameId];
   const gamePlayer = game.players.find((loopPlayer) => loopPlayer.playerId === player.playerId);
   if (gamePlayer) {
-    if (!isPathableCell(x, y, game)) {
+    if (!isPlayerPathableCell(x, y, game)) {
       gamePlayer.currentAction = null;
       return;
     }
@@ -118,7 +133,13 @@ function executeMonsterActions(gameId: string): void {
   const game = getGames()[gameId];
   const mapLevel = getMapLevel(game);
   game.dungeonMap[mapLevel].monsters.forEach((monster) => {
-    console.log(getClosestPlayerToMonster(monster, game));
+    const closestPlayer = getClosestPlayerToMonster(monster, game);
+    if (closestPlayer) {
+      monster.target = `${closestPlayer.x},${closestPlayer.y}`;
+    }
+    if (monster.target) {
+      handleMonsterActionTowardsTarget(monster, game);
+    }
   });
 }
 
@@ -139,7 +160,7 @@ export function handleGameActions(io: Server, socket: Socket): void {
       const action: PlayerAction = {
         name: PlayerActionName.Move,
         target: `${x},${y}`,
-        path: calculatePath(games[gameId], games[gameId].players[playerIndex], x, y),
+        path: calculatePath(games[gameId], games[gameId].players[playerIndex], x, y, isPlayerPathableCell),
       };
       games[gameId].players[playerIndex].currentAction = action;
       io.emit(Messages.PlayerActionQueued, gameId, {

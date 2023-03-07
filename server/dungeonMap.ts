@@ -6,7 +6,7 @@ import {CellType, Coordinate, DungeonMap, Game, Monster, MonsterType} from '../t
 
 function createMonster(coordinate: Coordinate): Monster {
   const {x, y} = coordsToNumberCoords(coordinate);
-  return {x, y, type: MonsterType.Goblin, attackStrength: 1, maxHp: 5, currentHp: 5, monsterId: uuid()};
+  return {x, y, type: MonsterType.Goblin, attackStrength: 1, maxHp: 5, currentHp: 5, monsterId: uuid(), target: null};
 }
 
 export function isValidCoordinate(x: number, y: number): boolean {
