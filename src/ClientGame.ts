@@ -126,6 +126,8 @@ export class ClientGame {
       const updatedPlayer = game.players.find((gamePlayer) => gamePlayer.playerId === thisPlayer.playerId) as Player;
       thisPlayer.x = updatedPlayer.x;
       thisPlayer.y = updatedPlayer.y;
+      thisPlayer.currentHp = updatedPlayer.currentHp;
+      thisPlayer.maxHp = updatedPlayer.maxHp;
       thisPlayer.currentAction = updatedPlayer.currentAction;
     });
     this.resetAllBadgeContent();
@@ -200,7 +202,7 @@ export class ClientGame {
       (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y,
     );
     if (occupyingPlayer) {
-      const playerRaster = new paper.Raster('character-swordwoman');
+      const playerRaster = new paper.Raster(occupyingPlayer.currentHp > 0 ? 'character-swordwoman' : 'character-dead');
       playerRaster.position = circlePoint;
       const playerRasterScale = (getCellWidth() / cellBackgroundRaster.width) * 0.8;
       playerRaster.scale(playerRasterScale);

@@ -113,6 +113,8 @@ function executeQueuedActions(gameId: string, io: Server): void {
   game.lastActionTime = executionDate;
   game.players.forEach((player) => {
     switch (player.currentAction?.name) {
+      case PlayerActionName.LayDead:
+        break;
       case PlayerActionName.Move:
         handlePlayerMovementAction(gameId, player);
         break;
@@ -120,7 +122,7 @@ function executeQueuedActions(gameId: string, io: Server): void {
         console.warn('invalid action', gameId, player.playerId); // eslint-disable-line no-console
     }
   });
-  if (game.players.some((player) => player.currentAction)) {
+  if (game.players.some((player) => player.currentAction?.name !== PlayerActionName.LayDead)) {
     setTimeout(() => {
       if (game.lastActionTime === executionDate) {
         // eslint-disable-next-line @typescript-eslint/no-use-before-define
@@ -148,7 +150,7 @@ function getGameStatus(gameId: string): GameStatus {
   const game = getGames()[gameId];
   game.players.forEach((p) => {
     if (p.currentHp <= 0) {
-      p.currentAction = null;
+      p.currentAction = {name: PlayerActionName.LayDead};
     }
   });
   if (game.players.every((p) => p.currentHp <= 0)) {
@@ -175,7 +177,7 @@ export function handleGameActions(io: Server, socket: Socket): void {
   socket.on(Messages.MovePlayer, (gameId: string, x: number, y: number) => {
     const games = getGames();
     const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
-    if (playerIndex !== undefined && isValidCoordinate(x, y)) {
+    if (playerIndex !== undefined && games[gameId].players[playerIndex].currentHp > 0 && isValidCoordinate(x, y)) {
       const action: PlayerAction = {
         name: PlayerActionName.Move,
         target: `${x},${y}`,

@@ -1,5 +1,6 @@
 export enum PlayerActionName {
   Move,
+  LayDead,
 }
 export type PlayerAction = {
   name: PlayerActionName;
