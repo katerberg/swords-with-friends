@@ -19,6 +19,7 @@ export enum CharacterName {
 export type Player = {
   x: number;
   y: number;
+  items: Item[];
   playerId: string;
   character: CharacterName;
   name: string;

@@ -90,6 +90,7 @@ function createPlayer(socketId: string, game: Game, isHost = false): Player {
     isHost,
     character: CharacterName.SwordsWoman,
     name: getRandomName(),
+    items: [],
     socketId,
     attackStrength: 5,
     maxHp: 10,

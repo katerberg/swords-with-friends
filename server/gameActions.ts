@@ -71,6 +71,18 @@ function handlePlayerAttack(game: Game, player: Player, monster: Monster): void 
   }
 }
 
+function playerMovesTo(x: number, y: number, player: Player, game: Game): void {
+  player.x = x;
+  player.y = y;
+  const cell = game.dungeonMap[player.mapLevel].cells[`${x},${y}`];
+  while (cell.items.length > 0) {
+    const item = cell.items.pop();
+    if (item) {
+      player.items.push(item);
+    }
+  }
+}
+
 function handlePlayerMovementAction(gameId: string, clientPlayer: Player): void {
   const game = getGames()[gameId];
   const gamePlayer = game.players.find((loopPlayer) => loopPlayer.playerId === clientPlayer.playerId);
@@ -85,8 +97,7 @@ function handlePlayerMovementAction(gameId: string, clientPlayer: Player): void 
     if (Math.abs(targetX - gamePlayer.x) <= 1 && Math.abs(targetY - gamePlayer.y) <= 1) {
       const monster = getMonsterInCell(targetX, targetY, game);
       if (!monster) {
-        gamePlayer.x = targetX;
-        gamePlayer.y = targetY;
+        playerMovesTo(targetX, targetY, gamePlayer, game);
         if (isOnExitCell(gamePlayer, game)) {
           gamePlayer.currentAction = {name: PlayerActionName.WaitOnExit};
         } else {
@@ -112,8 +123,7 @@ function handlePlayerMovementAction(gameId: string, clientPlayer: Player): void 
         gamePlayer.currentAction = null;
         return;
       }
-      gamePlayer.x = newX;
-      gamePlayer.y = newY;
+      playerMovesTo(newX, newY, gamePlayer, game);
     } else {
       gamePlayer.currentAction = null;
     }
