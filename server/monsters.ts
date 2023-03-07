@@ -11,7 +11,7 @@ export function getMonsterInCell(x: number, y: number, game: Game): Monster | nu
   return game.dungeonMap[getMapLevel(game)].monsters.find((monster) => monster.x === x && monster.y === y) || null;
 }
 
-function getPlayersInViewOfMonster(monster: Monster, game: Game): Player[] {
+function getLivingPlayersInViewOfMonster(monster: Monster, game: Game): Player[] {
   const mapLevel = getMapLevel(game);
 
   function lightPasses(x: number, y: number): boolean {
@@ -28,7 +28,7 @@ function getPlayersInViewOfMonster(monster: Monster, game: Game): Player[] {
 
   viewLines.compute(monster.x, monster.y, 10, (x, y) => {
     const viewPlayer = getPlayerInCell(x, y, game);
-    if (viewPlayer) {
+    if (viewPlayer && viewPlayer.currentHp > 0) {
       playersInView.push(viewPlayer);
     }
   });
@@ -43,7 +43,7 @@ function calculateDistanceBetween(coord1: NumberCoordinates, coord2: NumberCoord
 }
 
 export function getClosestPlayerToMonster(monster: Monster, game: Game): Player | null {
-  const playersInView = getPlayersInViewOfMonster(monster, game);
+  const playersInView = getLivingPlayersInViewOfMonster(monster, game);
   if (playersInView.length === 0) {
     return null;
   } else if (playersInView.length === 1) {
