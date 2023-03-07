@@ -80,6 +80,7 @@ export function handleMonsterActionTowardsTarget(monster: Monster, game: Game): 
   const player = getPlayerInCell(x, y, game);
   if (player && Math.abs(x - monster.x) <= 1 && Math.abs(y - monster.y) <= 1) {
     player.currentHp -= monster.attackStrength;
+    player.currentAction = null;
   } else {
     const path = calculatePath(game, monster, x, y, isMonsterPathableCell);
     if (path.length > 0) {
