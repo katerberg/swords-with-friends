@@ -19,13 +19,17 @@ import {getMapLevel, isOnExitCell, isValidCoordinate} from './dungeonMap';
 import {getClosestPlayerToMonster, getMonsterInCell, handleMonsterActionTowardsTarget} from './monsters';
 import {getGames, getStartLocationNearHost} from '.';
 
+function isFreeOfStandingPlayers(x: number, y: number, game: Game): boolean {
+  return game.players.every((player) => player.currentHp <= 0 || player.x !== x || player.y !== y);
+}
+
 export function isFreeCell(x: number, y: number, game: Game): boolean {
   const mapLevel = getMapLevel(game);
   return (
     isValidCoordinate(x, y) &&
     (!game.dungeonMap?.[mapLevel] ||
       game.dungeonMap[mapLevel].monsters.every((monster) => monster.x !== x || monster.y !== y)) &&
-    game.players.every((player) => player.x !== x || player.y !== y) &&
+    isFreeOfStandingPlayers(x, y, game) &&
     (!game.dungeonMap?.[mapLevel] || game.dungeonMap[mapLevel].cells[`${x},${y}`].isPassable)
   );
 }
@@ -33,7 +37,7 @@ export function isFreeCell(x: number, y: number, game: Game): boolean {
 function isPlayerPathableCell(x: number, y: number, game: Game): boolean {
   return (
     isValidCoordinate(x, y) &&
-    game.players.every((player) => player.x !== x || player.y !== y) &&
+    isFreeOfStandingPlayers(x, y, game) &&
     game.dungeonMap[getMapLevel(game)].cells[`${x},${y}`].isPassable
   );
 }

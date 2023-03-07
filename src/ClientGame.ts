@@ -276,10 +276,18 @@ export class ClientGame {
     this.handlePotentialDoor(cell, circlePoint, cellCoords, clickHandler);
     this.handlePotentialItem(cell, circlePoint, cellCoords, clickHandler);
 
-    const occupyingPlayer = this.players.find(
+    let occupyingPlayer = this.players.find(
       (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y,
     );
     if (occupyingPlayer) {
+      if (occupyingPlayer?.currentHp <= 0) {
+        const standingPlayer = this.players.find(
+          (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y && loopingPlayer.currentHp > 0,
+        );
+        if (standingPlayer) {
+          occupyingPlayer = standingPlayer;
+        }
+      }
       const playerRaster = new paper.Raster(
         occupyingPlayer.currentHp > 0 ? occupyingPlayer.character : CharacterName.Dead,
       );
