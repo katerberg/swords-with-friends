@@ -73,7 +73,7 @@ export function getSpiralAroundPoint({x, y}: NumberCoordinates): NumberCoordinat
   return getSpiral().map(({x: spiralX, y: spiralY}) => ({x: x + spiralX, y: y + spiralY}));
 }
 
-function getStartLocationNearHost(game: Game): NumberCoordinates {
+export function getStartLocationNearHost(game: Game): NumberCoordinates {
   const {x, y} = game.players.find((p) => p.isHost) as Player;
 
   const firstFree = getSpiralAroundPoint({x, y}).find(({x: spiralX, y: spiralY}) => isFreeCell(spiralX, spiralY, game));

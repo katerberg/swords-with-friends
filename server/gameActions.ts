@@ -13,9 +13,9 @@ import {
   PlayerAction,
   PlayerActionName,
 } from '../types/SharedTypes';
-import {getMapLevel, isValidCoordinate} from './dungeonMap';
+import {getMapLevel, isOnExitCell, isValidCoordinate} from './dungeonMap';
 import {getClosestPlayerToMonster, getMonsterInCell, handleMonsterActionTowardsTarget} from './monsters';
-import {getGames} from '.';
+import {getGames, getStartLocationNearHost} from '.';
 
 export function isFreeCell(x: number, y: number, game: Game): boolean {
   const mapLevel = getMapLevel(game);
@@ -88,7 +88,11 @@ function handlePlayerMovementAction(gameId: string, player: Player): void {
       } else {
         handlePlayerAttack(game, player, monster);
       }
-      player.currentAction = null;
+      if (isOnExitCell(player, game)) {
+        player.currentAction = {name: PlayerActionName.WaitOnExit};
+      } else {
+        player.currentAction = null;
+      }
     } else if (gamePlayer.currentAction?.path?.length && gamePlayer.currentAction?.path?.length > 0) {
       const target = gamePlayer.currentAction.path.shift();
       if (!target) {
@@ -118,6 +122,8 @@ function executeQueuedActions(gameId: string, io: Server): void {
         break;
       case PlayerActionName.Move:
         handlePlayerMovementAction(gameId, player);
+        break;
+      case PlayerActionName.WaitOnExit:
         break;
       default:
         console.warn('invalid action', gameId, player.playerId); // eslint-disable-line no-console
@@ -160,11 +166,35 @@ function getGameStatus(gameId: string): GameStatus {
   return game.gameStatus;
 }
 
+function checkLevelEnd(gameId: string): void {
+  const game = getGames()[gameId];
+  if (game.players.every((p) => isOnExitCell(p, game))) {
+    const host = game.players.find((p) => p.isHost);
+    if (host) {
+      host.mapLevel++;
+      const spawn = coordsToNumberCoords(game.dungeonMap[host.mapLevel].playerSpawn);
+      host.currentAction = null;
+      host.x = spawn.x;
+      host.y = spawn.y;
+      game.players
+        .filter((p) => !p.isHost)
+        .forEach((p) => {
+          p.mapLevel = host.mapLevel;
+          const startLocation = getStartLocationNearHost(game);
+          host.currentAction = null;
+          p.x = startLocation.x;
+          p.y = startLocation.y;
+        });
+    }
+  }
+}
+
 function checkTurnEnd(gameId: string, io: Server): void {
   const games = getGames();
   if (games[gameId]?.players.every((player) => player.currentAction !== null)) {
     executeQueuedActions(gameId, io);
     executeMonsterActions(gameId);
+    checkLevelEnd(gameId);
     const status = getGameStatus(gameId);
     if (status === GameStatus.Done) {
       io.emit(Messages.GameEnded, gameId, games[gameId]);

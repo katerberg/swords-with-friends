@@ -2,7 +2,16 @@ import * as ROT from 'rot-js';
 import {v4 as uuid} from 'uuid';
 import {MAX_LEVEL, MAX_X, MAX_Y} from '../types/consts';
 import {coordsToNumberCoords} from '../types/math';
-import {CellType, Coordinate, DungeonMap, Game, Monster, MonsterType, NumberCoordinates} from '../types/SharedTypes';
+import {
+  CellType,
+  Coordinate,
+  DungeonMap,
+  Game,
+  Monster,
+  MonsterType,
+  NumberCoordinates,
+  Player,
+} from '../types/SharedTypes';
 import {isFreeCell} from './gameActions';
 import {getRandomFreeLocation, getSpiralAroundPoint} from '.';
 
@@ -13,6 +22,12 @@ function createMonster(coordinate: Coordinate): Monster {
 
 export function isValidCoordinate(x: number, y: number): boolean {
   return x >= 0 && x <= MAX_X && y >= 0 && y <= MAX_Y;
+}
+
+export function isOnExitCell(player: Player, game: Game): boolean {
+  return game.dungeonMap[player.mapLevel].exit.some(
+    (e) => coordsToNumberCoords(e).x === player.x && coordsToNumberCoords(e).y === player.y,
+  );
 }
 
 export function getMapLevel(game: Game): number {

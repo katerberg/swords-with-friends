@@ -31,8 +31,6 @@ function getCellWidth(): number {
 export class ClientGame {
   dungeonMap: DungeonMap;
 
-  level: number;
-
   drawnTiles: {[key: Coordinate]: paper.Group};
 
   drawnMap: {[key: Coordinate]: paper.Group};
@@ -72,13 +70,16 @@ export class ClientGame {
     this.drawnMonsters = {};
     this.drawnMovementPaths = {};
     this.drawnTiles = {};
-    this.level = 0;
     this.dungeonMap = game.dungeonMap;
 
     globalThis.socket.on(Messages.GameEnded, endGame);
     globalThis.socket.on(Messages.TurnEnd, this.handleTurnEnd.bind(this));
     globalThis.socket.on(Messages.PlayerActionQueued, this.handlePlayerActionQueue.bind(this));
     this.drawMap();
+  }
+
+  private get level(): number {
+    return this.players[0].mapLevel;
   }
 
   private get currentPlayer(): Player {
@@ -127,6 +128,7 @@ export class ClientGame {
       const updatedPlayer = game.players.find((gamePlayer) => gamePlayer.playerId === thisPlayer.playerId) as Player;
       thisPlayer.x = updatedPlayer.x;
       thisPlayer.y = updatedPlayer.y;
+      thisPlayer.mapLevel = updatedPlayer.mapLevel;
       thisPlayer.currentHp = updatedPlayer.currentHp;
       thisPlayer.maxHp = updatedPlayer.maxHp;
       thisPlayer.currentAction = updatedPlayer.currentAction;

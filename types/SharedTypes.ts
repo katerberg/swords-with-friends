@@ -1,6 +1,7 @@
 export enum PlayerActionName {
   Move,
   LayDead,
+  WaitOnExit,
 }
 
 export type PlayerAction = {
