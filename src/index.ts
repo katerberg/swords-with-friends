@@ -1,13 +1,14 @@
 import './index.scss';
 import './start-screen.scss';
 import './waiting-room.scss';
+import './end-screen.scss';
 import './games-lobby.scss';
 import * as paper from 'paper';
 import {io} from 'socket.io-client';
 import {API_BASE, SOCKET_BASE} from '../types/consts';
 import {Game, Messages} from '../types/SharedTypes';
 import {isDebug} from './debug';
-import {swapScreens} from './screen-manager';
+import {endGame, swapScreens} from './screen-manager';
 import {handleStartGame, populatePlayerList} from './waiting-room';
 
 // screen.orientation?.lock('portrait');
@@ -114,6 +115,10 @@ function cancelWaitingRoom(): void {
   swapScreens('waiting-room', 'start-screen');
 }
 
+function closeEndScreen(): void {
+  swapScreens('end-screen', 'start-screen');
+}
+
 function jumpToNewGame(): void {
   if (!globalThis.socket.id) {
     setTimeout(jumpToNewGame, 10);
@@ -153,11 +158,21 @@ window.addEventListener('load', () => {
     if (waitingRoomCancelButton) {
       waitingRoomCancelButton.ontouchend = cancelWaitingRoom;
     }
+    const endScreenDonebutton = document.getElementById('end-screen-done-button');
+    if (endScreenDonebutton) {
+      endScreenDonebutton.ontouchend = closeEndScreen;
+    }
 
     globalThis.socket = io(SOCKET_BASE);
 
     if (isDebug('newGame')) {
       setTimeout(jumpToNewGame, 1);
+    }
+    if (isDebug('endScreen')) {
+      setTimeout(() => {
+        swapScreens('start-screen', 'end-screen');
+        endGame();
+      }, 1);
     }
   }
 });

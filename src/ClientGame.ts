@@ -15,6 +15,7 @@ import {
 } from '../types/SharedTypes';
 import {BLACK, WHITE} from './colors';
 import {getBacking} from './drawing';
+import {endGame} from './screen-manager';
 
 const xVisibleCells = 7;
 const yVisibleCells = 11;
@@ -73,6 +74,7 @@ export class ClientGame {
     this.level = 0;
     this.dungeonMap = game.dungeonMap;
 
+    globalThis.socket.on(Messages.GameEnded, endGame);
     globalThis.socket.on(Messages.TurnEnd, this.handleTurnEnd.bind(this));
     globalThis.socket.on(Messages.PlayerActionQueued, this.handlePlayerActionQueue.bind(this));
     this.drawMap();

@@ -5,6 +5,7 @@ import {coordsToNumberCoords} from '../types/math';
 import {
   Coordinate,
   Game,
+  GameStatus,
   Messages,
   Monster,
   NumberCoordinates,
@@ -143,13 +144,17 @@ function executeMonsterActions(gameId: string): void {
   });
 }
 
-function checkPlayerStatuses(gameId: string): void {
+function getGameStatus(gameId: string): GameStatus {
   const game = getGames()[gameId];
   game.players.forEach((p) => {
     if (p.currentHp <= 0) {
       p.currentAction = null;
     }
   });
+  if (game.players.every((p) => p.currentHp <= 0)) {
+    game.gameStatus = GameStatus.Done;
+  }
+  return game.gameStatus;
 }
 
 function checkTurnEnd(gameId: string, io: Server): void {
@@ -157,8 +162,12 @@ function checkTurnEnd(gameId: string, io: Server): void {
   if (games[gameId]?.players.every((player) => player.currentAction !== null)) {
     executeQueuedActions(gameId, io);
     executeMonsterActions(gameId);
-    checkPlayerStatuses(gameId);
-    io.emit(Messages.TurnEnd, gameId, games[gameId]);
+    const status = getGameStatus(gameId);
+    if (status === GameStatus.Done) {
+      io.emit(Messages.GameEnded, gameId, games[gameId]);
+    } else {
+      io.emit(Messages.TurnEnd, gameId, games[gameId]);
+    }
   }
 }
 

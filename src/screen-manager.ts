@@ -6,3 +6,10 @@ export function swapScreens(currentScreen: string, newScreen: string): void {
     currentScreenElement.classList.remove('visible');
   }
 }
+
+export function endGame(): void {
+  const newScreenElement = document.getElementById('end-screen');
+  if (newScreenElement) {
+    newScreenElement.classList.add('visible');
+  }
+}

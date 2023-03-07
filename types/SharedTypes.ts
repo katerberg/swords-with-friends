@@ -90,6 +90,7 @@ export enum Messages {
   LeaveGame = 'leaveGame',
   GameClosed = 'gameClosed',
   GameStarted = 'gameStarted',
+  GameEnded = 'gameEnded',
   CurrentGames = 'currentGames',
   StartGame = 'startGame',
   PlayersChangedInGame = 'playersChangedInGame',
@@ -101,9 +102,3 @@ export enum Messages {
 }
 
 export type GamesHash = {[key: string]: Game};
-
-export type OnFrameEvent = {
-  delta: number;
-  time: number;
-  count: number;
-};
