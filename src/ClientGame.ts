@@ -191,6 +191,7 @@ export class ClientGame {
       door.scale(cellWidth / door.width);
       door.strokeWidth = 0;
       door.onClick = clickHandler;
+      this.drawnTiles[cellCoords].addChild(door);
     }
 
     const occupyingPlayer = this.players.find(

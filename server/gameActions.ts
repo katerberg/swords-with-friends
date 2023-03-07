@@ -1,17 +1,11 @@
 import * as ROT from 'rot-js';
 import {Server, Socket} from 'socket.io';
-import {AUTO_MOVE_DELAY, MAX_X, MAX_Y} from '../types/consts';
+import {AUTO_MOVE_DELAY} from '../types/consts';
 import {coordsToNumberCoords} from '../types/math';
 import {Coordinate, Game, Messages, Monster, Player, PlayerAction, PlayerActionName} from '../types/SharedTypes';
+import {getMapLevel, isValidCoordinate} from './dungeonMap';
+import {getClosestPlayerToMonster, getMonsterInCell} from './monsters';
 import {getGames} from '.';
-
-function isValidCoordinate(x: number, y: number): boolean {
-  return x >= 0 && x <= MAX_X && y >= 0 && y <= MAX_Y;
-}
-
-function getMapLevel(game: Game): number {
-  return game.players.length === 0 ? 0 : game.players[0].mapLevel;
-}
 
 export function isFreeCell(x: number, y: number, game: Game): boolean {
   const mapLevel = getMapLevel(game);
@@ -29,10 +23,6 @@ function isPathableCell(x: number, y: number, game: Game): boolean {
     game.players.every((player) => player.x !== x || player.y !== y) &&
     game.dungeonMap[getMapLevel(game)].cells[`${x},${y}`].isPassable
   );
-}
-
-function getMonsterInCell(x: number, y: number, game: Game): Monster | null {
-  return game.dungeonMap[getMapLevel(game)].monsters.find((monster) => monster.x === x || monster.y === y) || null;
 }
 
 function calculatePath(game: Game, player: Player, targetX: number, targetY: number): Coordinate[] {
@@ -123,8 +113,13 @@ function executeQueuedActions(gameId: string, io: Server): void {
     }, AUTO_MOVE_DELAY);
   }
 }
+
 function executeMonsterActions(gameId: string): void {
   const game = getGames()[gameId];
+  const mapLevel = getMapLevel(game);
+  game.dungeonMap[mapLevel].monsters.forEach((monster) => {
+    console.log(getClosestPlayerToMonster(monster, game));
+  });
 }
 
 function checkTurnEnd(gameId: string, io: Server): void {

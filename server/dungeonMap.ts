@@ -2,11 +2,19 @@ import * as ROT from 'rot-js';
 import {v4 as uuid} from 'uuid';
 import {MAX_LEVEL, MAX_X, MAX_Y} from '../types/consts';
 import {coordsToNumberCoords} from '../types/math';
-import {CellType, Coordinate, DungeonMap, Monster, MonsterType} from '../types/SharedTypes';
+import {CellType, Coordinate, DungeonMap, Game, Monster, MonsterType} from '../types/SharedTypes';
 
 function createMonster(coordinate: Coordinate): Monster {
   const {x, y} = coordsToNumberCoords(coordinate);
   return {x, y, type: MonsterType.Goblin, attackStrength: 1, maxHp: 5, currentHp: 5, monsterId: uuid()};
+}
+
+export function isValidCoordinate(x: number, y: number): boolean {
+  return x >= 0 && x <= MAX_X && y >= 0 && y <= MAX_Y;
+}
+
+export function getMapLevel(game: Game): number {
+  return game.players.length === 0 ? 0 : game.players[0].mapLevel;
 }
 
 export function createMap(): DungeonMap {
