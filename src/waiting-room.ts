@@ -55,14 +55,16 @@ export function populatePlayerList(players: Player[]): void {
     let playerList = '<div class="player-list">';
     players.forEach((player) => {
       if (player.playerId === globalThis.playerId) {
-        playerList += `<div class="player-list-row"><img id="character-change-icon" class="character-change-icon" src="${getSrcFromCharacterName(
+        playerList += `<div class="player-list-row"><img id="character-change-icon" style="background-color: ${
+          player.color
+        };" class="character-change-icon" src="${getSrcFromCharacterName(
           player.character,
         )}" /><input id="name-change-input" value="${player.name}" ></div>`;
         ({isHost} = player);
       } else {
-        playerList += `<div class="player-list-row"><img class="character-change-icon" src="${getSrcFromCharacterName(
-          player.character,
-        )}" />${player.name}${player.isHost ? '*' : ''}</div>`;
+        playerList += `<div class="player-list-row"><img class="character-change-icon" style="background-color: ${
+          player.color
+        }" src="${getSrcFromCharacterName(player.character)}" />${player.name}${player.isHost ? '*' : ''}</div>`;
       }
     });
     playerList += '</div>';
