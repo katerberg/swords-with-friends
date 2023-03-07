@@ -50,7 +50,7 @@ export function getClosestPlayerToMonster(monster: Monster, game: Game): Player 
     return playersInView[0];
   }
   let [player] = playersInView;
-  let distance = 9999;
+  let distance = calculateDistanceBetween(monster, player);
   playersInView.forEach((p, i) => {
     if (i !== 0) {
       const testDistance = calculateDistanceBetween(monster, p);
