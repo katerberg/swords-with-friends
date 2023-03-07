@@ -41,6 +41,15 @@ export enum CellType {
   Wall,
 }
 
+export enum ItemType {
+  Trophy,
+}
+
+export type Item = {
+  id: string;
+  type: ItemType;
+};
+
 export type Cell = {
   x: number;
   y: number;
@@ -49,6 +58,7 @@ export type Cell = {
   isPassable: boolean;
   isWalkable: boolean;
   type: CellType;
+  items: Item[];
 };
 
 export enum MonsterType {
@@ -72,7 +82,7 @@ export type MapLevel = {
   monsters: Monster[];
   playerSpawn: Coordinate;
   monsterSpawn: Coordinate[];
-  exit: Coordinate[];
+  exits: Coordinate[];
   cells: {
     [key: Coordinate]: Cell;
   };

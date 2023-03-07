@@ -7,6 +7,7 @@ import {
   Coordinate,
   DungeonMap,
   Game,
+  ItemType,
   Messages,
   MonsterType,
   NumberCoordinates,
@@ -180,6 +181,29 @@ export class ClientGame {
     }
   }
 
+  private handlePotentialItem(
+    cell: Cell,
+    circlePoint: paper.Point,
+    cellCoords: Coordinate,
+    clickHandler: () => void,
+  ): void {
+    if (cell.items.length) {
+      let rasterImage = '';
+      if (cell.items.some((item) => item.type === ItemType.Trophy)) {
+        rasterImage = 'orb08';
+      }
+      if (rasterImage !== '') {
+        const cellWidth = getCellWidth();
+        const item = new paper.Raster(rasterImage);
+        item.position = circlePoint;
+        item.scale(cellWidth / item.width);
+        item.strokeWidth = 0;
+        item.onClick = clickHandler;
+        this.drawnTiles[cellCoords].addChild(item);
+      }
+    }
+  }
+
   private handlePotentialDoor(
     cell: Cell,
     circlePoint: paper.Point,
@@ -231,6 +255,7 @@ export class ClientGame {
     this.drawnTiles[cellCoords] = new paper.Group([cellBackgroundRaster]);
     this.handlePotentialExit(cell, circlePoint, cellCoords, clickHandler);
     this.handlePotentialDoor(cell, circlePoint, cellCoords, clickHandler);
+    this.handlePotentialItem(cell, circlePoint, cellCoords, clickHandler);
 
     const occupyingPlayer = this.players.find(
       (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y,

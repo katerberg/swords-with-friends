@@ -7,6 +7,7 @@ import {
   Coordinate,
   DungeonMap,
   Game,
+  ItemType,
   Monster,
   MonsterType,
   NumberCoordinates,
@@ -25,7 +26,7 @@ export function isValidCoordinate(x: number, y: number): boolean {
 }
 
 export function isOnExitCell(player: Player, game: Game): boolean {
-  return game.dungeonMap[player.mapLevel].exit.some(
+  return game.dungeonMap[player.mapLevel].exits.some(
     (e) => coordsToNumberCoords(e).x === player.x && coordsToNumberCoords(e).y === player.y,
   );
 }
@@ -58,7 +59,7 @@ export function createMap(game: Game): DungeonMap {
   const map = new ROT.Map.Digger(MAX_X, MAX_Y, {dugPercentage: 0.1, corridorLength: [0, 5]});
 
   for (let i = 0; i < MAX_LEVEL; i++) {
-    dungeonMap[i] = {cells: {}, monsters: [], playerSpawn: '0,0', monsterSpawn: [], exit: []};
+    dungeonMap[i] = {cells: {}, monsters: [], playerSpawn: '0,0', monsterSpawn: [], exits: []};
     const mapCreationCallback = (x: number, y: number, value: number): void => {
       const type = value === 0 ? CellType.Earth : CellType.Wall;
       dungeonMap[i].cells[`${x},${y}`] = {
@@ -69,6 +70,7 @@ export function createMap(game: Game): DungeonMap {
         isEntrance: false,
         isExit: false,
         isWalkable: value === 0,
+        items: [],
       };
     };
     map._options.dugPercentage = (i + 1) * 0.2;
@@ -95,10 +97,14 @@ export function createMap(game: Game): DungeonMap {
     });
 
     const [exitX, exitY] = rooms[rooms.length - 1].getCenter();
-    getExits({x: exitX, y: exitY}, game).forEach((exit) => {
-      dungeonMap[i].exit.push(exit);
-      dungeonMap[i].cells[exit].type = CellType.Exit;
-    });
+    if (i !== MAX_LEVEL - 1) {
+      getExits({x: exitX, y: exitY}, game).forEach((exit) => {
+        dungeonMap[i].exits.push(exit);
+        dungeonMap[i].cells[exit].type = CellType.Exit;
+      });
+    } else {
+      dungeonMap[i].cells[`${exitX},${exitY}`].items.push({id: uuid(), type: ItemType.Trophy});
+    }
 
     dungeonMap[i].monsterSpawn.forEach((ms) => {
       dungeonMap[i].monsters.push(createMonster(ms));
