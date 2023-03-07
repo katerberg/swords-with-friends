@@ -71,36 +71,44 @@ function handlePlayerAttack(game: Game, player: Player, monster: Monster): void 
   }
 }
 
-function handlePlayerMovementAction(gameId: string, player: Player): void {
-  const {x, y} = coordsToNumberCoords(player.currentAction?.target as Coordinate);
+function handlePlayerMovementAction(gameId: string, clientPlayer: Player): void {
   const game = getGames()[gameId];
-  const gamePlayer = game.players.find((loopPlayer) => loopPlayer.playerId === player.playerId);
+  const gamePlayer = game.players.find((loopPlayer) => loopPlayer.playerId === clientPlayer.playerId);
   if (gamePlayer) {
-    if (!isPlayerPathableCell(x, y, game)) {
+    const {x: targetX, y: targetY} = coordsToNumberCoords(gamePlayer.currentAction?.target as Coordinate);
+    // Stop player from walking into other player
+    if (!isPlayerPathableCell(targetX, targetY, game)) {
       gamePlayer.currentAction = null;
       return;
     }
-    if (Math.abs(x - player.x) <= 1 && Math.abs(y - player.y) <= 1) {
-      const monster = getMonsterInCell(x, y, game);
+    // Next to goal
+    if (Math.abs(targetX - gamePlayer.x) <= 1 && Math.abs(targetY - gamePlayer.y) <= 1) {
+      const monster = getMonsterInCell(targetX, targetY, game);
       if (!monster) {
-        gamePlayer.x = x;
-        gamePlayer.y = y;
+        gamePlayer.x = targetX;
+        gamePlayer.y = targetY;
+        if (isOnExitCell(gamePlayer, game)) {
+          gamePlayer.currentAction = {name: PlayerActionName.WaitOnExit};
+        } else {
+          gamePlayer.currentAction = null;
+        }
       } else {
-        handlePlayerAttack(game, player, monster);
-      }
-      if (isOnExitCell(player, game)) {
-        player.currentAction = {name: PlayerActionName.WaitOnExit};
-      } else {
-        player.currentAction = null;
+        handlePlayerAttack(game, gamePlayer, monster);
+        gamePlayer.currentAction = null;
       }
     } else if (gamePlayer.currentAction?.path?.length && gamePlayer.currentAction?.path?.length > 0) {
       const target = gamePlayer.currentAction.path.shift();
+      // No next path step (shouldn't happen)
       if (!target) {
         gamePlayer.currentAction = null;
         return;
       }
       const {x: newX, y: newY} = coordsToNumberCoords(target);
       if (!isFreeCell(newX, newY, game)) {
+        const monster = getMonsterInCell(newX, newY, game);
+        if (monster) {
+          handlePlayerAttack(game, gamePlayer, monster);
+        }
         gamePlayer.currentAction = null;
         return;
       }
