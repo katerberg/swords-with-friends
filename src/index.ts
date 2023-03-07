@@ -8,7 +8,7 @@ import {io} from 'socket.io-client';
 import {API_BASE, SOCKET_BASE} from '../types/consts';
 import {Game, Messages} from '../types/SharedTypes';
 import {isDebug} from './debug';
-import {endGame, swapScreens} from './screen-manager';
+import {loseGame, swapScreens, winGame} from './screen-manager';
 import {handleStartGame, populatePlayerList} from './waiting-room';
 
 // screen.orientation?.lock('portrait');
@@ -115,8 +115,12 @@ function cancelWaitingRoom(): void {
   swapScreens('waiting-room', 'start-screen');
 }
 
-function closeEndScreen(): void {
-  swapScreens('end-screen', 'start-screen');
+function closeLoseScreen(): void {
+  swapScreens('lose-screen', 'start-screen');
+}
+
+function closeWinScreen(): void {
+  swapScreens('win-screen', 'start-screen');
 }
 
 function jumpToNewGame(): void {
@@ -158,9 +162,13 @@ window.addEventListener('load', () => {
     if (waitingRoomCancelButton) {
       waitingRoomCancelButton.ontouchend = cancelWaitingRoom;
     }
-    const endScreenDonebutton = document.getElementById('end-screen-done-button');
-    if (endScreenDonebutton) {
-      endScreenDonebutton.ontouchend = closeEndScreen;
+    const loseScreenDonebutton = document.getElementById('lose-screen-done-button');
+    if (loseScreenDonebutton) {
+      loseScreenDonebutton.ontouchend = closeLoseScreen;
+    }
+    const winScreenDonebutton = document.getElementById('win-screen-done-button');
+    if (winScreenDonebutton) {
+      winScreenDonebutton.ontouchend = closeWinScreen;
     }
 
     globalThis.socket = io(SOCKET_BASE);
@@ -168,10 +176,16 @@ window.addEventListener('load', () => {
     if (isDebug('newGame')) {
       setTimeout(jumpToNewGame, 1);
     }
-    if (isDebug('endScreen')) {
+    if (isDebug('winScreen')) {
       setTimeout(() => {
-        swapScreens('start-screen', 'end-screen');
-        endGame();
+        swapScreens('start-screen', 'win-screen');
+        winGame();
+      }, 1);
+    }
+    if (isDebug('loseScreen')) {
+      setTimeout(() => {
+        swapScreens('start-screen', 'lose-screen');
+        loseGame();
       }, 1);
     }
   }

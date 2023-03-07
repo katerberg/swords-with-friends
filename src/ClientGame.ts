@@ -17,7 +17,7 @@ import {
 } from '../types/SharedTypes';
 import {BLACK, WHITE} from './colors';
 import {getBacking} from './drawing';
-import {endGame} from './screen-manager';
+import {loseGame, winGame} from './screen-manager';
 
 const xVisibleCells = 7;
 const yVisibleCells = 11;
@@ -73,7 +73,8 @@ export class ClientGame {
     this.drawnTiles = {};
     this.dungeonMap = game.dungeonMap;
 
-    globalThis.socket.on(Messages.GameEnded, endGame);
+    globalThis.socket.on(Messages.GameWon, this.handleWonGame.bind(this));
+    globalThis.socket.on(Messages.GameLost, this.handleLostGame.bind(this));
     globalThis.socket.on(Messages.TurnEnd, this.handleTurnEnd.bind(this));
     globalThis.socket.on(Messages.PlayerActionQueued, this.handlePlayerActionQueue.bind(this));
     this.drawMap();
@@ -85,6 +86,20 @@ export class ClientGame {
 
   private get currentPlayer(): Player {
     return this.players.find((player) => player.playerId === globalThis.playerId) as Player;
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  private handleWonGame(gameId: string): void {
+    if (gameId === globalThis.currentGameId) {
+      winGame();
+    }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  private handleLostGame(gameId: string): void {
+    if (gameId === globalThis.currentGameId) {
+      loseGame();
+    }
   }
 
   private resetAllBadgeContent(): void {

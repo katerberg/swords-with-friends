@@ -96,7 +96,8 @@ export enum GameStatus {
   WaitingForPlayers,
   Ongoing,
   Saved,
-  Done,
+  Lost,
+  Won,
 }
 
 export type Game = {
@@ -113,7 +114,8 @@ export enum Messages {
   LeaveGame = 'leaveGame',
   GameClosed = 'gameClosed',
   GameStarted = 'gameStarted',
-  GameEnded = 'gameEnded',
+  GameLost = 'gameLost',
+  GameWon = 'gameWon',
   CurrentGames = 'currentGames',
   StartGame = 'startGame',
   PlayersChangedInGame = 'playersChangedInGame',

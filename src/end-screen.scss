@@ -1,7 +1,12 @@
 .end-screen {
   height: 100%;
   width: 100%;
-  background-color: #ffff0b;
+  &#lose-screen {
+    background-color: #ffff0b;
+  }
+  &#win-screen {
+    background-color: #ffffff;
+  }
   z-index: 100;
   display: none;
 

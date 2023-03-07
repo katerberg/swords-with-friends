@@ -7,8 +7,14 @@ export function swapScreens(currentScreen: string, newScreen: string): void {
   }
 }
 
-export function endGame(): void {
-  const newScreenElement = document.getElementById('end-screen');
+export function winGame(): void {
+  const newScreenElement = document.getElementById('win-screen');
+  if (newScreenElement) {
+    newScreenElement.classList.add('visible');
+  }
+}
+export function loseGame(): void {
+  const newScreenElement = document.getElementById('lose-screen');
   if (newScreenElement) {
     newScreenElement.classList.add('visible');
   }

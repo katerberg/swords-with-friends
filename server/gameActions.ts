@@ -3,9 +3,11 @@ import {Server, Socket} from 'socket.io';
 import {AUTO_MOVE_DELAY} from '../types/consts';
 import {coordsToNumberCoords} from '../types/math';
 import {
+  Cell,
   Coordinate,
   Game,
   GameStatus,
+  ItemType,
   Messages,
   Monster,
   NumberCoordinates,
@@ -71,16 +73,20 @@ function handlePlayerAttack(game: Game, player: Player, monster: Monster): void 
   }
 }
 
-function playerMovesTo(x: number, y: number, player: Player, game: Game): void {
-  player.x = x;
-  player.y = y;
-  const cell = game.dungeonMap[player.mapLevel].cells[`${x},${y}`];
+function playerPicksUpItems(cell: Cell, player: Player): void {
   while (cell.items.length > 0) {
     const item = cell.items.pop();
     if (item) {
       player.items.push(item);
     }
   }
+}
+
+function playerMovesTo(x: number, y: number, player: Player, game: Game): void {
+  player.x = x;
+  player.y = y;
+  const cell = game.dungeonMap[player.mapLevel].cells[`${x},${y}`];
+  playerPicksUpItems(cell, player);
 }
 
 function handlePlayerMovementAction(gameId: string, clientPlayer: Player): void {
@@ -179,7 +185,10 @@ function getGameStatus(gameId: string): GameStatus {
     }
   });
   if (game.players.every((p) => p.currentHp <= 0)) {
-    game.gameStatus = GameStatus.Done;
+    game.gameStatus = GameStatus.Lost;
+  }
+  if (game.players.some((p) => p.items.some((item) => item.type === ItemType.Trophy))) {
+    game.gameStatus = GameStatus.Won;
   }
   return game.gameStatus;
 }
@@ -214,8 +223,10 @@ function checkTurnEnd(gameId: string, io: Server): void {
     executeMonsterActions(gameId);
     checkLevelEnd(gameId);
     const status = getGameStatus(gameId);
-    if (status === GameStatus.Done) {
-      io.emit(Messages.GameEnded, gameId, games[gameId]);
+    if (status === GameStatus.Lost) {
+      io.emit(Messages.GameLost, gameId, games[gameId]);
+    } else if (status === GameStatus.Won) {
+      io.emit(Messages.GameWon, gameId, games[gameId]);
     } else {
       io.emit(Messages.TurnEnd, gameId, games[gameId]);
     }
