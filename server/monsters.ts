@@ -78,8 +78,8 @@ export function handleMonsterActionTowardsTarget(monster: Monster, game: Game): 
   }
   const {x, y} = coordsToNumberCoords(monster.target);
   const player = getPlayerInCell(x, y, game);
-  if (player && Math.abs(x - monster.x) === 1 && Math.abs(y - monster.y)) {
-    //attack
+  if (player && Math.abs(x - monster.x) <= 1 && Math.abs(y - monster.y) <= 1) {
+    player.currentHp -= monster.attackStrength;
   } else {
     const path = calculatePath(game, monster, x, y, isMonsterPathableCell);
     if (path.length > 0) {

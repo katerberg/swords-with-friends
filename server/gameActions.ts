@@ -143,11 +143,21 @@ function executeMonsterActions(gameId: string): void {
   });
 }
 
+function checkPlayerStatuses(gameId: string): void {
+  const game = getGames()[gameId];
+  game.players.forEach((p) => {
+    if (p.currentHp <= 0) {
+      p.currentAction = null;
+    }
+  });
+}
+
 function checkTurnEnd(gameId: string, io: Server): void {
   const games = getGames();
   if (games[gameId]?.players.every((player) => player.currentAction !== null)) {
     executeQueuedActions(gameId, io);
     executeMonsterActions(gameId);
+    checkPlayerStatuses(gameId);
     io.emit(Messages.TurnEnd, gameId, games[gameId]);
   }
 }
