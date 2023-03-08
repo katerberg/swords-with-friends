@@ -1,5 +1,5 @@
 import * as paper from 'paper';
-import {coordsToNumberCoords} from '../types/math';
+import {calculateDistanceBetween, coordsToNumberCoords} from '../types/math';
 import {
   Cell,
   CellType,
@@ -13,8 +13,9 @@ import {
   Player,
   PlayerAction,
   PlayerActionName,
+  VisiblityStatus,
 } from '../types/SharedTypes';
-import {BLACK, WHITE} from './colors';
+import {BLACK, FOV_SEEN_OVERLAY, WHITE} from './colors';
 import {getBacking, getHpBar, getMonster} from './drawing';
 import {loseGame, winGame} from './screen-manager';
 
@@ -260,6 +261,42 @@ export class ClientGame {
     this.drawnMap[cellCoords] = playerGroup;
   }
 
+  private handleFovOverlay(
+    cell: Cell,
+    center: paper.Point,
+    cellCoords: Coordinate,
+    width: number,
+    clickHandler: () => void,
+  ): void {
+    if (cell.visibilityStatus === VisiblityStatus.Seen) {
+      const rectTLPoint = new paper.Point(center);
+      rectTLPoint.x -= width / 2;
+      rectTLPoint.y -= width / 2;
+      const rectBRPoint = new paper.Point(center);
+      rectBRPoint.x += width / 2;
+      rectBRPoint.y += width / 2;
+      const fovOverlay = new paper.Shape.Rectangle(rectTLPoint, rectBRPoint);
+      fovOverlay.strokeWidth = 0;
+      fovOverlay.fillColor = FOV_SEEN_OVERLAY;
+      fovOverlay.onClick = clickHandler;
+      this.drawnTiles[cellCoords].addChild(fovOverlay);
+
+      // let rasterImage = '';
+      // if (cell.items.some((item) => item.type === ItemType.Trophy)) {
+      //   rasterImage = 'orb08';
+      // }
+      // if (rasterImage !== '') {
+      //   const cellWidth = getCellWidth();
+      //   const item = new paper.Raster(rasterImage);
+      //   item.position = circlePoint;
+      //   item.scale(cellWidth / item.width);
+      //   item.strokeWidth = 0;
+      //   item.onClick = clickHandler;
+      //   this.drawnTiles[cellCoords].addChild(item);
+      // }
+    }
+  }
+
   private drawCell(offsetX: number, offsetY: number, cell: Cell): void {
     const {currentPlayer} = this;
     const cellCoords: Coordinate = `${offsetX},${offsetY}`;
@@ -270,51 +307,60 @@ export class ClientGame {
     const circlePoint = new paper.Point(coordX, coordY);
 
     let cellBackgroundRaster: paper.Raster;
-    switch (cell.type) {
-      case CellType.VerticalDoor:
-      case CellType.HorizontalDoor:
-      case CellType.Earth:
-      case CellType.Exit:
-        cellBackgroundRaster = new paper.Raster('dirt01');
-        break;
-      case CellType.Wall:
-      default:
-        cellBackgroundRaster = new paper.Raster('ground01');
-        break;
+    if (cell.visibilityStatus === VisiblityStatus.Unseen) {
+      cellBackgroundRaster = new paper.Raster('black');
+    } else {
+      switch (cell.type) {
+        case CellType.VerticalDoor:
+        case CellType.HorizontalDoor:
+        case CellType.Earth:
+        case CellType.Exit:
+          cellBackgroundRaster = new paper.Raster('dirt01');
+          break;
+        case CellType.Wall:
+        default:
+          cellBackgroundRaster = new paper.Raster('ground01');
+          break;
+      }
     }
-    cellBackgroundRaster.strokeWidth = 0;
     cellBackgroundRaster.position = circlePoint;
+    const rasterScale = cellWidth / cellBackgroundRaster.width + 0.003;
     cellBackgroundRaster.scale(cellWidth / cellBackgroundRaster.width + 0.003);
     cellBackgroundRaster.strokeWidth = 0;
     const clickHandler = (): void => this.handleCellClick(offsetX, offsetY);
     cellBackgroundRaster.onClick = clickHandler;
     this.drawnTiles[cellCoords] = new paper.Group([cellBackgroundRaster]);
-    this.handlePotentialExit(cell, circlePoint, cellCoords, clickHandler);
-    this.handlePotentialDoor(cell, circlePoint, cellCoords, clickHandler);
-    this.handlePotentialItem(cell, circlePoint, cellCoords, clickHandler);
+    if (cell.visibilityStatus !== VisiblityStatus.Unseen) {
+      this.handlePotentialExit(cell, circlePoint, cellCoords, clickHandler);
+      this.handlePotentialDoor(cell, circlePoint, cellCoords, clickHandler);
+      this.handlePotentialItem(cell, circlePoint, cellCoords, clickHandler);
+      this.handleFovOverlay(cell, circlePoint, cellCoords, cellBackgroundRaster.width * rasterScale, clickHandler);
 
-    let occupyingPlayer = this.players.find(
-      (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y,
-    );
-    if (occupyingPlayer) {
-      if (occupyingPlayer?.currentHp <= 0) {
-        const standingPlayer = this.players.find(
-          (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y && loopingPlayer.currentHp > 0,
-        );
-        if (standingPlayer) {
-          occupyingPlayer = standingPlayer;
+      let occupyingPlayer = this.players.find(
+        (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y,
+      );
+      if (occupyingPlayer) {
+        if (occupyingPlayer?.currentHp <= 0) {
+          const standingPlayer = this.players.find(
+            (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y && loopingPlayer.currentHp > 0,
+          );
+          if (standingPlayer) {
+            occupyingPlayer = standingPlayer;
+          }
         }
+        this.drawPlayer(occupyingPlayer, circlePoint, cellCoords, clickHandler);
       }
-      this.drawPlayer(occupyingPlayer, circlePoint, cellCoords, clickHandler);
     }
   }
 
   private drawMonsters(): void {
     this.dungeonMap[this.level].monsters.forEach((monster) => {
-      const monsterGroup = getMonster(monster, this.getCellCenterPointFromCoordinates(`${monster.x},${monster.y}`));
-      monsterGroup.onClick = (): void =>
-        this.handleCellClick(monster.x - this.currentPlayer.x, monster.y - this.currentPlayer.y);
-      this.drawnMonsters[monster.monsterId] = monsterGroup;
+      if (this.dungeonMap[this.level].cells[`${monster.x},${monster.y}`].visibilityStatus === VisiblityStatus.Visible) {
+        const monsterGroup = getMonster(monster, this.getCellCenterPointFromCoordinates(`${monster.x},${monster.y}`));
+        monsterGroup.onClick = (): void =>
+          this.handleCellClick(monster.x - this.currentPlayer.x, monster.y - this.currentPlayer.y);
+        this.drawnMonsters[monster.monsterId] = monsterGroup;
+      }
     });
   }
 
@@ -383,11 +429,18 @@ export class ClientGame {
 
     this.drawMonsters();
 
-    this.players.forEach((player) => {
-      if (player.currentAction?.name === PlayerActionName.Move && player.currentAction?.path?.length) {
-        this.drawPlayerPath(player);
-      }
-    });
+    if (
+      this.players.length > 1 ||
+      (this.players[0].currentAction?.target &&
+        calculateDistanceBetween(this.players[0], coordsToNumberCoords(this.players[0].currentAction.target)) >= 2)
+    ) {
+      this.players.forEach((player) => {
+        if (player.currentAction?.name === PlayerActionName.Move && player.currentAction?.path?.length) {
+          this.drawPlayerPath(player);
+        }
+      });
+    }
+
     this.playerBadges.forEach((badge) => {
       badge.bringToFront();
     });

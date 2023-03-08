@@ -12,6 +12,7 @@ import {
   MonsterType,
   NumberCoordinates,
   Player,
+  VisiblityStatus,
 } from '../types/SharedTypes';
 import {isFreeCell} from './gameActions';
 import {getRandomFreeLocation, getSpiralAroundPoint} from '.';
@@ -53,6 +54,33 @@ function getExits(centerPoint: NumberCoordinates, game: Game): Coordinate[] {
   return exits;
 }
 
+function updateFovCells(playerX: number, playerY: number, game: Game, mapLevel: number): void {
+  function lightPasses(x: number, y: number): boolean {
+    const key: Coordinate = `${x},${y}`;
+    if (key in game.dungeonMap[mapLevel].cells) {
+      return game.dungeonMap[mapLevel].cells[key].isPassable;
+    }
+    return false;
+  }
+
+  const viewLines = new ROT.FOV.PreciseShadowcasting(lightPasses);
+  viewLines.compute(playerX, playerY, 10, (x, y) => {
+    game.dungeonMap[mapLevel].cells[`${x},${y}`].visibilityStatus = VisiblityStatus.Visible;
+  });
+}
+
+export function populateFov(game: Game): void {
+  const mapLevel = getMapLevel(game);
+  (Object.keys(game.dungeonMap[mapLevel].cells) as Coordinate[]).forEach((cellKey) => {
+    if (game.dungeonMap[mapLevel].cells[cellKey].visibilityStatus === VisiblityStatus.Visible) {
+      game.dungeonMap[mapLevel].cells[cellKey].visibilityStatus = VisiblityStatus.Seen;
+    }
+  });
+  game.players.forEach((p) => {
+    updateFovCells(p.x, p.y, game, mapLevel);
+  });
+}
+
 export function createMap(game: Game): DungeonMap {
   const dungeonMap: DungeonMap = [];
 
@@ -70,6 +98,7 @@ export function createMap(game: Game): DungeonMap {
         isEntrance: false,
         isExit: false,
         isWalkable: value === 0,
+        visibilityStatus: VisiblityStatus.Unseen,
         items: [],
       };
     };

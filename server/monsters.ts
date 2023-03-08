@@ -1,6 +1,6 @@
 import * as ROT from 'rot-js';
-import {coordsToNumberCoords} from '../types/math';
-import {Coordinate, Game, Monster, NumberCoordinates, Player} from '../types/SharedTypes';
+import {calculateDistanceBetween, coordsToNumberCoords} from '../types/math';
+import {Coordinate, Game, Monster, Player} from '../types/SharedTypes';
 import {getMapLevel, isValidCoordinate} from './dungeonMap';
 import {calculatePath} from './gameActions';
 
@@ -33,13 +33,6 @@ function getLivingPlayersInViewOfMonster(monster: Monster, game: Game): Player[]
     }
   });
   return playersInView;
-}
-
-function calculateDistanceBetween(coord1: NumberCoordinates, coord2: NumberCoordinates): number {
-  const xDistance = Math.abs(coord1.x - coord2.x);
-  const yDistance = Math.abs(coord1.y - coord2.y);
-
-  return Math.sqrt(Math.pow(xDistance, 2) + Math.pow(yDistance, 2));
 }
 
 export function getClosestPlayerToMonster(monster: Monster, game: Game): Player | null {

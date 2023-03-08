@@ -7,7 +7,7 @@ import {coordsToNumberCoords} from '../types/math';
 import {CharacterName, Game, GamesHash, GameStatus, Messages, NumberCoordinates, Player} from '../types/SharedTypes';
 import {contrast, getRandomColor} from './color';
 import {getRandomInt, getRandomName} from './data';
-import {createMap} from './dungeonMap';
+import {createMap, populateFov} from './dungeonMap';
 import {setup} from './express';
 import {handleGameActions, isFreeCell} from './gameActions';
 
@@ -160,6 +160,7 @@ io.on('connection', (socket) => {
       } else {
         console.error('No host found in creation'); //eslint-disable-line no-console
       }
+      populateFov(games[gameId]);
       io.emit(Messages.GameStarted, gameId, games[gameId]);
       socket.broadcast.emit(Messages.CurrentGames, getAvailableGames());
     }

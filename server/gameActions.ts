@@ -15,7 +15,7 @@ import {
   PlayerAction,
   PlayerActionName,
 } from '../types/SharedTypes';
-import {getMapLevel, isOnExitCell, isValidCoordinate} from './dungeonMap';
+import {getMapLevel, isOnExitCell, isValidCoordinate, populateFov} from './dungeonMap';
 import {getClosestPlayerToMonster, getMonsterInCell, handleMonsterActionTowardsTarget} from './monsters';
 import {getGames, getStartLocationNearHost} from '.';
 
@@ -226,6 +226,7 @@ function checkTurnEnd(gameId: string, io: Server): void {
     executeQueuedActions(gameId, io);
     executeMonsterActions(gameId);
     checkLevelEnd(gameId);
+    populateFov(games[gameId]);
     const status = getGameStatus(gameId);
     if (status === GameStatus.Lost) {
       io.emit(Messages.GameLost, gameId, games[gameId]);

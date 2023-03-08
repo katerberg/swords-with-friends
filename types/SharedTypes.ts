@@ -59,6 +59,7 @@ export type Cell = {
   isPassable: boolean;
   isWalkable: boolean;
   type: CellType;
+  visibilityStatus: VisiblityStatus;
   items: Item[];
 };
 
@@ -126,6 +127,12 @@ export enum Messages {
   MovePlayer = 'movePlayer',
   PlayerActionQueued = 'playerActionQueued',
   TurnEnd = 'turnEnd',
+}
+
+export enum VisiblityStatus {
+  Unseen,
+  Seen,
+  Visible,
 }
 
 export type GamesHash = {[key: string]: Game};
