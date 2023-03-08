@@ -35,11 +35,7 @@ export function isFreeCell(x: number, y: number, game: Game): boolean {
 }
 
 function isPlayerPathableCell(x: number, y: number, game: Game): boolean {
-  return (
-    isValidCoordinate(x, y) &&
-    isFreeOfStandingPlayers(x, y, game) &&
-    game.dungeonMap[getMapLevel(game)].cells[`${x},${y}`].isPassable
-  );
+  return isValidCoordinate(x, y) && game.dungeonMap[getMapLevel(game)].cells[`${x},${y}`].isPassable;
 }
 
 export function calculatePath(
