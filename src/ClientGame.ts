@@ -1,5 +1,5 @@
 import * as paper from 'paper';
-import {MAX_X, MAX_Y} from '../types/consts';
+import {MAX_X, MAX_Y, X_VISIBLE_CELLS, Y_VISIBLE_CELLS} from '../types/consts';
 import {calculateDistanceBetween, coordsToNumberCoords} from '../types/math';
 import {
   Cell,
@@ -17,17 +17,15 @@ import {
   VisiblityStatus,
 } from '../types/SharedTypes';
 import {BLACK, FOV_SEEN_OVERLAY, INVENTORY_BACKGROUND, TRANSPARENT, WHITE} from './colors';
-import {getBacking, getHpBar, getMonster, getRasterStringFromItems} from './drawing';
+import {getBacking, getHpBar, getInventoryItemSelectedMessage, getMonster, getRasterStringFromItems} from './drawing';
 import {loseGame, winGame} from './screen-manager';
 
-const xVisibleCells = 7;
-const yVisibleCells = 11;
 const cellPadding = 0;
 const badgePadding = 6;
 
 export function getCellWidth(): number {
   const {width} = globalThis.gameElement.getBoundingClientRect();
-  return (width - cellPadding * 2 * xVisibleCells) / xVisibleCells;
+  return (width - cellPadding * 2 * X_VISIBLE_CELLS) / X_VISIBLE_CELLS;
 }
 
 export class ClientGame {
@@ -51,6 +49,8 @@ export class ClientGame {
 
   isInventoryOpen: boolean;
 
+  message: paper.Group | null;
+
   playerBadges: {[playerId: string]: paper.Group};
 
   piggybackView: Player | null;
@@ -69,6 +69,7 @@ export class ClientGame {
     this.drawnTiles = {};
     this.drawnInventory = null;
     this.selectedInventoryItem = null;
+    this.message = null;
     this.dungeonMap = game.dungeonMap;
 
     globalThis.socket.on(Messages.GameWon, this.handleWonGame.bind(this));
@@ -106,6 +107,8 @@ export class ClientGame {
     const group = new paper.Group([circle, backpack]);
     group.onClick = (): void => {
       this.piggybackView = null;
+      this.selectedInventoryItem = null;
+      this.clearMessage();
       this.toggleInventoryOpen();
       this.drawMap();
     };
@@ -165,9 +168,16 @@ export class ClientGame {
     return this.players.find((gamePlayer) => gamePlayer.playerId === playerId);
   }
 
+  private clearMessage(): void {
+    this.message?.remove();
+    this.message = null;
+  }
+
   private handleBadgeClick(playerId: string): void {
     const player = this.getPlayer(playerId);
     if (player) {
+      this.clearMessage();
+      this.selectedInventoryItem = null;
       this.piggybackView = player;
       this.drawMap();
     }
@@ -246,14 +256,20 @@ export class ClientGame {
       return;
     }
 
-    globalThis.socket.emit(Messages.MovePlayer, globalThis.currentGameId, x, y);
+    if (!this.selectedInventoryItem) {
+      globalThis.socket.emit(Messages.MovePlayer, globalThis.currentGameId, x, y);
+    } else {
+      globalThis.socket.emit(Messages.UseItem, globalThis.currentGameId, x, y, this.selectedInventoryItem.itemId);
+      this.clearMessage();
+      this.selectedInventoryItem = null;
+    }
   }
 
   private getCellCenterPointFromCoordinates(coordinates: Coordinate): NumberCoordinates {
     const {currentPlayer} = this;
     const cellWidth = getCellWidth();
-    const xFromCenter = (xVisibleCells - 1) / 2;
-    const yFromCenter = (yVisibleCells - 1) / 2;
+    const xFromCenter = (X_VISIBLE_CELLS - 1) / 2;
+    const yFromCenter = (Y_VISIBLE_CELLS - 1) / 2;
     const {x, y} = coordsToNumberCoords(coordinates);
     const offsetX = currentPlayer.x - x;
     const offsetY = currentPlayer.y - y;
@@ -481,8 +497,10 @@ export class ClientGame {
   }
 
   private handleInventoryItemClick(item: Item): void {
+    this.toggleInventoryOpen();
     this.selectedInventoryItem = item;
-    this.isInventoryOpen = false;
+    this.message = getInventoryItemSelectedMessage();
+    this.drawMap();
   }
 
   private getInventoryItems(): paper.Group[] {
@@ -522,10 +540,10 @@ export class ClientGame {
       this.drawMap();
     };
     const tlPoint = new paper.Point(cellWidth * 0.5, cellWidth * 0.5);
-    const brPoint = new paper.Point(cellWidth * (xVisibleCells - 0.5), cellWidth * 4);
+    const brPoint = new paper.Point(cellWidth * (X_VISIBLE_CELLS - 0.5), cellWidth * 4);
     const inventoryBackground = new paper.Shape.Rectangle(tlPoint, brPoint);
     inventoryBackground.fillColor = INVENTORY_BACKGROUND;
-    const title = new paper.PointText(new paper.Point((cellWidth * (xVisibleCells - 1.5)) / 2, cellWidth));
+    const title = new paper.PointText(new paper.Point((cellWidth * (X_VISIBLE_CELLS - 1.5)) / 2, cellWidth));
     title.content = 'Inventory';
     title.strokeColor = BLACK;
     title.fontSize = 20;
@@ -569,6 +587,7 @@ export class ClientGame {
     Object.values(this.playerBadges).forEach((badge) => {
       badge.bringToFront();
     });
+    this.message?.bringToFront();
     if (this.isInventoryOpen) {
       this.drawInventory();
     }

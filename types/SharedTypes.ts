@@ -1,5 +1,6 @@
 export enum PlayerActionName {
   Move,
+  UseItem,
   LayDead,
   WaitOnExit,
 }
@@ -8,6 +9,7 @@ export type PlayerAction = {
   name: PlayerActionName;
   target?: Coordinate;
   path?: Coordinate[];
+  item?: string;
 };
 
 export enum CharacterName {
@@ -134,6 +136,7 @@ export enum Messages {
   MovePlayer = 'movePlayer',
   PlayerActionQueued = 'playerActionQueued',
   TurnEnd = 'turnEnd',
+  UseItem = 'useItem',
 }
 
 export enum VisiblityStatus {

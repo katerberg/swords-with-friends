@@ -7,6 +7,7 @@ import {
   Coordinate,
   Game,
   GameStatus,
+  Item,
   ItemType,
   Messages,
   Monster,
@@ -14,6 +15,7 @@ import {
   Player,
   PlayerAction,
   PlayerActionName,
+  PotionType,
   VisiblityStatus,
 } from '../types/SharedTypes';
 import {getMapLevel, isOnExitCell, isValidCoordinate, populateFov} from './dungeonMap';
@@ -94,50 +96,92 @@ function playerMovesTo(x: number, y: number, player: Player, game: Game): void {
   playerPicksUpItems(cell, player);
 }
 
+function handlePlayerUsePotion(game: Game, player: Player, item: Item, targetX: number, targetY: number): void {
+  const targetPlayer = game.players.find((p) => p.x === targetX && p.y === targetY);
+  const targetMonster = game.dungeonMap[player.mapLevel].monsters.find((m) => m.x === targetX && m.y === targetY);
+  const target = targetPlayer || targetMonster;
+  if (!target) {
+    return;
+  }
+  switch (item.subtype) {
+    case PotionType.Health:
+      target.currentHp = target.maxHp;
+      break;
+    case PotionType.Acid:
+      target.currentHp -= 9;
+      break;
+    default:
+  }
+}
+
+function handlePlayerUseItemAction(gameId: string, clientPlayer: Player): void {
+  const game = getGames()[gameId];
+  const gamePlayer = game.players.find((loopPlayer) => loopPlayer.playerId === clientPlayer.playerId);
+  if (!gamePlayer || !gamePlayer.currentAction) {
+    return;
+  }
+  const {currentAction} = gamePlayer;
+  gamePlayer.currentAction = null;
+
+  const {x: targetX, y: targetY} = coordsToNumberCoords(currentAction.target as Coordinate);
+  const itemIndex = gamePlayer.items.findIndex((i) => i.itemId === currentAction.item);
+  if (itemIndex === -1) {
+    return;
+  }
+  const [item] = gamePlayer.items.splice(itemIndex, 1);
+  switch (item.type) {
+    case ItemType.Potion:
+      handlePlayerUsePotion(game, gamePlayer, item, targetX, targetY);
+      break;
+    default:
+  }
+}
+
 function handlePlayerMovementAction(gameId: string, clientPlayer: Player): void {
   const game = getGames()[gameId];
   const gamePlayer = game.players.find((loopPlayer) => loopPlayer.playerId === clientPlayer.playerId);
-  if (gamePlayer) {
-    const {x: targetX, y: targetY} = coordsToNumberCoords(gamePlayer.currentAction?.target as Coordinate);
-    // Stop player from walking into other player
-    if (!isPlayerPathableCell(targetX, targetY, game)) {
+  if (!gamePlayer || !gamePlayer.currentAction) {
+    return;
+  }
+  const {x: targetX, y: targetY} = coordsToNumberCoords(gamePlayer.currentAction?.target as Coordinate);
+  // Stop player from walking into other player
+  if (!isPlayerPathableCell(targetX, targetY, game)) {
+    gamePlayer.currentAction = null;
+    return;
+  }
+  // Next to goal
+  if (Math.abs(targetX - gamePlayer.x) <= 1 && Math.abs(targetY - gamePlayer.y) <= 1) {
+    const monster = getMonsterInCell(targetX, targetY, game);
+    if (!monster) {
+      playerMovesTo(targetX, targetY, gamePlayer, game);
+      if (isOnExitCell(gamePlayer, game)) {
+        gamePlayer.currentAction = {name: PlayerActionName.WaitOnExit};
+      } else {
+        gamePlayer.currentAction = null;
+      }
+    } else {
+      handlePlayerAttack(game, gamePlayer, monster);
+      gamePlayer.currentAction = null;
+    }
+  } else if (gamePlayer.currentAction?.path?.length && gamePlayer.currentAction?.path?.length > 0) {
+    const target = gamePlayer.currentAction.path.shift();
+    // No next path step (shouldn't happen)
+    if (!target) {
       gamePlayer.currentAction = null;
       return;
     }
-    // Next to goal
-    if (Math.abs(targetX - gamePlayer.x) <= 1 && Math.abs(targetY - gamePlayer.y) <= 1) {
-      const monster = getMonsterInCell(targetX, targetY, game);
-      if (!monster) {
-        playerMovesTo(targetX, targetY, gamePlayer, game);
-        if (isOnExitCell(gamePlayer, game)) {
-          gamePlayer.currentAction = {name: PlayerActionName.WaitOnExit};
-        } else {
-          gamePlayer.currentAction = null;
-        }
-      } else {
+    const {x: newX, y: newY} = coordsToNumberCoords(target);
+    if (!isFreeCell(newX, newY, game)) {
+      const monster = getMonsterInCell(newX, newY, game);
+      if (monster) {
         handlePlayerAttack(game, gamePlayer, monster);
-        gamePlayer.currentAction = null;
       }
-    } else if (gamePlayer.currentAction?.path?.length && gamePlayer.currentAction?.path?.length > 0) {
-      const target = gamePlayer.currentAction.path.shift();
-      // No next path step (shouldn't happen)
-      if (!target) {
-        gamePlayer.currentAction = null;
-        return;
-      }
-      const {x: newX, y: newY} = coordsToNumberCoords(target);
-      if (!isFreeCell(newX, newY, game)) {
-        const monster = getMonsterInCell(newX, newY, game);
-        if (monster) {
-          handlePlayerAttack(game, gamePlayer, monster);
-        }
-        gamePlayer.currentAction = null;
-        return;
-      }
-      playerMovesTo(newX, newY, gamePlayer, game);
-    } else {
       gamePlayer.currentAction = null;
+      return;
     }
+    playerMovesTo(newX, newY, gamePlayer, game);
+  } else {
+    gamePlayer.currentAction = null;
   }
 }
 
@@ -148,6 +192,9 @@ function executeQueuedActions(gameId: string, io: Server): void {
   game.players.forEach((player) => {
     switch (player.currentAction?.name) {
       case PlayerActionName.LayDead:
+        break;
+      case PlayerActionName.UseItem:
+        handlePlayerUseItemAction(gameId, player);
         break;
       case PlayerActionName.Move:
         handlePlayerMovementAction(gameId, player);
@@ -240,6 +287,29 @@ function checkTurnEnd(gameId: string, io: Server): void {
 }
 
 export function handleGameActions(io: Server, socket: Socket): void {
+  socket.on(Messages.UseItem, (gameId: string, x: number, y: number, itemId: string) => {
+    const games = getGames();
+    const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
+    if (
+      playerIndex !== undefined &&
+      games[gameId].players[playerIndex].currentHp > 0 &&
+      isValidCoordinate(x, y) &&
+      games[gameId].players[playerIndex].items.findIndex((item) => itemId === item.itemId) > -1
+    ) {
+      const action: PlayerAction = {
+        name: PlayerActionName.UseItem,
+        target: `${x},${y}`,
+        item: itemId,
+      };
+      games[gameId].players[playerIndex].currentAction = action;
+      io.emit(Messages.PlayerActionQueued, gameId, {
+        action,
+        playerId: games[gameId].players[playerIndex].playerId,
+      });
+      checkTurnEnd(gameId, io);
+    }
+  });
+
   socket.on(Messages.MovePlayer, (gameId: string, x: number, y: number) => {
     const games = getGames();
     const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);

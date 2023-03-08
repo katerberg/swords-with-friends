@@ -1,7 +1,8 @@
 import * as paper from 'paper';
+import {X_VISIBLE_CELLS} from '../types/consts';
 import {Item, ItemType, Monster, MonsterType, NumberCoordinates, Player, PotionType} from '../types/SharedTypes';
 import {getCellWidth} from './ClientGame';
-import {RED, WHITE} from './colors';
+import {BLACK, RED, WHITE} from './colors';
 
 export function getBacking(color: string, center: paper.Point, width: number): paper.Shape.Rectangle {
   const rectTLPoint = new paper.Point(center);
@@ -74,6 +75,27 @@ export function getRasterStringFromItems(items: Item[]): string {
     return 'gem11';
   }
   return '';
+}
+
+export function getInventoryItemSelectedMessage(): paper.Group {
+  const cellWidth = getCellWidth();
+  const title = new paper.PointText(new paper.Point((cellWidth * (X_VISIBLE_CELLS - 1.5)) / 2, cellWidth));
+  title.content = 'Where?';
+  title.strokeColor = BLACK;
+  title.fontSize = 20;
+  title.fontWeight = 800;
+  title.shadowColor = WHITE;
+  title.shadowBlur = 22;
+  title.fillColor = WHITE;
+
+  const padding = 3;
+  const bl = new paper.Point(title.bounds.bottomLeft);
+  bl.x -= padding;
+  bl.y += padding;
+  const tr = new paper.Point(title.bounds.topRight);
+  tr.x += padding;
+  tr.y -= padding;
+  return new paper.Group([title]);
 }
 
 export function getFog(circlePoint: paper.Point): paper.Raster {
