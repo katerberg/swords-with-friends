@@ -212,7 +212,7 @@ function checkLevelEnd(gameId: string): void {
         .forEach((p) => {
           p.mapLevel = host.mapLevel;
           const startLocation = getStartLocationNearHost(game);
-          host.currentAction = null;
+          p.currentAction = null;
           p.x = startLocation.x;
           p.y = startLocation.y;
         });

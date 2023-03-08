@@ -1,4 +1,5 @@
 import * as paper from 'paper';
+import {MAX_X, MAX_Y} from '../types/consts';
 import {calculateDistanceBetween, coordsToNumberCoords} from '../types/math';
 import {
   Cell,
@@ -313,10 +314,10 @@ export class ClientGame {
     const rasterScale = cellWidth / cellBackgroundRaster.width + 0.003;
     cellBackgroundRaster.scale(cellWidth / cellBackgroundRaster.width + 0.003);
     cellBackgroundRaster.strokeWidth = 0;
-    const clickHandler = (): void => this.handleCellClick(offsetX, offsetY);
-    cellBackgroundRaster.onClick = clickHandler;
     this.drawnTiles[cellCoords] = new paper.Group([cellBackgroundRaster]);
     if (cell.visibilityStatus !== VisiblityStatus.Unseen) {
+      const clickHandler = (): void => this.handleCellClick(offsetX, offsetY);
+      this.drawnTiles[cellCoords].onClick = clickHandler;
       this.handlePotentialExit(cell, circlePoint, cellCoords, clickHandler);
       this.handlePotentialDoor(cell, circlePoint, cellCoords, clickHandler);
       this.handlePotentialItem(cell, circlePoint, cellCoords, clickHandler);
@@ -398,15 +399,13 @@ export class ClientGame {
   private drawMap(): void {
     this.clearExistingDrawings();
 
-    const {currentPlayer} = this;
-    const xFromCenter = (xVisibleCells - 1) / 2;
-    const yFromCenter = (yVisibleCells - 1) / 2;
-    for (let offsetX = -1 * xFromCenter; offsetX <= xFromCenter; offsetX++) {
-      for (let offSetY = -1 * yFromCenter; offSetY <= yFromCenter; offSetY++) {
-        const cell = this.dungeonMap[this.level].cells[`${currentPlayer.x + offsetX},${currentPlayer.y + offSetY}`];
+    const {x: playerX, y: playerY} = this.currentPlayer;
+    for (let cellX = 0; cellX < MAX_X; cellX++) {
+      for (let cellY = 0; cellY < MAX_Y; cellY++) {
+        const cell = this.dungeonMap[this.level].cells[`${cellX},${cellY}`];
         if (cell !== undefined) {
           //Tile
-          this.drawCell(offsetX, offSetY, cell);
+          this.drawCell(cellX - playerX, cellY - playerY, cell);
         } else {
           // Out of bounds
         }
