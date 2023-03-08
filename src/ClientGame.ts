@@ -17,7 +17,14 @@ import {
   VisiblityStatus,
 } from '../types/SharedTypes';
 import {BLACK, FOV_SEEN_OVERLAY, INVENTORY_BACKGROUND, TRANSPARENT, WHITE} from './colors';
-import {getBacking, getHpBar, getInventoryItemSelectedMessage, getMonster, getRasterStringFromItems} from './drawing';
+import {
+  getBacking,
+  getCellOffsetFromMouseEvent,
+  getHpBar,
+  getInventoryItemSelectedMessage,
+  getMonster,
+  getRasterStringFromItems,
+} from './drawing';
 import {loseGame, winGame} from './screen-manager';
 
 const cellPadding = 0;
@@ -33,7 +40,7 @@ export class ClientGame {
 
   drawnTiles: {[key: Coordinate]: paper.Group};
 
-  drawnMap: {[key: Coordinate]: paper.Group};
+  drawnPlayers: {[key: Coordinate]: paper.Group};
 
   drawnMonsters: {[key: string]: paper.Group};
 
@@ -63,7 +70,7 @@ export class ClientGame {
     this.isInventoryOpen = false;
     this.inventoryButton = this.getInventoryButton();
 
-    this.drawnMap = {};
+    this.drawnPlayers = {};
     this.drawnMonsters = {};
     this.drawnMovementPaths = {};
     this.drawnTiles = {};
@@ -353,7 +360,7 @@ export class ClientGame {
       playerGroup.addChild(getHpBar(player, circlePoint, playerRaster.width * playerRasterScale));
     }
     playerGroup.onClick = clickHandler;
-    this.drawnMap[cellCoords] = playerGroup;
+    this.drawnPlayers[cellCoords] = playerGroup;
   }
 
   private handleFovOverlay(
@@ -468,6 +475,10 @@ export class ClientGame {
     endingCircle.strokeColor = new paper.Color(player.color);
 
     const pathGroup = new paper.Group([path, endingCircle]);
+    pathGroup.onClick = (e: paper.MouseEvent): void => {
+      const {x, y} = getCellOffsetFromMouseEvent(e);
+      this.handleCellClick(x, y);
+    };
     this.drawnMovementPaths[player.playerId] = pathGroup;
   }
 
@@ -478,9 +489,9 @@ export class ClientGame {
       this.drawnInventory = null;
     }
 
-    Object.entries(this.drawnMap).forEach(([key, cell]) => {
+    Object.entries(this.drawnPlayers).forEach(([key, cell]) => {
       cell.remove();
-      delete this.drawnMap[key as Coordinate];
+      delete this.drawnPlayers[key as Coordinate];
     });
     Object.entries(this.drawnTiles).forEach(([key, cell]) => {
       cell.remove();

@@ -1,5 +1,5 @@
 import * as paper from 'paper';
-import {X_VISIBLE_CELLS} from '../types/consts';
+import {X_VISIBLE_CELLS, Y_VISIBLE_CELLS} from '../types/consts';
 import {Item, ItemType, Monster, MonsterType, NumberCoordinates, Player, PotionType} from '../types/SharedTypes';
 import {getCellWidth} from './ClientGame';
 import {BLACK, RED, WHITE} from './colors';
@@ -104,4 +104,17 @@ export function getFog(circlePoint: paper.Point): paper.Raster {
   const rasterScale = getCellWidth() / raster.width;
   raster.scale(rasterScale);
   return raster;
+}
+
+export function getCellOffsetFromMouseEvent(e: paper.MouseEvent): NumberCoordinates {
+  const cellWidth = getCellWidth();
+  const zeroBasedX = Math.floor(e.point.x / cellWidth);
+  const zeroBasedY = Math.floor(e.point.y / cellWidth);
+  const centerX = (X_VISIBLE_CELLS - 1) / 2;
+  const centerY = (Y_VISIBLE_CELLS - 1) / 2;
+
+  return {
+    x: -1 * (zeroBasedX - centerX),
+    y: -1 * (zeroBasedY - centerY),
+  };
 }
