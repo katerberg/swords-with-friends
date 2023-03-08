@@ -59,3 +59,11 @@ export function getMonster(monster: Monster, center: NumberCoordinates): paper.G
   }
   return monsterGroup;
 }
+
+export function getFog(circlePoint: paper.Point): paper.Raster {
+  const raster = new paper.Raster('fog');
+  raster.position = circlePoint;
+  const rasterScale = getCellWidth() / raster.width;
+  raster.scale(rasterScale);
+  return raster;
+}

@@ -280,20 +280,6 @@ export class ClientGame {
       fovOverlay.fillColor = FOV_SEEN_OVERLAY;
       fovOverlay.onClick = clickHandler;
       this.drawnTiles[cellCoords].addChild(fovOverlay);
-
-      // let rasterImage = '';
-      // if (cell.items.some((item) => item.type === ItemType.Trophy)) {
-      //   rasterImage = 'orb08';
-      // }
-      // if (rasterImage !== '') {
-      //   const cellWidth = getCellWidth();
-      //   const item = new paper.Raster(rasterImage);
-      //   item.position = circlePoint;
-      //   item.scale(cellWidth / item.width);
-      //   item.strokeWidth = 0;
-      //   item.onClick = clickHandler;
-      //   this.drawnTiles[cellCoords].addChild(item);
-      // }
     }
   }
 
