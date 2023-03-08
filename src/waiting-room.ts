@@ -22,7 +22,7 @@ async function startGame(game: Game): Promise<void> {
     gameLobby.classList.remove('visible');
   }
 
-  new ClientGame(game);
+  globalThis.clientGame = new ClientGame(game);
 }
 
 export function handleStartGame(): void {

@@ -44,11 +44,18 @@ export enum CellType {
 
 export enum ItemType {
   Trophy,
+  Potion,
+}
+
+export enum PotionType {
+  Health,
+  Acid,
 }
 
 export type Item = {
-  id: string;
+  itemId: string;
   type: ItemType;
+  subtype?: PotionType;
 };
 
 export type Cell = {

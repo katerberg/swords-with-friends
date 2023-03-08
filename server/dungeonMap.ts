@@ -132,7 +132,7 @@ export function createMap(game: Game): DungeonMap {
         dungeonMap[i].cells[exit].type = CellType.Exit;
       });
     } else {
-      dungeonMap[i].cells[`${exitX},${exitY}`].items.push({id: uuid(), type: ItemType.Trophy});
+      dungeonMap[i].cells[`${exitX},${exitY}`].items.push({itemId: uuid(), type: ItemType.Trophy});
     }
 
     dungeonMap[i].monsterSpawn.forEach((ms) => {

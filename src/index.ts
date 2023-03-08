@@ -123,12 +123,12 @@ function closeWinScreen(): void {
   swapScreens('win-screen', 'start-screen');
 }
 
-function jumpToNewGame(): void {
+async function jumpToNewGame(): Promise<void> {
   if (!globalThis.socket.id) {
-    setTimeout(jumpToNewGame, 10);
+    await setTimeout(jumpToNewGame, 10);
     return;
   }
-  handleCreateGame().then(() => {
+  return handleCreateGame().then(() => {
     handleStartGame();
   });
 }

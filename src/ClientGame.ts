@@ -8,7 +8,7 @@ import {
   Coordinate,
   DungeonMap,
   Game,
-  ItemType,
+  Item,
   Messages,
   NumberCoordinates,
   Player,
@@ -16,8 +16,8 @@ import {
   PlayerActionName,
   VisiblityStatus,
 } from '../types/SharedTypes';
-import {BLACK, FOV_SEEN_OVERLAY, WHITE} from './colors';
-import {getBacking, getHpBar, getMonster} from './drawing';
+import {BLACK, FOV_SEEN_OVERLAY, INVENTORY_BACKGROUND, TRANSPARENT, WHITE} from './colors';
+import {getBacking, getHpBar, getMonster, getRasterStringFromItems} from './drawing';
 import {loseGame, winGame} from './screen-manager';
 
 const xVisibleCells = 7;
@@ -41,7 +41,15 @@ export class ClientGame {
 
   drawnMovementPaths: {[playerId: string]: paper.Group};
 
+  drawnInventory: paper.Group | null;
+
+  selectedInventoryItem: Item | null;
+
   players: Player[];
+
+  inventoryButton: paper.Group;
+
+  isInventoryOpen: boolean;
 
   playerBadges: {[playerId: string]: paper.Group};
 
@@ -52,11 +60,15 @@ export class ClientGame {
 
     this.piggybackView = null;
     this.playerBadges = this.getPlayerBadges(game);
+    this.isInventoryOpen = false;
+    this.inventoryButton = this.getInventoryButton();
 
     this.drawnMap = {};
     this.drawnMonsters = {};
     this.drawnMovementPaths = {};
     this.drawnTiles = {};
+    this.drawnInventory = null;
+    this.selectedInventoryItem = null;
     this.dungeonMap = game.dungeonMap;
 
     globalThis.socket.on(Messages.GameWon, this.handleWonGame.bind(this));
@@ -64,6 +76,40 @@ export class ClientGame {
     globalThis.socket.on(Messages.TurnEnd, this.handleTurnEnd.bind(this));
     globalThis.socket.on(Messages.PlayerActionQueued, this.handlePlayerActionQueue.bind(this));
     this.drawMap();
+  }
+
+  private toggleInventoryOpen(): void {
+    const backpack = this.inventoryButton.lastChild as paper.Raster;
+    backpack.rotation = this.isInventoryOpen ? 0 : 30;
+    backpack.source = (backpack.source as string)
+      .replace('unlit', 'blah')
+      .replace('lit', 'unlit')
+      .replace('blah', 'lit');
+    this.isInventoryOpen = !this.isInventoryOpen;
+    this.selectedInventoryItem = null;
+  }
+
+  private getInventoryButton(): paper.Group {
+    const {height, width} = globalThis.gameElement.getBoundingClientRect();
+    const cellWidth = getCellWidth();
+    const circlePoint = new paper.Point(width - cellWidth, height - cellWidth);
+    const circle = new paper.Shape.Circle(circlePoint, cellWidth / 2);
+    circle.strokeWidth = 3;
+    circle.shadowColor = BLACK;
+    circle.shadowBlur = 12;
+    circle.fillColor = new paper.Color('green');
+    circle.strokeColor = BLACK;
+    const backpack = new paper.Raster('backpack-unlit');
+    const rasterScale = getCellWidth() / backpack.width;
+    backpack.scale(rasterScale);
+    backpack.position = circlePoint;
+    const group = new paper.Group([circle, backpack]);
+    group.onClick = (): void => {
+      this.piggybackView = null;
+      this.toggleInventoryOpen();
+      this.drawMap();
+    };
+    return group;
   }
 
   private getPlayerBadges(game: Game): {[playerId: string]: paper.Group} {
@@ -82,7 +128,8 @@ export class ClientGame {
         return 0;
       });
     const badges: {[playerId: string]: paper.Group} = {};
-    badgePlayers.forEach((player, i) => {
+    badgePlayers.forEach((player, index) => {
+      const i = index + 1;
       const circlePoint = new paper.Point(width - cellWidth, height - cellWidth - i * cellWidth - badgePadding * i);
       const circle = new paper.Shape.Circle(circlePoint, cellWidth / 2);
       circle.strokeWidth = 3;
@@ -242,10 +289,7 @@ export class ClientGame {
     clickHandler: () => void,
   ): void {
     if (cell.items.length) {
-      let rasterImage = '';
-      if (cell.items.some((item) => item.type === ItemType.Trophy)) {
-        rasterImage = 'orb08';
-      }
+      const rasterImage = getRasterStringFromItems(cell.items);
       if (rasterImage !== '') {
         const cellWidth = getCellWidth();
         const item = new paper.Raster(rasterImage);
@@ -412,6 +456,12 @@ export class ClientGame {
   }
 
   private clearExistingDrawings(): void {
+    // clear inventory
+    if (this.drawnInventory !== null) {
+      this.drawnInventory.remove();
+      this.drawnInventory = null;
+    }
+
     Object.entries(this.drawnMap).forEach(([key, cell]) => {
       cell.remove();
       delete this.drawnMap[key as Coordinate];
@@ -427,6 +477,62 @@ export class ClientGame {
     Object.entries(this.drawnMonsters).forEach(([key, image]) => {
       image.remove();
       delete this.drawnMonsters[key as string];
+    });
+  }
+
+  private handleInventoryItemClick(item: Item): void {
+    this.selectedInventoryItem = item;
+    this.isInventoryOpen = false;
+  }
+
+  private getInventoryItems(): paper.Group[] {
+    const {items} = this.currentPlayer;
+    const cellWidth = getCellWidth();
+
+    const cellPositions: paper.Point[] = [];
+    for (let row = 1; row <= 3; row++) {
+      for (let column = 1; column <= 6; column++) {
+        cellPositions.push(new paper.Point(cellWidth * column, cellWidth * (row + 0.5)));
+      }
+    }
+    return items.map((item, i) => {
+      if (!cellPositions[i]) {
+        return new paper.Group([]);
+      }
+      const raster = new paper.Raster(getRasterStringFromItems([item]));
+      raster.position = cellPositions[i];
+      const rasterScale = (getCellWidth() / raster.width) * 0.8;
+      raster.scale(rasterScale);
+      const backing = new paper.Shape.Circle(raster.position, (0.8 * cellWidth) / 2);
+      backing.fillColor = BLACK;
+      backing.strokeWidth = 0;
+      const group = new paper.Group([backing, raster]);
+      group.onClick = (): void => this.handleInventoryItemClick(item);
+      return group;
+    });
+  }
+
+  private drawInventory(): void {
+    const cellWidth = getCellWidth();
+    const {width, height} = globalThis.gameElement.getBoundingClientRect();
+    const transparentBackground = new paper.Shape.Rectangle(new paper.Point(0, 0), new paper.Point(width, height));
+    transparentBackground.fillColor = TRANSPARENT;
+    transparentBackground.onClick = (): void => {
+      this.toggleInventoryOpen();
+      this.drawMap();
+    };
+    const tlPoint = new paper.Point(cellWidth * 0.5, cellWidth * 0.5);
+    const brPoint = new paper.Point(cellWidth * (xVisibleCells - 0.5), cellWidth * 4);
+    const inventoryBackground = new paper.Shape.Rectangle(tlPoint, brPoint);
+    inventoryBackground.fillColor = INVENTORY_BACKGROUND;
+    const title = new paper.PointText(new paper.Point((cellWidth * (xVisibleCells - 1.5)) / 2, cellWidth));
+    title.content = 'Inventory';
+    title.strokeColor = BLACK;
+    title.fontSize = 20;
+    title.fontWeight = 100;
+    this.drawnInventory = new paper.Group([transparentBackground, inventoryBackground, title]);
+    this.getInventoryItems().forEach((item) => {
+      this.drawnInventory?.addChild(item);
     });
   }
 
@@ -463,5 +569,9 @@ export class ClientGame {
     Object.values(this.playerBadges).forEach((badge) => {
       badge.bringToFront();
     });
+    if (this.isInventoryOpen) {
+      this.drawInventory();
+    }
+    this.inventoryButton.bringToFront();
   }
 }

@@ -4,7 +4,17 @@ import {Server} from 'socket.io';
 import {v4 as uuid} from 'uuid';
 import {MAX_X, MAX_Y} from '../types/consts';
 import {coordsToNumberCoords} from '../types/math';
-import {CharacterName, Game, GamesHash, GameStatus, Messages, NumberCoordinates, Player} from '../types/SharedTypes';
+import {
+  CharacterName,
+  Game,
+  GamesHash,
+  GameStatus,
+  ItemType,
+  Messages,
+  NumberCoordinates,
+  Player,
+  PotionType,
+} from '../types/SharedTypes';
 import {contrast, getRandomColor} from './color';
 import {getRandomInt, getRandomName} from './data';
 import {createMap, populateFov} from './dungeonMap';
@@ -90,7 +100,7 @@ function createPlayer(socketId: string, game: Game, isHost = false): Player {
     isHost,
     character: CharacterName.SwordsWoman,
     name: getRandomName(),
-    items: [],
+    items: [{itemId: uuid(), type: ItemType.Potion, subtype: PotionType.Health}],
     socketId,
     attackStrength: 5,
     maxHp: 10,

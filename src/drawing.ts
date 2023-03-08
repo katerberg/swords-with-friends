@@ -1,5 +1,5 @@
 import * as paper from 'paper';
-import {Monster, MonsterType, NumberCoordinates, Player} from '../types/SharedTypes';
+import {Item, ItemType, Monster, MonsterType, NumberCoordinates, Player, PotionType} from '../types/SharedTypes';
 import {getCellWidth} from './ClientGame';
 import {RED, WHITE} from './colors';
 
@@ -58,6 +58,22 @@ export function getMonster(monster: Monster, center: NumberCoordinates): paper.G
     monsterGroup.addChild(getHpBar(monster, circlePoint, raster.width * rasterScale));
   }
   return monsterGroup;
+}
+
+export function getRasterStringFromItems(items: Item[]): string {
+  if (items.some((item) => item.type === ItemType.Trophy)) {
+    return 'orb08';
+  }
+  if (items.some((item) => item.type === ItemType.Potion)) {
+    if (items.some((item) => item.subtype === PotionType.Health)) {
+      return 'gem91';
+    }
+    if (items.some((item) => item.subtype === PotionType.Acid)) {
+      return 'gem95';
+    }
+    return 'gem11';
+  }
+  return '';
 }
 
 export function getFog(circlePoint: paper.Point): paper.Raster {
