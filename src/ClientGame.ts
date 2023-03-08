@@ -45,11 +45,14 @@ export class ClientGame {
 
   playerBadges: paper.Group[];
 
+  piggybackView: Player | null;
+
   constructor(game: Game) {
     this.players = game.players;
     const {height, width} = globalThis.gameElement.getBoundingClientRect();
     const cellWidth = getCellWidth();
 
+    this.piggybackView = null;
     this.playerBadges = game.players.map((player, i) => {
       const circlePoint = new paper.Point(width - cellWidth, height - cellWidth - i * cellWidth - badgePadding * i);
       const circle = new paper.Shape.Circle(circlePoint, cellWidth / 2);
@@ -65,7 +68,9 @@ export class ClientGame {
         fillColor: new paper.Color(player.textColor),
         content: '...',
       });
-      return new paper.Group([circle, text]);
+      const group = new paper.Group([circle, text]);
+      group.onClick = (): void => this.handleBadgeClick(player.playerId);
+      return group;
     });
 
     this.drawnMap = {};
@@ -86,7 +91,17 @@ export class ClientGame {
   }
 
   private get currentPlayer(): Player {
-    return this.players.find((player) => player.playerId === globalThis.playerId) as Player;
+    return this.players.find(
+      (player) => player.playerId === (this.piggybackView ? this.piggybackView.playerId : globalThis.playerId),
+    ) as Player;
+  }
+
+  private handleBadgeClick(playerId: string): void {
+    const player = this.players.find((p) => p.playerId === playerId);
+    if (player) {
+      this.piggybackView = player;
+      this.drawMap();
+    }
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -161,6 +176,7 @@ export class ClientGame {
   private handleCellClick(xOffset: number, yOffset: number): void {
     const x = this.currentPlayer.x + xOffset;
     const y = this.currentPlayer.y + yOffset;
+    this.piggybackView = null;
     if (!this.dungeonMap[this.level].cells[`${x},${y}`].isPassable) {
       return;
     }
@@ -419,9 +435,9 @@ export class ClientGame {
       (this.players[0].currentAction?.target &&
         calculateDistanceBetween(this.players[0], coordsToNumberCoords(this.players[0].currentAction.target)) >= 2)
     ) {
-      this.players.forEach((player) => {
-        if (player.currentAction?.name === PlayerActionName.Move && player.currentAction?.path?.length) {
-          this.drawPlayerPath(player);
+      this.players.forEach((p) => {
+        if (p.currentAction?.name === PlayerActionName.Move && p.currentAction?.path?.length) {
+          this.drawPlayerPath(p);
         }
       });
     }
