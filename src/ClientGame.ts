@@ -43,17 +43,46 @@ export class ClientGame {
 
   players: Player[];
 
-  playerBadges: paper.Group[];
+  playerBadges: {[playerId: string]: paper.Group};
 
   piggybackView: Player | null;
 
   constructor(game: Game) {
     this.players = game.players;
-    const {height, width} = globalThis.gameElement.getBoundingClientRect();
-    const cellWidth = getCellWidth();
 
     this.piggybackView = null;
-    this.playerBadges = game.players.map((player, i) => {
+    this.playerBadges = this.getPlayerBadges(game);
+
+    this.drawnMap = {};
+    this.drawnMonsters = {};
+    this.drawnMovementPaths = {};
+    this.drawnTiles = {};
+    this.dungeonMap = game.dungeonMap;
+
+    globalThis.socket.on(Messages.GameWon, this.handleWonGame.bind(this));
+    globalThis.socket.on(Messages.GameLost, this.handleLostGame.bind(this));
+    globalThis.socket.on(Messages.TurnEnd, this.handleTurnEnd.bind(this));
+    globalThis.socket.on(Messages.PlayerActionQueued, this.handlePlayerActionQueue.bind(this));
+    this.drawMap();
+  }
+
+  private getPlayerBadges(game: Game): {[playerId: string]: paper.Group} {
+    const {height, width} = globalThis.gameElement.getBoundingClientRect();
+    const cellWidth = getCellWidth();
+    const {playerId} = this.currentPlayer;
+    const badgePlayers = game.players
+      .map((p) => ({playerId: p.playerId, color: p.color, textColor: p.textColor}))
+      .sort((a, b) => {
+        if (a.playerId === playerId) {
+          return -1;
+        }
+        if (b.playerId === playerId) {
+          return 1;
+        }
+        return 0;
+      });
+    const badges: {[playerId: string]: paper.Group} = {};
+    badgePlayers.forEach((player, i) => {
       const circlePoint = new paper.Point(width - cellWidth, height - cellWidth - i * cellWidth - badgePadding * i);
       const circle = new paper.Shape.Circle(circlePoint, cellWidth / 2);
       circle.strokeWidth = 3;
@@ -70,20 +99,9 @@ export class ClientGame {
       });
       const group = new paper.Group([circle, text]);
       group.onClick = (): void => this.handleBadgeClick(player.playerId);
-      return group;
+      badges[player.playerId] = group;
     });
-
-    this.drawnMap = {};
-    this.drawnMonsters = {};
-    this.drawnMovementPaths = {};
-    this.drawnTiles = {};
-    this.dungeonMap = game.dungeonMap;
-
-    globalThis.socket.on(Messages.GameWon, this.handleWonGame.bind(this));
-    globalThis.socket.on(Messages.GameLost, this.handleLostGame.bind(this));
-    globalThis.socket.on(Messages.TurnEnd, this.handleTurnEnd.bind(this));
-    globalThis.socket.on(Messages.PlayerActionQueued, this.handlePlayerActionQueue.bind(this));
-    this.drawMap();
+    return badges;
   }
 
   private get level(): number {
@@ -96,8 +114,12 @@ export class ClientGame {
     ) as Player;
   }
 
+  private getPlayer(playerId: string): Player | undefined {
+    return this.players.find((gamePlayer) => gamePlayer.playerId === playerId);
+  }
+
   private handleBadgeClick(playerId: string): void {
-    const player = this.players.find((p) => p.playerId === playerId);
+    const player = this.getPlayer(playerId);
     if (player) {
       this.piggybackView = player;
       this.drawMap();
@@ -119,20 +141,16 @@ export class ClientGame {
   }
 
   private resetAllBadgeContent(): void {
-    this.playerBadges.forEach((badgeGroup, i) => {
-      const text = badgeGroup.lastChild as paper.PointText;
-      if (this.players[i].currentAction === null) {
+    Object.keys(this.playerBadges).forEach((playerId) => {
+      const text = this.playerBadges[playerId].lastChild as paper.PointText;
+      if (this.getPlayer(playerId)?.currentAction === null) {
         text.content = '...';
       }
     });
   }
 
   private setBadgeContent(playerId: string, content: string): void {
-    const index = this.players.findIndex((player) => playerId === player.playerId);
-    if (index === -1) {
-      return;
-    }
-    const text = this.playerBadges[index].lastChild as paper.PointText;
+    const text = this.playerBadges[playerId].lastChild as paper.PointText;
     text.content = content;
   }
 
@@ -140,7 +158,7 @@ export class ClientGame {
     if (gameId !== globalThis.currentGameId) {
       return;
     }
-    const player = this.players.find((p) => p.playerId === actionQueued.playerId);
+    const player = this.getPlayer(actionQueued.playerId);
     if (player) {
       player.currentAction = actionQueued.action;
       if (actionQueued.action.name === PlayerActionName.Move) {
@@ -442,7 +460,7 @@ export class ClientGame {
       });
     }
 
-    this.playerBadges.forEach((badge) => {
+    Object.values(this.playerBadges).forEach((badge) => {
       badge.bringToFront();
     });
   }
