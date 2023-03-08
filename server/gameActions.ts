@@ -271,10 +271,21 @@ function checkLevelEnd(gameId: string): void {
 function checkTurnEnd(gameId: string, io: Server): void {
   const games = getGames();
   if (games[gameId]?.players.every((player) => player.currentAction !== null)) {
+    const dungeonMap = games[gameId].dungeonMap[getMapLevel(games[gameId])];
+    const previouslyVisibleMonsterIds = dungeonMap.monsters
+      .filter((m) => dungeonMap.cells[`${m.x},${m.y}`].visibilityStatus === VisiblityStatus.Visible)
+      .map((m) => m.monsterId);
     executeQueuedActions(gameId, io);
     executeMonsterActions(gameId);
     checkLevelEnd(gameId);
     populateFov(games[gameId]);
+    const currentlyVisibleMonsters = dungeonMap.monsters.filter(
+      (m) => dungeonMap.cells[`${m.x},${m.y}`].visibilityStatus === VisiblityStatus.Visible,
+    );
+    if (currentlyVisibleMonsters.some((m) => !previouslyVisibleMonsterIds.includes(m.monsterId))) {
+      games[gameId].players.forEach((p) => (p.currentAction = null));
+    }
+
     const status = getGameStatus(gameId);
     if (status === GameStatus.Lost) {
       io.emit(Messages.GameLost, gameId, games[gameId]);
