@@ -14,6 +14,7 @@ import {
   Player,
   PlayerAction,
   PlayerActionName,
+  VisiblityStatus,
 } from '../types/SharedTypes';
 import {getMapLevel, isOnExitCell, isValidCoordinate, populateFov} from './dungeonMap';
 import {getClosestPlayerToMonster, getMonsterInCell, handleMonsterActionTowardsTarget} from './monsters';
@@ -35,7 +36,11 @@ export function isFreeCell(x: number, y: number, game: Game): boolean {
 }
 
 function isPlayerPathableCell(x: number, y: number, game: Game): boolean {
-  return isValidCoordinate(x, y) && game.dungeonMap[getMapLevel(game)].cells[`${x},${y}`].isPassable;
+  return (
+    isValidCoordinate(x, y) &&
+    game.dungeonMap[getMapLevel(game)].cells[`${x},${y}`].isPassable &&
+    game.dungeonMap[getMapLevel(game)].cells[`${x},${y}`].visibilityStatus !== VisiblityStatus.Unseen
+  );
 }
 
 export function calculatePath(
