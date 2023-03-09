@@ -11,6 +11,7 @@ import {
   Item,
   Messages,
   NumberCoordinates,
+  OnFrameEvent,
   Player,
   PlayerAction,
   PlayerActionName,
@@ -40,7 +41,7 @@ export class ClientGame {
 
   drawnTiles: {[key: Coordinate]: paper.Group};
 
-  drawnPlayers: {[key: Coordinate]: paper.Group};
+  drawnPlayers: {[playerId: string]: paper.Group};
 
   drawnMonsters: {[key: string]: paper.Group};
 
@@ -51,6 +52,8 @@ export class ClientGame {
   selectedInventoryItem: Item | null;
 
   players: Player[];
+
+  viewPortCenter: NumberCoordinates;
 
   inventoryButton: paper.Group;
 
@@ -78,12 +81,15 @@ export class ClientGame {
     this.selectedInventoryItem = null;
     this.message = null;
     this.dungeonMap = game.dungeonMap;
+    const {x, y} = this.currentPlayer;
+    this.viewPortCenter = {x: x * getCellWidth(), y: y * getCellWidth()};
 
     globalThis.socket.on(Messages.GameWon, this.handleWonGame.bind(this));
     globalThis.socket.on(Messages.GameLost, this.handleLostGame.bind(this));
     globalThis.socket.on(Messages.TurnEnd, this.handleTurnEnd.bind(this));
     globalThis.socket.on(Messages.PlayerActionQueued, this.handlePlayerActionQueue.bind(this));
     this.drawMap();
+    paper.view.onFrame = this.onFrame.bind(this);
   }
 
   private toggleInventoryOpen(): void {
@@ -346,21 +352,24 @@ export class ClientGame {
   }
 
   private drawPlayer(player: Player, circlePoint: paper.Point, cellCoords: Coordinate, clickHandler: () => void): void {
-    const playerRaster = new paper.Raster(player.currentHp > 0 ? player.character : CharacterName.Dead);
-    playerRaster.position = circlePoint;
-    const playerRasterScale = (getCellWidth() / playerRaster.width) * 0.8;
-    playerRaster.scale(playerRasterScale);
-    playerRaster.shadowColor = WHITE;
-    playerRaster.shadowBlur = 22;
-    const playerGroup = new paper.Group([
-      getBacking(player.color, circlePoint, playerRaster.width * playerRasterScale),
-      playerRaster,
-    ]);
-    if (player.currentHp < player.maxHp) {
-      playerGroup.addChild(getHpBar(player, circlePoint, playerRaster.width * playerRasterScale));
+    if (!this.drawnPlayers[player.playerId]) {
+      console.log('drawing player', player.playerId);
+      const playerRaster = new paper.Raster(player.currentHp > 0 ? player.character : CharacterName.Dead);
+      playerRaster.position = circlePoint;
+      const playerRasterScale = (getCellWidth() / playerRaster.width) * 0.8;
+      playerRaster.scale(playerRasterScale);
+      playerRaster.shadowColor = WHITE;
+      playerRaster.shadowBlur = 22;
+      const playerGroup = new paper.Group([
+        getBacking(player.color, circlePoint, playerRaster.width * playerRasterScale),
+        playerRaster,
+      ]);
+      if (player.currentHp < player.maxHp) {
+        playerGroup.addChild(getHpBar(player, circlePoint, playerRaster.width * playerRasterScale));
+      }
+      playerGroup.onClick = clickHandler;
+      this.drawnPlayers[player.playerId] = playerGroup;
     }
-    playerGroup.onClick = clickHandler;
-    this.drawnPlayers[cellCoords] = playerGroup;
   }
 
   private handleFovOverlay(
@@ -392,6 +401,9 @@ export class ClientGame {
     const {x: coordX, y: coordY} = this.getCellCenterPointFromCoordinates(
       `${currentPlayer.x + offsetX},${currentPlayer.y + offsetY}`,
     );
+    if (this.drawnTiles[cellCoords]) {
+      return;
+    }
     const circlePoint = new paper.Point(coordX, coordY);
 
     let cellBackgroundRaster: paper.Raster;
@@ -489,10 +501,10 @@ export class ClientGame {
       this.drawnInventory = null;
     }
 
-    Object.entries(this.drawnPlayers).forEach(([key, cell]) => {
-      cell.remove();
-      delete this.drawnPlayers[key as Coordinate];
-    });
+    // Object.entries(this.drawnPlayers).forEach(([key, cell]) => {
+    //   cell.remove();
+    //   delete this.drawnPlayers[key as Coordinate];
+    // });
     Object.entries(this.drawnTiles).forEach(([key, cell]) => {
       cell.remove();
       delete this.drawnTiles[key as Coordinate];
@@ -595,6 +607,13 @@ export class ClientGame {
       });
     }
 
+    // Object.values(this.drawnTiles).forEach((player) => {
+    //   player.bringToFront();
+    // });
+
+    Object.values(this.drawnPlayers).forEach((player) => {
+      player.bringToFront();
+    });
     Object.values(this.playerBadges).forEach((badge) => {
       badge.bringToFront();
     });
@@ -603,5 +622,56 @@ export class ClientGame {
       this.drawInventory();
     }
     this.inventoryButton.bringToFront();
+  }
+
+  private onFrame(e: OnFrameEvent): void {
+    // const {x: targetX, y: targetY, playerId: currentPlayerId} = this.currentPlayer;
+    // const xDiff = this.viewPortCenter.x - targetX * getCellWidth();
+    // const yDiff = this.viewPortCenter.y - targetY * getCellWidth();
+    // let xShift = 0,
+    //   yShift = 0;
+    const xShiftSpeed = 1;
+    const yShiftSpeed = 1;
+    // if (Math.abs(xDiff) > shiftSpeed) {
+    //   xShift = shiftSpeed * (xDiff > 0 ? -1 : 1);
+    // }
+    // if (Math.abs(yDiff) > shiftSpeed) {
+    //   yShift = shiftSpeed * (yDiff > 0 ? -1 : 1);
+    // }
+    // console.log(yDiff, xDiff);
+    // this.viewPortCenter.y += yShift;
+    // this.viewPortCenter.x += xShift;
+    // this.drawnPlayers[Object.keys(this.drawnPlayers)[0]].position.x += 10;
+    this.players.forEach((p) => {
+      const newPlayerCoords = this.getCellCenterPointFromCoordinates(`${p.x},${p.y}`);
+      const playerXDiff = this.drawnPlayers[p.playerId].position.x - newPlayerCoords.x;
+      const playerYDiff = this.drawnPlayers[p.playerId].position.y - newPlayerCoords.y;
+      let playerXShift = 0;
+      if (Math.abs(playerXDiff) > xShiftSpeed) {
+        playerXShift = xShiftSpeed * (playerXDiff > 0 ? -1 : 1);
+        this.drawnPlayers[p.playerId].position.x += playerXShift;
+      }
+      let playerYShift = 0;
+      if (Math.abs(playerYDiff) > yShiftSpeed) {
+        playerYShift = yShiftSpeed * (playerYDiff > 0 ? -1 : 1);
+        this.drawnPlayers[p.playerId].position.y += playerYShift;
+      }
+      // if (this.drawnPlayers[p.playerId].position.x !== newPlayerCoords.x || this.drawnPlayers[p.playerId].position.y !== newPlayerCoords.y) {
+
+      // }
+    });
+    // if (xShift || yShift) {
+    //   Object.keys(this.drawnPlayers)
+    //     .filter((p) => p !== currentPlayerId)
+    //     .forEach((key) => {
+    //       console.log('shifting');
+    //       this.drawnPlayers[key].position.x += xShift;
+    //       this.drawnPlayers[key].position.y += yShift;
+    //     });
+    // }
+    // (Object.keys(this.drawnTiles) as Coordinate[]).forEach((key) => {
+    //   this.drawnTiles[key].position.x += xShift;
+    //   this.drawnTiles[key].position.y += yShift;
+    // });
   }
 }
