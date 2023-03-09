@@ -28,6 +28,24 @@ export function getBacking(color: string, center: paper.Point, width: number): p
   return playerBacking;
 }
 
+export function getRemainingTurnsBadge(player: Player, center: paper.Point, width: number): paper.Group {
+  const statusEffect =
+    player.statusEffects.find((se) => se.name === StatusEffectName.Frozen) ||
+    player.statusEffects.find((se) => se.name === StatusEffectName.Pinned);
+  const turns = statusEffect?.remainingTurns || 0;
+  const circleRadius = 5;
+  const circleCenter = {x: center.x + width / 2 - circleRadius, y: center.y - width / 2 + circleRadius};
+  const text = new paper.PointText({...circleCenter, y: circleCenter.y + 3});
+  text.fontSize = 10;
+  text.content = `${turns}`;
+  text.fillColor = new paper.Color(player.textColor);
+  text.justification = 'center';
+  const backing = new paper.Shape.Circle(circleCenter, circleRadius);
+  backing.fillColor = new paper.Color(player.color);
+
+  return new paper.Group([backing, text]);
+}
+
 export function getHpBar(character: Player | Monster, center: paper.Point, width: number): paper.Shape.Rectangle {
   const padding = 2;
   const height = 6;

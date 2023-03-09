@@ -24,6 +24,7 @@ import {
   getMonster,
   getRasterStringForPlayer,
   getRasterStringFromItems,
+  getRemainingTurnsBadge,
 } from './drawing';
 import {loseGame, winGame} from './screen-manager';
 
@@ -376,6 +377,9 @@ export class ClientGame {
     ]);
     if (player.currentHp < player.maxHp && player.currentHp > 0) {
       playerGroup.addChild(getHpBar(player, circlePoint, playerRaster.width * playerRasterScale));
+    }
+    if (player.statusEffects.length > 0) {
+      playerGroup.addChild(getRemainingTurnsBadge(player, circlePoint, playerRaster.width * playerRasterScale));
     }
     playerGroup.onClick = clickHandler;
     this.drawnPlayers[cellCoords] = playerGroup;
