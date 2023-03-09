@@ -270,7 +270,7 @@ export class ClientGame {
 
     if (!this.selectedInventoryItem) {
       globalThis.socket.emit(Messages.MovePlayer, globalThis.currentGameId, x, y);
-    } else {
+    } else if (this.dungeonMap[this.level].cells[`${x},${y}`].visibilityStatus === VisiblityStatus.Visible) {
       globalThis.socket.emit(Messages.UseItem, globalThis.currentGameId, x, y, this.selectedInventoryItem.itemId);
       this.clearMessage();
       this.selectedInventoryItem = null;
