@@ -38,6 +38,8 @@ export function getCellWidth(): number {
 export class ClientGame {
   dungeonMap: DungeonMap;
 
+  drawnReticles: {[playerId: string]: paper.Group};
+
   drawnTiles: {[key: Coordinate]: paper.Group};
 
   drawnPlayers: {[key: Coordinate]: paper.Group};
@@ -72,6 +74,7 @@ export class ClientGame {
 
     this.drawnPlayers = {};
     this.drawnMonsters = {};
+    this.drawnReticles = {};
     this.drawnMovementPaths = {};
     this.drawnTiles = {};
     this.drawnInventory = null;
@@ -308,16 +311,11 @@ export class ClientGame {
       const reticle = new paper.Group([backing, raster]);
       reticle.onClick = clickHandler;
 
-      this.drawnTiles[cellCoords].addChild(reticle);
+      this.drawnReticles[player.playerId] = reticle;
     }
   }
 
-  private handlePotentialExit(
-    cell: Cell,
-    circlePoint: paper.Point,
-    cellCoords: Coordinate,
-    clickHandler: () => void,
-  ): void {
+  private handlePotentialExit(cell: Cell, circlePoint: paper.Point, cellCoords: Coordinate): void {
     if (cell.type === CellType.Exit) {
       const cellWidth = getCellWidth();
       const exitSigil = new paper.Raster('cosmic09');
@@ -326,17 +324,11 @@ export class ClientGame {
       exitSigil.strokeWidth = 0;
       exitSigil.shadowColor = WHITE;
       exitSigil.shadowBlur = 12;
-      exitSigil.onClick = clickHandler;
       this.drawnTiles[cellCoords].addChild(exitSigil);
     }
   }
 
-  private handlePotentialItem(
-    cell: Cell,
-    circlePoint: paper.Point,
-    cellCoords: Coordinate,
-    clickHandler: () => void,
-  ): void {
+  private handlePotentialItem(cell: Cell, circlePoint: paper.Point, cellCoords: Coordinate): void {
     if (cell.items.length) {
       const rasterImage = getRasterStringFromItems(cell.items);
       if (rasterImage !== '') {
@@ -351,18 +343,12 @@ export class ClientGame {
           item.scale(0.8);
           item.rotate(-30);
         }
-        item.onClick = clickHandler;
         this.drawnTiles[cellCoords].addChild(item);
       }
     }
   }
 
-  private handlePotentialDoor(
-    cell: Cell,
-    circlePoint: paper.Point,
-    cellCoords: Coordinate,
-    clickHandler: () => void,
-  ): void {
+  private handlePotentialDoor(cell: Cell, circlePoint: paper.Point, cellCoords: Coordinate): void {
     if (cell.type === CellType.VerticalDoor || cell.type === CellType.HorizontalDoor) {
       const cellWidth = getCellWidth();
       const door = new paper.Raster('door');
@@ -372,7 +358,6 @@ export class ClientGame {
       door.position = circlePoint;
       door.scale(cellWidth / door.width);
       door.strokeWidth = 0;
-      door.onClick = clickHandler;
       this.drawnTiles[cellCoords].addChild(door);
     }
   }
@@ -395,13 +380,7 @@ export class ClientGame {
     this.drawnPlayers[cellCoords] = playerGroup;
   }
 
-  private handleFovOverlay(
-    cell: Cell,
-    center: paper.Point,
-    cellCoords: Coordinate,
-    width: number,
-    clickHandler: () => void,
-  ): void {
+  private handleFovOverlay(cell: Cell, center: paper.Point, cellCoords: Coordinate, width: number): void {
     if (cell.visibilityStatus === VisiblityStatus.Seen) {
       const rectTLPoint = new paper.Point(center);
       rectTLPoint.x -= width / 2;
@@ -412,7 +391,6 @@ export class ClientGame {
       const fovOverlay = new paper.Shape.Rectangle(rectTLPoint, rectBRPoint);
       fovOverlay.strokeWidth = 0;
       fovOverlay.fillColor = FOV_SEEN_OVERLAY;
-      fovOverlay.onClick = clickHandler;
       this.drawnTiles[cellCoords].addChild(fovOverlay);
     }
   }
@@ -452,12 +430,10 @@ export class ClientGame {
     // Visible Cells
     if (cell.visibilityStatus !== VisiblityStatus.Unseen) {
       const clickHandler = (): void => this.handleCellClick(offsetX, offsetY);
-      this.drawnTiles[cellCoords].onClick = clickHandler;
-      this.handlePotentialExit(cell, circlePoint, cellCoords, clickHandler);
-      this.handlePotentialDoor(cell, circlePoint, cellCoords, clickHandler);
-      this.handlePotentialItem(cell, circlePoint, cellCoords, clickHandler);
-      this.handlePotentialReticle(cell, circlePoint, cellCoords, clickHandler);
-      this.handleFovOverlay(cell, circlePoint, cellCoords, cellBackgroundRaster.width * rasterScale, clickHandler);
+      this.handlePotentialExit(cell, circlePoint, cellCoords);
+      this.handlePotentialDoor(cell, circlePoint, cellCoords);
+      this.handlePotentialItem(cell, circlePoint, cellCoords);
+      this.handleFovOverlay(cell, circlePoint, cellCoords, cellBackgroundRaster.width * rasterScale);
 
       // Player in cell
       let occupyingPlayer = this.players.find(
@@ -474,6 +450,10 @@ export class ClientGame {
         }
         this.drawPlayer(occupyingPlayer, circlePoint, cellCoords, clickHandler);
       }
+      if (this.players.length > 1) {
+        this.handlePotentialReticle(cell, circlePoint, cellCoords, clickHandler);
+      }
+      this.drawnTiles[cellCoords].onClick = clickHandler;
     }
   }
 
@@ -525,6 +505,10 @@ export class ClientGame {
       this.drawnInventory = null;
     }
 
+    Object.entries(this.drawnReticles).forEach(([playerId, reticle]) => {
+      reticle.remove();
+      delete this.drawnReticles[playerId];
+    });
     Object.entries(this.drawnPlayers).forEach(([key, cell]) => {
       cell.remove();
       delete this.drawnPlayers[key as Coordinate];
