@@ -74,14 +74,18 @@ export function calculatePath(
   return path;
 }
 
+function killMonster(game: Game, mapLevel: number, monsterId: string): void {
+  const monsterList = game.dungeonMap[mapLevel].monsters;
+  const index = monsterList.findIndex((m) => m.monsterId === monsterId);
+  if (index >= 0) {
+    monsterList.splice(index, 1);
+  }
+}
+
 function handlePlayerAttack(game: Game, player: Player, monster: Monster): void {
   monster.currentHp -= player.attackStrength;
   if (monster.currentHp <= 0) {
-    const monsterList = game.dungeonMap[player.mapLevel].monsters;
-    const index = monsterList.findIndex((m) => m.monsterId === monster.monsterId);
-    if (index >= 0) {
-      monsterList.splice(index, 1);
-    }
+    killMonster(game, player.mapLevel, monster.monsterId);
   }
 }
 
@@ -275,6 +279,12 @@ function checkLevelEnd(gameId: string): void {
   }
 }
 
+function checkMonsterDeaths(game: Game): void {
+  game.dungeonMap.forEach((level) => {
+    level.monsters = level.monsters.filter((m) => m.currentHp > 0);
+  });
+}
+
 function checkTurnEnd(gameId: string, io: Server): void {
   const games = getGames();
   if (games[gameId]?.players.every((player) => player.currentAction !== null)) {
@@ -283,6 +293,7 @@ function checkTurnEnd(gameId: string, io: Server): void {
       .filter((m) => dungeonMap.cells[`${m.x},${m.y}`].visibilityStatus === VisiblityStatus.Visible)
       .map((m) => m.monsterId);
     executeQueuedActions(gameId, io);
+    checkMonsterDeaths(games[gameId]);
     executeMonsterActions(gameId);
     checkLevelEnd(gameId);
     populateFov(games[gameId]);
