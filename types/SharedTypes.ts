@@ -50,8 +50,8 @@ export enum ItemType {
 }
 
 export enum PotionType {
-  Health,
-  Acid,
+  Health = 'Health',
+  Acid = 'Acid',
 }
 
 export type Item = {

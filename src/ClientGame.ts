@@ -14,6 +14,7 @@ import {
   Player,
   PlayerAction,
   PlayerActionName,
+  PotionType,
   VisiblityStatus,
 } from '../types/SharedTypes';
 import {BLACK, FOV_SEEN_OVERLAY, INVENTORY_BACKGROUND, TRANSPARENT, WHITE} from './colors';
@@ -530,12 +531,19 @@ export class ClientGame {
       }
       const raster = new paper.Raster(getRasterStringFromItems([item]));
       raster.position = cellPositions[i];
-      const rasterScale = (getCellWidth() / raster.width) * 0.8;
+      const rasterScale = (getCellWidth() / raster.width) * 0.7;
       raster.scale(rasterScale);
-      const backing = new paper.Shape.Circle(raster.position, (0.8 * cellWidth) / 2);
+      const backing = new paper.Shape.Circle(raster.position, (0.7 * cellWidth) / 2);
       backing.fillColor = BLACK;
       backing.strokeWidth = 0;
-      const group = new paper.Group([backing, raster]);
+      const label = new paper.PointText(cellPositions[i]);
+      label.position.y += cellWidth * 0.55;
+      // const foo = PotionType[item.subtype as PotionType.Acid] as string;
+      label.content = item.subtype as PotionType;
+      label.fillColor = BLACK;
+      label.justification = 'center';
+      // label.content = item.subtype. ? 'foo' : '';
+      const group = new paper.Group([backing, raster, label]);
       group.onClick = (): void => this.handleInventoryItemClick(item);
       return group;
     });
