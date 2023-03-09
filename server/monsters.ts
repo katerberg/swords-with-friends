@@ -119,6 +119,11 @@ export function createMonster<Type extends MonsterType>(coordinate: Coordinate, 
   let minAttack: number;
   let maxAttack: number;
   switch (type) {
+    case MonsterType.Slime:
+      hp = 30;
+      minAttack = 5;
+      maxAttack = 10;
+      break;
     case MonsterType.Vampire:
       hp = 50;
       minAttack = 10;

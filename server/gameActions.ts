@@ -12,6 +12,7 @@ import {
   ItemType,
   Messages,
   Monster,
+  MonsterType,
   NumberCoordinates,
   Player,
   PlayerAction,
@@ -22,12 +23,13 @@ import {
 import {getRandomInt} from './data';
 import {getMapLevel, isOnExitCell, isValidCoordinate, populateFov} from './dungeonMap';
 import {
+  createMonster,
   getClosestVisiblePlayerToMonster,
   getMonsterInCell,
   handleMonsterActionTowardsTarget,
   handleMonsterWander,
 } from './monsters';
-import {getGames, getStartLocationNearHost} from '.';
+import {getGames, getSpiralAroundPoint, getStartLocationNearHost} from '.';
 
 function isFreeOfStandingPlayers(x: number, y: number, game: Game): boolean {
   return game.players.every((player) => player.currentHp <= 0 || player.x !== x || player.y !== y);
@@ -88,6 +90,15 @@ function handlePlayerAttackMonster(game: Game, player: Player, monster: Monster)
   monster.currentHp -= getRandomInt(player.minAttackStrength, player.maxAttackStrength);
   if (monster.currentHp <= 0) {
     killMonster(game, player.mapLevel, monster.monsterId);
+  } else if (monster.type === MonsterType.Slime) {
+    const firstFree = getSpiralAroundPoint({x: monster.x, y: monster.y}).find(({x: spiralX, y: spiralY}) =>
+      isFreeCell(spiralX, spiralY, game),
+    );
+    if (firstFree) {
+      const newSlime = createMonster(`${firstFree.x},${firstFree.y}`, MonsterType.Slime);
+      newSlime.currentHp = monster.currentHp;
+      game.dungeonMap[player.mapLevel].monsters.push(newSlime);
+    }
   }
 }
 

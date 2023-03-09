@@ -84,6 +84,7 @@ export type Cell = {
 };
 
 export enum MonsterType {
+  Slime,
   Goblin,
   Orc,
   Vampire,
