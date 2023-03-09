@@ -69,6 +69,9 @@ export function getHpBar(character: Player | Monster, center: paper.Point, width
 export function getMonster(monster: Monster, center: NumberCoordinates): paper.Group {
   let raster: paper.Raster;
   switch (monster.type) {
+    case MonsterType.Medusa:
+      raster = new paper.Raster('character-medusa');
+      break;
     case MonsterType.Tarball:
       raster = new paper.Raster('character-tarball');
       break;

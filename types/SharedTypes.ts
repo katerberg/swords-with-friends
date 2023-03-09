@@ -97,6 +97,7 @@ export type Cell = {
 };
 
 export enum MonsterType {
+  Medusa,
   Slime,
   Goblin,
   Orc,

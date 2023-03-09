@@ -86,6 +86,11 @@ export function handleMonsterWander(monster: Monster, game: Game): void {
 function handleMonsterAttackPlayer(monster: Monster, player: Player): void {
   const damage = getRandomInt(monster.minAttackStrength, monster.maxAttackStrength);
   player.currentHp -= damage;
+  if (monster.type === MonsterType.Medusa) {
+    if (player.statusEffects.every((se) => se.name !== StatusEffectName.Frozen)) {
+      player.statusEffects.push({name: StatusEffectName.Frozen, remainingTurns: getRandomInt(2, 4)});
+    }
+  }
   if (monster.type === MonsterType.Tarball) {
     if (player.statusEffects.every((se) => se.name !== StatusEffectName.Pinned)) {
       player.statusEffects.push({name: StatusEffectName.Pinned, remainingTurns: getRandomInt(2, 4)});
@@ -124,6 +129,11 @@ export function createMonster<Type extends MonsterType>(coordinate: Coordinate, 
   let minAttack: number;
   let maxAttack: number;
   switch (type) {
+    case MonsterType.Medusa:
+      hp = 20;
+      minAttack = 5;
+      maxAttack = 10;
+      break;
     case MonsterType.Tarball:
       hp = 20;
       minAttack = 5;
