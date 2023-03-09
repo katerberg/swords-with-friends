@@ -150,7 +150,15 @@ export function createMap(game: Game): DungeonMap {
       });
     }
 
-    dungeonMap[i].monsterSpawn.forEach((ms) => dungeonMap[i].monsters.push(createMonster(ms, randomEnum(MonsterType))));
+    dungeonMap[i].monsterSpawn.forEach((ms) =>
+      dungeonMap[i].monsters.push(
+        createMonster(
+          ms,
+          //Random monster
+          randomEnum(MonsterType),
+        ),
+      ),
+    );
   }
   return dungeonMap;
 }

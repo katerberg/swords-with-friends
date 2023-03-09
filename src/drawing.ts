@@ -49,6 +49,9 @@ export function getHpBar(character: Player | Monster, center: paper.Point, width
 export function getMonster(monster: Monster, center: NumberCoordinates): paper.Group {
   let raster: paper.Raster;
   switch (monster.type) {
+    case MonsterType.Vampire:
+      raster = new paper.Raster('character-vampire');
+      break;
     case MonsterType.Goblin:
       raster = new paper.Raster('character-goblin');
       break;

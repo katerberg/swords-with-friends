@@ -84,7 +84,14 @@ export function handleMonsterWander(monster: Monster, game: Game): void {
 }
 
 function handleMonsterAttackPlayer(monster: Monster, player: Player): void {
-  player.currentHp -= getRandomInt(monster.minAttackStrength, monster.maxAttackStrength);
+  const damage = getRandomInt(monster.minAttackStrength, monster.maxAttackStrength);
+  player.currentHp -= damage;
+  if (monster.type === MonsterType.Vampire) {
+    monster.currentHp += damage;
+    if (monster.currentHp > monster.maxHp) {
+      monster.currentHp = monster.maxHp;
+    }
+  }
   player.currentAction = null;
 }
 
@@ -112,6 +119,11 @@ export function createMonster<Type extends MonsterType>(coordinate: Coordinate, 
   let minAttack: number;
   let maxAttack: number;
   switch (type) {
+    case MonsterType.Vampire:
+      hp = 50;
+      minAttack = 10;
+      maxAttack = 15;
+      break;
     case MonsterType.Orc:
       hp = 50;
       minAttack = 25;
