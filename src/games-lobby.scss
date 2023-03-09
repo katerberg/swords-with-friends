@@ -14,6 +14,13 @@
     font-size: 5vh;
   }
 
+  #games-lobby-no-games {
+    display: none;
+    &.visible {
+      display: flex;
+    }
+  }
+
   #games-lobby-cancel-button {
     margin-top: 2vh;
   }

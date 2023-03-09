@@ -70,6 +70,14 @@ function joinGameHandler(event: TouchEvent | MouseEvent): void {
 function populateGamesList(games: Game[]): void {
   const gamesLobbyList = document.getElementById('games-lobby-list');
   if (gamesLobbyList) {
+    const noGamesMessage = document.getElementById('games-lobby-no-games');
+    if (noGamesMessage) {
+      if (games.length) {
+        noGamesMessage.classList.remove('visible');
+      } else {
+        noGamesMessage.classList.add('visible');
+      }
+    }
     while (gamesLobbyList.firstChild) {
       gamesLobbyList.removeChild(gamesLobbyList.firstChild);
     }
