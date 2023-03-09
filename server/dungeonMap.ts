@@ -156,6 +156,7 @@ export function createMap(game: Game): DungeonMap {
           ms,
           //Random monster
           randomEnum(MonsterType),
+          // MonsterType.Tarball,
         ),
       ),
     );

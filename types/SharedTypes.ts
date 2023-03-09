@@ -99,6 +99,7 @@ export enum MonsterType {
   Goblin,
   Orc,
   Vampire,
+  Tarball,
 }
 
 export type Monster = {

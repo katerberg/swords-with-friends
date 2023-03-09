@@ -18,6 +18,7 @@ import {
   PlayerAction,
   PlayerActionName,
   PotionType,
+  StatusEffectName,
   VisiblityStatus,
 } from '../types/SharedTypes';
 import {getRandomInt} from './data';
@@ -112,6 +113,9 @@ function playerPicksUpItems(cell: Cell, player: Player): void {
 }
 
 function playerMovesTo(x: number, y: number, player: Player, game: Game): void {
+  if (player.statusEffects.some((se) => se.name === StatusEffectName.Frozen || se.name === StatusEffectName.Pinned)) {
+    return;
+  }
   player.x = x;
   player.y = y;
   const cell = game.dungeonMap[player.mapLevel].cells[`${x},${y}`];
@@ -229,19 +233,21 @@ function executeQueuedActions(gameId: string, io: Server): void {
   const executionDate = new Date();
   game.lastActionTime = executionDate;
   game.players.forEach((player) => {
-    switch (player.currentAction?.name) {
-      case PlayerActionName.LayDead:
-        break;
-      case PlayerActionName.UseItem:
-        handlePlayerUseItemAction(gameId, player);
-        break;
-      case PlayerActionName.Move:
-        handlePlayerMovementAction(gameId, player);
-        break;
-      case PlayerActionName.WaitOnExit:
-        break;
-      default:
-        console.warn('invalid action', gameId, player.playerId); // eslint-disable-line no-console
+    if (!player.statusEffects.some((se) => se.name === StatusEffectName.Frozen)) {
+      switch (player.currentAction?.name) {
+        case PlayerActionName.LayDead:
+          break;
+        case PlayerActionName.UseItem:
+          handlePlayerUseItemAction(gameId, player);
+          break;
+        case PlayerActionName.Move:
+          handlePlayerMovementAction(gameId, player);
+          break;
+        case PlayerActionName.WaitOnExit:
+          break;
+        default:
+          console.warn('invalid action', gameId, player.playerId); // eslint-disable-line no-console
+      }
     }
   });
   if (game.players.some((player) => player.currentAction?.name !== PlayerActionName.LayDead)) {
@@ -318,6 +324,14 @@ function checkMonsterDeaths(game: Game): void {
   });
 }
 
+function reduceCooldowns(game: Game): void {
+  game.players.forEach((player) => {
+    player.statusEffects = player.statusEffects
+      .map((se) => ({...se, remainingTurns: se.remainingTurns - 1}))
+      .filter((se) => se.remainingTurns > 0);
+  });
+}
+
 function checkTurnEnd(gameId: string, io: Server): void {
   const games = getGames();
   if (games[gameId]?.players.every((player) => player.currentAction !== null)) {
@@ -328,6 +342,7 @@ function checkTurnEnd(gameId: string, io: Server): void {
     executeQueuedActions(gameId, io);
     checkMonsterDeaths(games[gameId]);
     executeMonsterActions(gameId);
+    reduceCooldowns(games[gameId]);
     checkLevelEnd(gameId);
     populateFov(games[gameId]);
     const currentlyVisibleMonsters = dungeonMap.monsters.filter(

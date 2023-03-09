@@ -1,7 +1,7 @@
 import * as ROT from 'rot-js';
 import {v4 as uuid} from 'uuid';
 import {calculateDistanceBetween, coordsToNumberCoords} from '../types/math';
-import {Coordinate, Game, Monster, MonsterType, Player} from '../types/SharedTypes';
+import {Coordinate, Game, Monster, MonsterType, Player, StatusEffectName} from '../types/SharedTypes';
 import {getRandomInt} from './data';
 import {getMapLevel, isValidCoordinate} from './dungeonMap';
 import {calculatePath} from './gameActions';
@@ -86,6 +86,11 @@ export function handleMonsterWander(monster: Monster, game: Game): void {
 function handleMonsterAttackPlayer(monster: Monster, player: Player): void {
   const damage = getRandomInt(monster.minAttackStrength, monster.maxAttackStrength);
   player.currentHp -= damage;
+  if (monster.type === MonsterType.Tarball) {
+    if (player.statusEffects.every((se) => se.name !== StatusEffectName.Pinned)) {
+      player.statusEffects.push({name: StatusEffectName.Pinned, remainingTurns: getRandomInt(1, 3)});
+    }
+  }
   if (monster.type === MonsterType.Vampire) {
     monster.currentHp += damage;
     if (monster.currentHp > monster.maxHp) {
@@ -119,6 +124,11 @@ export function createMonster<Type extends MonsterType>(coordinate: Coordinate, 
   let minAttack: number;
   let maxAttack: number;
   switch (type) {
+    case MonsterType.Tarball:
+      hp = 20;
+      minAttack = 5;
+      maxAttack = 10;
+      break;
     case MonsterType.Slime:
       hp = 30;
       minAttack = 5;
