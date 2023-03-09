@@ -35,7 +35,7 @@ function getLivingPlayersInViewOfMonster(monster: Monster, game: Game): Player[]
   return playersInView;
 }
 
-export function getClosestPlayerToMonster(monster: Monster, game: Game): Player | null {
+export function getClosestVisiblePlayerToMonster(monster: Monster, game: Game): Player | null {
   const playersInView = getLivingPlayersInViewOfMonster(monster, game);
   if (playersInView.length === 0) {
     return null;
@@ -63,6 +63,22 @@ function isMonsterPathableCell(x: number, y: number, game: Game): boolean {
     game.dungeonMap[mapLevel].monsters.every((monster) => monster.x !== x || monster.y !== y) &&
     game.dungeonMap[mapLevel].cells[`${x},${y}`].isPassable
   );
+}
+
+export function handleMonsterWander(monster: Monster, game: Game): void {
+  const availableLocations: Coordinate[] = [];
+  for (let x = -1; x <= 1; x++) {
+    for (let y = -1; y <= 1; y++) {
+      if (isMonsterPathableCell(monster.x + x, monster.y + y, game)) {
+        availableLocations.push(`${monster.x + x},${monster.y + y}`);
+      }
+    }
+  }
+  if (availableLocations.length > 0) {
+    const {x, y} = coordsToNumberCoords(availableLocations[Math.floor(Math.random() * availableLocations.length)]);
+    monster.x = x;
+    monster.y = y;
+  }
 }
 
 export function handleMonsterActionTowardsTarget(monster: Monster, game: Game): void {

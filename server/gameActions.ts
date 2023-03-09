@@ -19,7 +19,12 @@ import {
   VisiblityStatus,
 } from '../types/SharedTypes';
 import {getMapLevel, isOnExitCell, isValidCoordinate, populateFov} from './dungeonMap';
-import {getClosestPlayerToMonster, getMonsterInCell, handleMonsterActionTowardsTarget} from './monsters';
+import {
+  getClosestVisiblePlayerToMonster,
+  getMonsterInCell,
+  handleMonsterActionTowardsTarget,
+  handleMonsterWander,
+} from './monsters';
 import {getGames, getStartLocationNearHost} from '.';
 
 function isFreeOfStandingPlayers(x: number, y: number, game: Game): boolean {
@@ -219,12 +224,14 @@ function executeMonsterActions(gameId: string): void {
   const game = getGames()[gameId];
   const mapLevel = getMapLevel(game);
   game.dungeonMap[mapLevel].monsters.forEach((monster) => {
-    const closestPlayer = getClosestPlayerToMonster(monster, game);
+    const closestPlayer = getClosestVisiblePlayerToMonster(monster, game);
     if (closestPlayer) {
       monster.target = `${closestPlayer.x},${closestPlayer.y}`;
     }
     if (monster.target) {
       handleMonsterActionTowardsTarget(monster, game);
+    } else {
+      handleMonsterWander(monster, game);
     }
   });
 }
