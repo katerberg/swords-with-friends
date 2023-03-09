@@ -19,6 +19,7 @@ import {
   PotionType,
   VisiblityStatus,
 } from '../types/SharedTypes';
+import {getRandomInt} from './data';
 import {getMapLevel, isOnExitCell, isValidCoordinate, populateFov} from './dungeonMap';
 import {
   getClosestVisiblePlayerToMonster,
@@ -84,7 +85,7 @@ function killMonster(game: Game, mapLevel: number, monsterId: string): void {
 }
 
 function handlePlayerAttackMonster(game: Game, player: Player, monster: Monster): void {
-  monster.currentHp -= player.attackStrength;
+  monster.currentHp -= getRandomInt(player.minAttackStrength, player.maxAttackStrength);
   if (monster.currentHp <= 0) {
     killMonster(game, player.mapLevel, monster.monsterId);
   }
@@ -118,7 +119,7 @@ function handlePlayerUsePotion(game: Game, player: Player, item: Item, targetX: 
       target.currentHp = target.maxHp;
       break;
     case PotionType.Acid:
-      target.currentHp -= 9;
+      target.currentHp -= getRandomInt(25, 35);
       break;
     default:
   }

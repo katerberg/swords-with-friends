@@ -8,22 +8,16 @@ import {
   DungeonMap,
   Game,
   ItemType,
-  Monster,
-  MonsterType,
   PotionType,
   NumberCoordinates,
   Player,
   VisiblityStatus,
   TrophyType,
+  MonsterType,
 } from '../types/SharedTypes';
 import {isFreeCell} from './gameActions';
+import {createMonster} from './monsters';
 import {getRandomFreeLocation, getSpiralAroundPoint} from '.';
-
-function createMonster(coordinate: Coordinate): Monster {
-  const {x, y} = coordsToNumberCoords(coordinate);
-  return {x, y, type: MonsterType.Goblin, attackStrength: 4, maxHp: 5, currentHp: 5, monsterId: uuid(), target: null};
-}
-
 export function isValidCoordinate(x: number, y: number): boolean {
   return x >= 0 && x <= MAX_X && y >= 0 && y <= MAX_Y;
 }
@@ -148,9 +142,7 @@ export function createMap(game: Game): DungeonMap {
       });
     }
 
-    dungeonMap[i].monsterSpawn.forEach((ms) => {
-      dungeonMap[i].monsters.push(createMonster(ms));
-    });
+    dungeonMap[i].monsterSpawn.forEach((ms) => dungeonMap[i].monsters.push(createMonster(ms, MonsterType.Goblin)));
   }
   return dungeonMap;
 }

@@ -29,8 +29,8 @@ export type Player = {
   socketId?: string;
   maxHp: number;
   currentHp: number;
-  attackStrength: number;
-  // min and max
+  minAttackStrength: number;
+  maxAttackStrength: number;
   color: string;
   textColor: string;
   currentAction: PlayerAction | null;
@@ -85,6 +85,7 @@ export type Cell = {
 
 export enum MonsterType {
   Goblin,
+  Orc,
 }
 
 export type Monster = {
@@ -92,8 +93,8 @@ export type Monster = {
   type: MonsterType;
   maxHp: number;
   currentHp: number;
-  attackStrength: number;
-  // min and max
+  minAttackStrength: number;
+  maxAttackStrength: number;
   target: Coordinate | null;
   x: number;
   y: number;
