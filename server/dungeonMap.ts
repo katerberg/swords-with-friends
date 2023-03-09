@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import * as ROT from 'rot-js';
 import {v4 as uuid} from 'uuid';
 import {MAX_LEVEL, MAX_X, MAX_Y} from '../types/consts';
@@ -84,6 +85,13 @@ export function populateItems(game: Game): void {
   });
 }
 
+function randomEnum<T extends Object>(anEnum: T): T[keyof T] {
+  const enumValues = Object.keys(anEnum) as Array<keyof T>;
+  const randomIndex = Math.floor((Math.random() * enumValues.length) / 2 + enumValues.length / 2);
+  const randomEnumKey = enumValues[randomIndex];
+  return anEnum[randomEnumKey];
+}
+
 export function createMap(game: Game): DungeonMap {
   const dungeonMap: DungeonMap = [];
 
@@ -142,7 +150,7 @@ export function createMap(game: Game): DungeonMap {
       });
     }
 
-    dungeonMap[i].monsterSpawn.forEach((ms) => dungeonMap[i].monsters.push(createMonster(ms, MonsterType.Goblin)));
+    dungeonMap[i].monsterSpawn.forEach((ms) => dungeonMap[i].monsters.push(createMonster(ms, randomEnum(MonsterType))));
   }
   return dungeonMap;
 }

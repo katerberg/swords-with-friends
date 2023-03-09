@@ -52,6 +52,9 @@ export function getMonster(monster: Monster, center: NumberCoordinates): paper.G
     case MonsterType.Goblin:
       raster = new paper.Raster('character-goblin');
       break;
+    case MonsterType.Orc:
+      raster = new paper.Raster('character-orc');
+      break;
     default:
       return new paper.Group();
   }

@@ -112,6 +112,11 @@ export function createMonster<Type extends MonsterType>(coordinate: Coordinate, 
   let minAttack: number;
   let maxAttack: number;
   switch (type) {
+    case MonsterType.Orc:
+      hp = 50;
+      minAttack = 25;
+      maxAttack = 45;
+      break;
     case MonsterType.Goblin:
     default:
       hp = 20;
