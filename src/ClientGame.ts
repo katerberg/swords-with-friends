@@ -286,6 +286,32 @@ export class ClientGame {
     };
   }
 
+  private handlePotentialReticle(
+    cell: Cell,
+    circlePoint: paper.Point,
+    cellCoords: Coordinate,
+    clickHandler: () => void,
+  ): void {
+    const player = this.players.find(
+      (p) => p.currentAction?.name === PlayerActionName.UseItem && p.currentAction.target === `${cell.x},${cell.y}`,
+    );
+    if (player) {
+      const cellWidth = getCellWidth();
+      const raster = new paper.Raster('reticle');
+      raster.position = circlePoint;
+      const rasterScale = (cellWidth * 0.5) / raster.width;
+      raster.scale(rasterScale);
+      raster.shadowColor = new paper.Color(player.color);
+      raster.shadowBlur = 22;
+      const backing = new paper.Shape.Circle(circlePoint, raster.width * rasterScale * 0.3);
+      backing.fillColor = new paper.Color(player.color);
+      const reticle = new paper.Group([backing, raster]);
+      reticle.onClick = clickHandler;
+
+      this.drawnTiles[cellCoords].addChild(reticle);
+    }
+  }
+
   private handlePotentialExit(
     cell: Cell,
     circlePoint: paper.Point,
@@ -430,6 +456,7 @@ export class ClientGame {
       this.handlePotentialExit(cell, circlePoint, cellCoords, clickHandler);
       this.handlePotentialDoor(cell, circlePoint, cellCoords, clickHandler);
       this.handlePotentialItem(cell, circlePoint, cellCoords, clickHandler);
+      this.handlePotentialReticle(cell, circlePoint, cellCoords, clickHandler);
       this.handleFovOverlay(cell, circlePoint, cellCoords, cellBackgroundRaster.width * rasterScale, clickHandler);
 
       // Player in cell
