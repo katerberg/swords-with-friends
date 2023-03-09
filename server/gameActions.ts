@@ -82,7 +82,7 @@ function killMonster(game: Game, mapLevel: number, monsterId: string): void {
   }
 }
 
-function handlePlayerAttack(game: Game, player: Player, monster: Monster): void {
+function handlePlayerAttackMonster(game: Game, player: Player, monster: Monster): void {
   monster.currentHp -= player.attackStrength;
   if (monster.currentHp <= 0) {
     killMonster(game, player.mapLevel, monster.monsterId);
@@ -169,7 +169,7 @@ function handlePlayerMovementAction(gameId: string, clientPlayer: Player): void 
         gamePlayer.currentAction = null;
       }
     } else {
-      handlePlayerAttack(game, gamePlayer, monster);
+      handlePlayerAttackMonster(game, gamePlayer, monster);
       gamePlayer.currentAction = null;
     }
   } else if (gamePlayer.currentAction?.path?.length && gamePlayer.currentAction?.path?.length > 0) {
@@ -183,7 +183,7 @@ function handlePlayerMovementAction(gameId: string, clientPlayer: Player): void 
     if (!isFreeCell(newX, newY, game)) {
       const monster = getMonsterInCell(newX, newY, game);
       if (monster) {
-        handlePlayerAttack(game, gamePlayer, monster);
+        handlePlayerAttackMonster(game, gamePlayer, monster);
       }
       gamePlayer.currentAction = null;
       return;
@@ -258,7 +258,7 @@ function getGameStatus(gameId: string): GameStatus {
 
 function checkLevelEnd(gameId: string): void {
   const game = getGames()[gameId];
-  if (game.players.every((p) => isOnExitCell(p, game))) {
+  if (game.players.filter((p) => p.currentHp > 0).every((p) => isOnExitCell(p, game))) {
     const host = game.players.find((p) => p.isHost);
     if (host) {
       host.mapLevel++;
@@ -274,6 +274,9 @@ function checkLevelEnd(gameId: string): void {
           p.currentAction = null;
           p.x = startLocation.x;
           p.y = startLocation.y;
+          if (p.currentHp <= 0) {
+            p.currentHp = 1;
+          }
         });
     }
   }

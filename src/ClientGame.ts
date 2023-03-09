@@ -226,7 +226,7 @@ export class ClientGame {
     const player = this.getPlayer(actionQueued.playerId);
     if (player) {
       player.currentAction = actionQueued.action;
-      if (actionQueued.action.name === PlayerActionName.Move) {
+      if (actionQueued.action.name === PlayerActionName.Move || actionQueued.action.name === PlayerActionName.UseItem) {
         this.drawMap();
       }
     }
@@ -357,7 +357,7 @@ export class ClientGame {
       getBacking(player.color, circlePoint, playerRaster.width * playerRasterScale),
       playerRaster,
     ]);
-    if (player.currentHp < player.maxHp) {
+    if (player.currentHp < player.maxHp && player.currentHp > 0) {
       playerGroup.addChild(getHpBar(player, circlePoint, playerRaster.width * playerRasterScale));
     }
     playerGroup.onClick = clickHandler;
@@ -395,6 +395,7 @@ export class ClientGame {
     );
     const circlePoint = new paper.Point(coordX, coordY);
 
+    // Cell background
     let cellBackgroundRaster: paper.Raster;
     if (cell.visibilityStatus === VisiblityStatus.Unseen) {
       cellBackgroundRaster = new paper.Raster('black');
@@ -417,6 +418,7 @@ export class ClientGame {
     cellBackgroundRaster.scale(cellWidth / cellBackgroundRaster.width + 0.003);
     cellBackgroundRaster.strokeWidth = 0;
     this.drawnTiles[cellCoords] = new paper.Group([cellBackgroundRaster]);
+    // Visible Cells
     if (cell.visibilityStatus !== VisiblityStatus.Unseen) {
       const clickHandler = (): void => this.handleCellClick(offsetX, offsetY);
       this.drawnTiles[cellCoords].onClick = clickHandler;
@@ -425,6 +427,7 @@ export class ClientGame {
       this.handlePotentialItem(cell, circlePoint, cellCoords, clickHandler);
       this.handleFovOverlay(cell, circlePoint, cellCoords, cellBackgroundRaster.width * rasterScale, clickHandler);
 
+      // Player in cell
       let occupyingPlayer = this.players.find(
         (loopingPlayer) => loopingPlayer.x === cell.x && loopingPlayer.y === cell.y,
       );

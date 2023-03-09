@@ -81,6 +81,11 @@ export function handleMonsterWander(monster: Monster, game: Game): void {
   }
 }
 
+function handleMonsterAttackPlayer(monster: Monster, player: Player): void {
+  player.currentHp -= monster.attackStrength;
+  player.currentAction = null;
+}
+
 export function handleMonsterActionTowardsTarget(monster: Monster, game: Game): void {
   if (!monster.target) {
     return;
@@ -88,8 +93,7 @@ export function handleMonsterActionTowardsTarget(monster: Monster, game: Game): 
   const {x, y} = coordsToNumberCoords(monster.target);
   const player = getPlayerInCell(x, y, game);
   if (player && Math.abs(x - monster.x) <= 1 && Math.abs(y - monster.y) <= 1) {
-    player.currentHp -= monster.attackStrength;
-    player.currentAction = null;
+    handleMonsterAttackPlayer(monster, player);
   } else {
     const path = calculatePath(game, monster, x, y, isMonsterPathableCell);
     if (path.length > 0) {

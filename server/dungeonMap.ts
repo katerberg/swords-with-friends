@@ -20,7 +20,7 @@ import {getRandomFreeLocation, getSpiralAroundPoint} from '.';
 
 function createMonster(coordinate: Coordinate): Monster {
   const {x, y} = coordsToNumberCoords(coordinate);
-  return {x, y, type: MonsterType.Goblin, attackStrength: 1, maxHp: 5, currentHp: 5, monsterId: uuid(), target: null};
+  return {x, y, type: MonsterType.Goblin, attackStrength: 4, maxHp: 5, currentHp: 5, monsterId: uuid(), target: null};
 }
 
 export function isValidCoordinate(x: number, y: number): boolean {
