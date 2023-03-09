@@ -10,6 +10,7 @@ import {
   ItemType,
   Monster,
   MonsterType,
+  PotionType,
   NumberCoordinates,
   Player,
   VisiblityStatus,
@@ -78,6 +79,13 @@ export function populateFov(game: Game): void {
   });
   game.players.forEach((p) => {
     updateFovCells(p.x, p.y, game, mapLevel);
+  });
+}
+
+export function populateItems(game: Game): void {
+  game.dungeonMap.forEach((mapLevel, i) => {
+    const {x, y} = getRandomFreeLocation(game, i);
+    mapLevel.cells[`${x},${y}`].items.push({itemId: uuid(), type: ItemType.Potion, subtype: PotionType.Acid});
   });
 }
 

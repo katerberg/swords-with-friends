@@ -31,14 +31,14 @@ function isFreeOfStandingPlayers(x: number, y: number, game: Game): boolean {
   return game.players.every((player) => player.currentHp <= 0 || player.x !== x || player.y !== y);
 }
 
-export function isFreeCell(x: number, y: number, game: Game): boolean {
-  const mapLevel = getMapLevel(game);
+export function isFreeCell(x: number, y: number, game: Game, mapLevel?: number): boolean {
+  const level = mapLevel !== undefined ? mapLevel : getMapLevel(game);
   return (
     isValidCoordinate(x, y) &&
-    (!game.dungeonMap?.[mapLevel] ||
-      game.dungeonMap[mapLevel].monsters.every((monster) => monster.x !== x || monster.y !== y)) &&
+    (!game.dungeonMap?.[level] ||
+      game.dungeonMap[level].monsters.every((monster) => monster.x !== x || monster.y !== y)) &&
     isFreeOfStandingPlayers(x, y, game) &&
-    (!game.dungeonMap?.[mapLevel] || game.dungeonMap[mapLevel].cells[`${x},${y}`].isPassable)
+    (!game.dungeonMap?.[level] || game.dungeonMap[level].cells[`${x},${y}`].isPassable)
   );
 }
 

@@ -17,7 +17,7 @@ import {
 } from '../types/SharedTypes';
 import {contrast, getRandomColor} from './color';
 import {getRandomInt, getRandomName} from './data';
-import {createMap, populateFov} from './dungeonMap';
+import {createMap, populateFov, populateItems} from './dungeonMap';
 import {setup} from './express';
 import {handleGameActions, isFreeCell} from './gameActions';
 
@@ -46,9 +46,9 @@ function getRandomSpace(): NumberCoordinates {
   return {x, y};
 }
 
-export function getRandomFreeLocation(game: Game): NumberCoordinates {
+export function getRandomFreeLocation(game: Game, mapLevel?: number): NumberCoordinates {
   const {x, y} = getRandomSpace();
-  if (isFreeCell(x, y, game)) {
+  if (isFreeCell(x, y, game, mapLevel)) {
     return {x, y};
   }
   return getRandomFreeLocation(game);
@@ -92,7 +92,6 @@ export function getStartLocationNearHost(game: Game): NumberCoordinates {
 
 function createPlayer(socketId: string, game: Game, isHost = false): Player {
   const color = getRandomColor();
-  // const {x, y} = isHost ? coordsToNumberCoords(game.dungeonMap[0].playerSpawn) : getStartLocationNearHost(game);
   return {
     playerId: uuid(),
     x: 0,
@@ -167,12 +166,13 @@ io.on('connection', (socket) => {
             p.y = y;
           }
         });
+        populateItems(games[gameId]);
+        populateFov(games[gameId]);
+        io.emit(Messages.GameStarted, gameId, games[gameId]);
+        socket.broadcast.emit(Messages.CurrentGames, getAvailableGames());
       } else {
         console.error('No host found in creation'); //eslint-disable-line no-console
       }
-      populateFov(games[gameId]);
-      io.emit(Messages.GameStarted, gameId, games[gameId]);
-      socket.broadcast.emit(Messages.CurrentGames, getAvailableGames());
     }
   });
   handleGameActions(io, socket);
