@@ -1,6 +1,17 @@
 import * as paper from 'paper';
 import {X_VISIBLE_CELLS, Y_VISIBLE_CELLS} from '../types/consts';
-import {Item, ItemType, Monster, MonsterType, NumberCoordinates, Player, PotionType} from '../types/SharedTypes';
+import {
+  Cell,
+  CellType,
+  Item,
+  ItemType,
+  Monster,
+  MonsterType,
+  NumberCoordinates,
+  Player,
+  PotionType,
+  VisiblityStatus,
+} from '../types/SharedTypes';
 import {getCellWidth} from './ClientGame';
 import {BLACK, RED, WHITE} from './colors';
 
@@ -96,6 +107,22 @@ export function getInventoryItemSelectedMessage(): paper.Group {
   tr.x += padding;
   tr.y -= padding;
   return new paper.Group([title]);
+}
+
+export function getCellBackgroundRaster(cell: Cell): string {
+  if (cell.visibilityStatus === VisiblityStatus.Unseen) {
+    return 'Black';
+  }
+  switch (cell.type) {
+    case CellType.VerticalDoor:
+    case CellType.HorizontalDoor:
+    case CellType.Earth:
+    case CellType.Exit:
+      return 'Dirt_01';
+    case CellType.Wall:
+    default:
+      return 'Ground_01';
+  }
 }
 
 export function getFog(circlePoint: paper.Point): paper.Raster {

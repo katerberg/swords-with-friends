@@ -20,6 +20,7 @@ import {
 import {BLACK, FOV_SEEN_OVERLAY, INVENTORY_BACKGROUND, TRANSPARENT, WHITE} from './colors';
 import {
   getBacking,
+  getCellBackgroundRaster,
   getCellOffsetFromMouseEvent,
   getHpBar,
   getInventoryItemSelectedMessage,
@@ -261,9 +262,7 @@ export class ClientGame {
     this.drawMap();
   }
 
-  private handleCellClick(xOffset: number, yOffset: number): void {
-    const x = this.currentPlayer.x + xOffset;
-    const y = this.currentPlayer.y + yOffset;
+  private handleCellClick(x: number, y: number): void {
     this.piggybackView = null;
     if (!this.dungeonMap[this.level].cells[`${x},${y}`].isPassable) {
       return;
@@ -351,9 +350,8 @@ export class ClientGame {
     }
   }
 
-  private drawPlayer(player: Player, circlePoint: paper.Point, cellCoords: Coordinate, clickHandler: () => void): void {
+  private drawPlayer(player: Player, circlePoint: paper.Point, clickHandler: () => void): void {
     if (!this.drawnPlayers[player.playerId]) {
-      console.log('drawing player', player.playerId);
       const playerRaster = new paper.Raster(player.currentHp > 0 ? player.character : CharacterName.Dead);
       playerRaster.position = circlePoint;
       const playerRasterScale = (getCellWidth() / playerRaster.width) * 0.8;
@@ -394,42 +392,43 @@ export class ClientGame {
     }
   }
 
+  private updateCellBackgroundRaster(cell: Cell, cellCoords: Coordinate): void {
+    const newBackground = getCellBackgroundRaster(cell);
+    (this.drawnTiles[cellCoords].firstChild as paper.Raster).source = (
+      (this.drawnTiles[cellCoords].firstChild as paper.Raster).source as string
+    )
+      .replace('Dirt_01', newBackground)
+      .replace('Ground_01', newBackground)
+      .replace('Black', newBackground);
+  }
+
   private drawCell(offsetX: number, offsetY: number, cell: Cell): void {
     const {currentPlayer} = this;
-    const cellCoords: Coordinate = `${offsetX},${offsetY}`;
+    const cellCoords: Coordinate = `${currentPlayer.x + offsetX},${currentPlayer.y + offsetY}`;
+    const clickX = currentPlayer.x + offsetX;
+    const clickY = currentPlayer.y + offsetY;
+    const clickHandler = (): void => {
+      this.handleCellClick(clickX, clickY);
+    };
+    if (this.drawnTiles[cellCoords]) {
+      this.updateCellBackgroundRaster(cell, cellCoords);
+      this.drawnTiles[cellCoords].onClick = clickHandler;
+      return;
+    }
     const cellWidth = getCellWidth();
     const {x: coordX, y: coordY} = this.getCellCenterPointFromCoordinates(
       `${currentPlayer.x + offsetX},${currentPlayer.y + offsetY}`,
     );
-    if (this.drawnTiles[cellCoords]) {
-      return;
-    }
     const circlePoint = new paper.Point(coordX, coordY);
 
-    let cellBackgroundRaster: paper.Raster;
-    if (cell.visibilityStatus === VisiblityStatus.Unseen) {
-      cellBackgroundRaster = new paper.Raster('black');
-    } else {
-      switch (cell.type) {
-        case CellType.VerticalDoor:
-        case CellType.HorizontalDoor:
-        case CellType.Earth:
-        case CellType.Exit:
-          cellBackgroundRaster = new paper.Raster('dirt01');
-          break;
-        case CellType.Wall:
-        default:
-          cellBackgroundRaster = new paper.Raster('ground01');
-          break;
-      }
-    }
+    const cellBackgroundRaster = new paper.Raster(getCellBackgroundRaster(cell));
+
     cellBackgroundRaster.position = circlePoint;
     const rasterScale = cellWidth / cellBackgroundRaster.width + 0.003;
     cellBackgroundRaster.scale(cellWidth / cellBackgroundRaster.width + 0.003);
     cellBackgroundRaster.strokeWidth = 0;
     this.drawnTiles[cellCoords] = new paper.Group([cellBackgroundRaster]);
     if (cell.visibilityStatus !== VisiblityStatus.Unseen) {
-      const clickHandler = (): void => this.handleCellClick(offsetX, offsetY);
       this.drawnTiles[cellCoords].onClick = clickHandler;
       this.handlePotentialExit(cell, circlePoint, cellCoords, clickHandler);
       this.handlePotentialDoor(cell, circlePoint, cellCoords, clickHandler);
@@ -448,7 +447,13 @@ export class ClientGame {
             occupyingPlayer = standingPlayer;
           }
         }
-        this.drawPlayer(occupyingPlayer, circlePoint, cellCoords, clickHandler);
+        if (currentPlayer.playerId === occupyingPlayer.playerId) {
+          this.drawPlayer(occupyingPlayer, circlePoint, (): void =>
+            this.handleCellClick(currentPlayer.x, currentPlayer.y),
+          );
+        } else {
+          this.drawPlayer(occupyingPlayer, circlePoint, clickHandler);
+        }
       }
     }
   }
@@ -505,10 +510,10 @@ export class ClientGame {
     //   cell.remove();
     //   delete this.drawnPlayers[key as Coordinate];
     // });
-    Object.entries(this.drawnTiles).forEach(([key, cell]) => {
-      cell.remove();
-      delete this.drawnTiles[key as Coordinate];
-    });
+    // Object.entries(this.drawnTiles).forEach(([key, cell]) => {
+    //   cell.remove();
+    //   delete this.drawnTiles[key as Coordinate];
+    // });
     Object.entries(this.drawnMovementPaths).forEach(([key, path]) => {
       path.remove();
       delete this.drawnMovementPaths[key as string];
@@ -579,7 +584,6 @@ export class ClientGame {
 
   private drawMap(): void {
     this.clearExistingDrawings();
-
     const {x: playerX, y: playerY} = this.currentPlayer;
     for (let cellX = 0; cellX < MAX_X; cellX++) {
       for (let cellY = 0; cellY < MAX_Y; cellY++) {
@@ -592,6 +596,10 @@ export class ClientGame {
         }
       }
     }
+
+    Object.values(this.drawnTiles).forEach((tile) => {
+      tile.bringToFront();
+    });
 
     this.drawMonsters();
 
@@ -606,10 +614,6 @@ export class ClientGame {
         }
       });
     }
-
-    // Object.values(this.drawnTiles).forEach((player) => {
-    //   player.bringToFront();
-    // });
 
     Object.values(this.drawnPlayers).forEach((player) => {
       player.bringToFront();
@@ -630,8 +634,8 @@ export class ClientGame {
     // const yDiff = this.viewPortCenter.y - targetY * getCellWidth();
     // let xShift = 0,
     //   yShift = 0;
-    const xShiftSpeed = 1;
-    const yShiftSpeed = 1;
+    const xShiftSpeed = 2;
+    const yShiftSpeed = 2;
     // if (Math.abs(xDiff) > shiftSpeed) {
     //   xShift = shiftSpeed * (xDiff > 0 ? -1 : 1);
     // }
@@ -642,16 +646,40 @@ export class ClientGame {
     // this.viewPortCenter.y += yShift;
     // this.viewPortCenter.x += xShift;
     // this.drawnPlayers[Object.keys(this.drawnPlayers)[0]].position.x += 10;
+    const {cells} = this.dungeonMap[this.level];
+    (Object.keys(cells) as Coordinate[]).forEach((key, i) => {
+      // drawn tiles use offset
+      // currentPlayer.x + offsetX
+      if (this.drawnTiles[key]) {
+        const newCellCoords = this.getCellCenterPointFromCoordinates(key);
+
+        const cellXDiff = this.drawnTiles[key].position.x - newCellCoords.x;
+        const cellYDiff = this.drawnTiles[key].position.y - newCellCoords.y;
+        let cellXShift = 0;
+        let cellYShift = 0;
+        if (Math.abs(cellXDiff) > xShiftSpeed) {
+          cellXShift = xShiftSpeed * (cellXDiff > 0 ? -1 : 1);
+          this.drawnTiles[key].position.x += cellXShift;
+        }
+        if (Math.abs(cellYDiff) > yShiftSpeed) {
+          cellYShift = yShiftSpeed * (cellYDiff > 0 ? -1 : 1);
+          this.drawnTiles[key].position.y += cellYShift;
+        }
+      }
+    });
     this.players.forEach((p) => {
       const newPlayerCoords = this.getCellCenterPointFromCoordinates(`${p.x},${p.y}`);
       const playerXDiff = this.drawnPlayers[p.playerId].position.x - newPlayerCoords.x;
       const playerYDiff = this.drawnPlayers[p.playerId].position.y - newPlayerCoords.y;
       let playerXShift = 0;
+      let playerYShift = 0;
       if (Math.abs(playerXDiff) > xShiftSpeed) {
         playerXShift = xShiftSpeed * (playerXDiff > 0 ? -1 : 1);
         this.drawnPlayers[p.playerId].position.x += playerXShift;
+        this.drawnPlayers[p.playerId].onClick = (): void => {
+          this.handleCellClick(p.x, p.y);
+        };
       }
-      let playerYShift = 0;
       if (Math.abs(playerYDiff) > yShiftSpeed) {
         playerYShift = yShiftSpeed * (playerYDiff > 0 ? -1 : 1);
         this.drawnPlayers[p.playerId].position.y += playerYShift;
