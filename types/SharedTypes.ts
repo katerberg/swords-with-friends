@@ -18,6 +18,16 @@ export enum CharacterName {
   SwordsWoman = 'character-swordswoman',
 }
 
+export enum StatusEffectName {
+  Pinned,
+  Frozen,
+}
+
+export type StatusEffect = {
+  name: StatusEffectName;
+  remainingTurns: number;
+};
+
 export type Player = {
   x: number;
   y: number;
@@ -35,6 +45,7 @@ export type Player = {
   textColor: string;
   currentAction: PlayerAction | null;
   mapLevel: number;
+  statusEffects: StatusEffect[];
 };
 
 export enum CellType {

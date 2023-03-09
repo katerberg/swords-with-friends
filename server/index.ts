@@ -113,6 +113,7 @@ function createPlayer(socketId: string, game: Game, isHost = false): Player {
     textColor: contrast(color),
     currentAction: null,
     mapLevel: 0,
+    statusEffects: [],
   };
 }
 

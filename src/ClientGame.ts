@@ -245,6 +245,7 @@ export class ClientGame {
       const updatedPlayer = game.players.find((gamePlayer) => gamePlayer.playerId === thisPlayer.playerId) as Player;
       thisPlayer.x = updatedPlayer.x;
       thisPlayer.y = updatedPlayer.y;
+      thisPlayer.statusEffects = updatedPlayer.statusEffects;
       thisPlayer.items.length = 0;
       updatedPlayer.items.forEach((item) => {
         thisPlayer.items.push(item);
