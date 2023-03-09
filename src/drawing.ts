@@ -1,6 +1,15 @@
 import * as paper from 'paper';
 import {X_VISIBLE_CELLS, Y_VISIBLE_CELLS} from '../types/consts';
-import {Item, ItemType, Monster, MonsterType, NumberCoordinates, Player, PotionType} from '../types/SharedTypes';
+import {
+  GearType,
+  Item,
+  ItemType,
+  Monster,
+  MonsterType,
+  NumberCoordinates,
+  Player,
+  PotionType,
+} from '../types/SharedTypes';
 import {getCellWidth} from './ClientGame';
 import {BLACK, RED, WHITE} from './colors';
 
@@ -64,6 +73,11 @@ export function getMonster(monster: Monster, center: NumberCoordinates): paper.G
 export function getRasterStringFromItems(items: Item[]): string {
   if (items.some((item) => item.type === ItemType.Trophy)) {
     return 'orb08';
+  }
+  if (items.some((item) => item.type === ItemType.Gear)) {
+    if (items.some((item) => item.subtype === GearType.Sword)) {
+      return 'sword33';
+    }
   }
   if (items.some((item) => item.type === ItemType.Potion)) {
     if (items.some((item) => item.subtype === PotionType.Health)) {

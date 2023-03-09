@@ -30,6 +30,7 @@ export type Player = {
   maxHp: number;
   currentHp: number;
   attackStrength: number;
+  // min and max
   color: string;
   textColor: string;
   currentAction: PlayerAction | null;
@@ -45,8 +46,18 @@ export enum CellType {
 }
 
 export enum ItemType {
+  Gear,
   Trophy,
   Potion,
+}
+
+export enum GearType {
+  // min and max
+  Sword = 'Sword',
+}
+
+export enum TrophyType {
+  Trophy = 'Orb',
 }
 
 export enum PotionType {
@@ -57,7 +68,7 @@ export enum PotionType {
 export type Item = {
   itemId: string;
   type: ItemType;
-  subtype?: PotionType;
+  subtype: PotionType | GearType | TrophyType;
 };
 
 export type Cell = {
@@ -82,6 +93,7 @@ export type Monster = {
   maxHp: number;
   currentHp: number;
   attackStrength: number;
+  // min and max
   target: Coordinate | null;
   x: number;
   y: number;

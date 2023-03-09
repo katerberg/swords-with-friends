@@ -14,7 +14,6 @@ import {
   Player,
   PlayerAction,
   PlayerActionName,
-  PotionType,
   VisiblityStatus,
 } from '../types/SharedTypes';
 import {BLACK, FOV_SEEN_OVERLAY, INVENTORY_BACKGROUND, TRANSPARENT, WHITE} from './colors';
@@ -320,6 +319,12 @@ export class ClientGame {
         item.position = circlePoint;
         item.scale(cellWidth / item.width);
         item.strokeWidth = 0;
+        if (rasterImage.includes('sword')) {
+          item.shadowColor = WHITE;
+          item.shadowBlur = 12;
+          item.scale(0.8);
+          item.rotate(-30);
+        }
         item.onClick = clickHandler;
         this.drawnTiles[cellCoords].addChild(item);
       }
@@ -541,11 +546,9 @@ export class ClientGame {
       backing.strokeWidth = 0;
       const label = new paper.PointText(cellPositions[i]);
       label.position.y += cellWidth * 0.55;
-      // const foo = PotionType[item.subtype as PotionType.Acid] as string;
-      label.content = item.subtype as PotionType;
+      label.content = item.subtype;
       label.fillColor = BLACK;
       label.justification = 'center';
-      // label.content = item.subtype. ? 'foo' : '';
       const group = new paper.Group([backing, raster, label]);
       group.onClick = (): void => this.handleInventoryItemClick(item);
       return group;

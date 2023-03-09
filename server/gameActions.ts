@@ -7,6 +7,7 @@ import {
   Coordinate,
   Game,
   GameStatus,
+  GearType,
   Item,
   ItemType,
   Messages,
@@ -123,6 +124,22 @@ function handlePlayerUsePotion(game: Game, player: Player, item: Item, targetX: 
   }
 }
 
+function handlePlayerUseGear(game: Game, player: Player, item: Item, targetX: number, targetY: number): void {
+  const targetPlayer = game.players.find((p) => p.x === targetX && p.y === targetY);
+  console.log('using gear', targetX, targetY, item.subtype === GearType.Sword, targetPlayer);
+  switch (item.subtype) {
+    case GearType.Sword:
+      if (targetPlayer && !targetPlayer.items.some((targetItem) => targetItem.subtype === GearType.Sword)) {
+        targetPlayer?.items.push(item);
+        break;
+      }
+      console.log('adding item to ', targetX, targetY);
+      game.dungeonMap[player.mapLevel].cells[`${targetX},${targetY}`].items.push(item);
+      break;
+    default:
+  }
+}
+
 function handlePlayerUseItemAction(gameId: string, clientPlayer: Player): void {
   const game = getGames()[gameId];
   const gamePlayer = game.players.find((loopPlayer) => loopPlayer.playerId === clientPlayer.playerId);
@@ -141,6 +158,9 @@ function handlePlayerUseItemAction(gameId: string, clientPlayer: Player): void {
   switch (item.type) {
     case ItemType.Potion:
       handlePlayerUsePotion(game, gamePlayer, item, targetX, targetY);
+      break;
+    case ItemType.Gear:
+      handlePlayerUseGear(game, gamePlayer, item, targetX, targetY);
       break;
     default:
   }

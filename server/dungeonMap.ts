@@ -14,6 +14,7 @@ import {
   NumberCoordinates,
   Player,
   VisiblityStatus,
+  TrophyType,
 } from '../types/SharedTypes';
 import {isFreeCell} from './gameActions';
 import {getRandomFreeLocation, getSpiralAroundPoint} from '.';
@@ -140,7 +141,11 @@ export function createMap(game: Game): DungeonMap {
         dungeonMap[i].cells[exit].type = CellType.Exit;
       });
     } else {
-      dungeonMap[i].cells[`${exitX},${exitY}`].items.push({itemId: uuid(), type: ItemType.Trophy});
+      dungeonMap[i].cells[`${exitX},${exitY}`].items.push({
+        itemId: uuid(),
+        type: ItemType.Trophy,
+        subtype: TrophyType.Trophy,
+      });
     }
 
     dungeonMap[i].monsterSpawn.forEach((ms) => {
