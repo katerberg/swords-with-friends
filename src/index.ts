@@ -39,6 +39,10 @@ async function handleCreateGame(): Promise<void> {
   globalThis.socket.on(Messages.PlayersChangedInGame, (game) => {
     populatePlayerList(game.players);
   });
+  const waitingRoomTitle = document.getElementById('waiting-room-title');
+  if (waitingRoomTitle) {
+    waitingRoomTitle.innerHTML = 'Waiting Room';
+  }
   swapScreens('start-screen', 'waiting-room');
   populatePlayerList(createdGame.players);
 }

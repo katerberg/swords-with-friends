@@ -1,6 +1,10 @@
 import {CharacterName, Game, Messages, Player} from '../types/SharedTypes';
 import {ClientGame} from './ClientGame';
+import {isDebug} from './debug';
 import {swapScreens} from './screen-manager';
+
+let playerCount = 1;
+let warned = false;
 
 function nameChange(newName: string): void {
   globalThis.socket.emit(Messages.ChangeName, globalThis.currentGameId, newName);
@@ -26,6 +30,21 @@ async function startGame(game: Game): Promise<void> {
 }
 
 export function handleStartGame(): void {
+  if (!isDebug() && !warned && playerCount === 1) {
+    const waitingRoomTitle = document.getElementById('waiting-room-title');
+    if (waitingRoomTitle) {
+      waitingRoomTitle.innerHTML = 'Multiplayer recommended. Are you sure?';
+    }
+
+    const startGameButton = document.getElementById('start-game');
+    if (startGameButton) {
+      startGameButton.innerHTML = 'Proceed';
+    }
+
+    warned = true;
+    return;
+  }
+
   globalThis.socket.emit(Messages.StartGame, globalThis.currentGameId);
   const gameLobby = document.getElementById('waiting-room');
   if (gameLobby) {
@@ -45,6 +64,7 @@ function getSrcFromCharacterName(character: CharacterName): string {
 }
 
 export function populatePlayerList(players: Player[]): void {
+  playerCount = players.length;
   const playerLobbyList = document.getElementById('waiting-room-list');
   if (playerLobbyList) {
     while (playerLobbyList.firstChild) {
