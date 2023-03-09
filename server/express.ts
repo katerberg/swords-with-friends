@@ -9,6 +9,10 @@ export function setup(): express.Express {
       'http://127.0.0.1:8080',
       'http://0.0.0.0:8080',
       'http://192.168.50.132:8080',
+      'http://localhost:9080',
+      'http://127.0.0.1:9080',
+      'http://0.0.0.0:9080',
+      'http://192.168.50.132:9080',
     ];
     const {origin} = req.headers;
     if (origin) {

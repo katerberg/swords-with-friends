@@ -25,7 +25,14 @@ const app = setup();
 const server = new http.Server(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:8080', 'http://0.0.0.0:8080', 'http://192.168.50.132:8080'],
+    origin: [
+      'http://localhost:8080',
+      'http://0.0.0.0:8080',
+      'http://192.168.50.132:8080',
+      'http://localhost:9080',
+      'http://0.0.0.0:9080',
+      'http://192.168.50.132:9080',
+    ],
     methods: ['GET', 'POST'],
   },
 });
@@ -180,7 +187,8 @@ io.on('connection', (socket) => {
   handleGameActions(io, socket);
 });
 
-server.listen(8081, () => {
+const args = process.argv.slice(2);
+server.listen(args[0] || 8081, () => {
   const address = server.address() as AddressInfo;
   console.log(`Listening on ${address.port}`); //eslint-disable-line no-console
 });

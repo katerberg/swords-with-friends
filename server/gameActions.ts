@@ -329,6 +329,9 @@ function reduceCooldowns(game: Game): void {
     player.statusEffects = player.statusEffects
       .map((se) => ({...se, remainingTurns: se.remainingTurns - 1}))
       .filter((se) => se.remainingTurns > 0);
+    if (player.statusEffects.some((se) => se.name === StatusEffectName.Frozen)) {
+      player.currentAction = {name: PlayerActionName.Move, target: `${player.x},${player.y}`, path: []};
+    }
   });
 }
 
@@ -348,9 +351,14 @@ function checkTurnEnd(gameId: string, io: Server): void {
     const currentlyVisibleMonsters = dungeonMap.monsters.filter(
       (m) => dungeonMap.cells[`${m.x},${m.y}`].visibilityStatus === VisiblityStatus.Visible,
     );
-    if (currentlyVisibleMonsters.some((m) => !previouslyVisibleMonsterIds.includes(m.monsterId))) {
-      games[gameId].players.forEach((p) => (p.currentAction = null));
-    }
+    currentlyVisibleMonsters
+      .filter((m) => !previouslyVisibleMonsterIds.includes(m.monsterId))
+      .forEach((m) => {
+        const player = getClosestVisiblePlayerToMonster(m, games[gameId]);
+        if (player) {
+          player.currentAction = null;
+        }
+      });
 
     const status = getGameStatus(gameId);
     if (status === GameStatus.Lost) {

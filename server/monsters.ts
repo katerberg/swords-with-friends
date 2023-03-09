@@ -83,9 +83,12 @@ export function handleMonsterWander(monster: Monster, game: Game): void {
   }
 }
 
-function handleMonsterAttackPlayer(monster: Monster, player: Player): void {
+function handleMonsterAttackPlayer(monster: Monster, player: Player, game: Game): void {
   const damage = getRandomInt(monster.minAttackStrength, monster.maxAttackStrength);
   player.currentHp -= damage;
+  if (player.currentHp <= 0) {
+    game.players.forEach((p) => (p.currentAction = null));
+  }
   if (monster.type === MonsterType.Medusa) {
     if (player.statusEffects.every((se) => se.name !== StatusEffectName.Frozen)) {
       player.statusEffects.push({name: StatusEffectName.Frozen, remainingTurns: getRandomInt(2, 4)});
@@ -112,7 +115,7 @@ export function handleMonsterActionTowardsTarget(monster: Monster, game: Game): 
   const {x, y} = coordsToNumberCoords(monster.target);
   const player = getPlayerInCell(x, y, game);
   if (player && Math.abs(x - monster.x) <= 1 && Math.abs(y - monster.y) <= 1) {
-    handleMonsterAttackPlayer(monster, player);
+    handleMonsterAttackPlayer(monster, player, game);
   } else {
     const path = calculatePath(game, monster, x, y, isMonsterPathableCell);
     if (path.length > 0) {

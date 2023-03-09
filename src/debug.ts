@@ -4,3 +4,7 @@ export function isDebug(additionalRequiredFlag?: string): boolean {
   const hasNeededFlag = !additionalRequiredFlag || url.searchParams.get(additionalRequiredFlag) !== null;
   return debug !== null && hasNeededFlag;
 }
+
+export function getServerPort(): string {
+  return new URL(window.location.href).port.replace('080', '081');
+}

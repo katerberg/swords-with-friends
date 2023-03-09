@@ -13,7 +13,8 @@ const config = {
     path: path.resolve(__dirname, 'dist'),
   },
   devServer: {
-    open: true,
+    open: isProduction ? false : true,
+    port: isProduction ? 9080 : 8080,
     host: '0.0.0.0',
   },
   plugins: [

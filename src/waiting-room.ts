@@ -25,7 +25,6 @@ async function startGame(game: Game): Promise<void> {
   if (gameLobby) {
     gameLobby.classList.remove('visible');
   }
-
   globalThis.clientGame = new ClientGame(game);
 }
 
