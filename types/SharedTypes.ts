@@ -14,6 +14,8 @@ export type PlayerAction = {
 
 export enum CharacterName {
   Dead = 'character-dead',
+  Frozen = 'character-frozen',
+  Pinned = 'character-pinned',
   SwordsMan = 'character-swordsman',
   SwordsWoman = 'character-swordswoman',
 }

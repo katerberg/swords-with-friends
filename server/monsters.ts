@@ -88,7 +88,7 @@ function handleMonsterAttackPlayer(monster: Monster, player: Player): void {
   player.currentHp -= damage;
   if (monster.type === MonsterType.Tarball) {
     if (player.statusEffects.every((se) => se.name !== StatusEffectName.Pinned)) {
-      player.statusEffects.push({name: StatusEffectName.Pinned, remainingTurns: getRandomInt(1, 3)});
+      player.statusEffects.push({name: StatusEffectName.Pinned, remainingTurns: getRandomInt(2, 4)});
     }
   }
   if (monster.type === MonsterType.Vampire) {

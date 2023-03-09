@@ -1,6 +1,7 @@
 import * as paper from 'paper';
 import {X_VISIBLE_CELLS, Y_VISIBLE_CELLS} from '../types/consts';
 import {
+  CharacterName,
   GearType,
   Item,
   ItemType,
@@ -9,6 +10,7 @@ import {
   NumberCoordinates,
   Player,
   PotionType,
+  StatusEffectName,
 } from '../types/SharedTypes';
 import {getCellWidth} from './ClientGame';
 import {BLACK, RED, WHITE} from './colors';
@@ -101,6 +103,19 @@ export function getRasterStringFromItems(items: Item[]): string {
     return 'gem11';
   }
   return '';
+}
+
+export function getRasterStringForPlayer(player: Player): string {
+  if (player.currentHp <= 0) {
+    return CharacterName.Dead;
+  }
+  if (player.statusEffects.some((se) => se.name === StatusEffectName.Frozen)) {
+    return CharacterName.Frozen;
+  }
+  if (player.statusEffects.some((se) => se.name === StatusEffectName.Pinned)) {
+    return CharacterName.Pinned;
+  }
+  return player.character;
 }
 
 export function getInventoryItemSelectedMessage(): paper.Group {

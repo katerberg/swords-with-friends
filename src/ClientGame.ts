@@ -4,7 +4,6 @@ import {calculateDistanceBetween, coordsToNumberCoords} from '../types/math';
 import {
   Cell,
   CellType,
-  CharacterName,
   Coordinate,
   DungeonMap,
   Game,
@@ -23,6 +22,7 @@ import {
   getHpBar,
   getInventoryItemSelectedMessage,
   getMonster,
+  getRasterStringForPlayer,
   getRasterStringFromItems,
 } from './drawing';
 import {loseGame, winGame} from './screen-manager';
@@ -364,7 +364,7 @@ export class ClientGame {
   }
 
   private drawPlayer(player: Player, circlePoint: paper.Point, cellCoords: Coordinate, clickHandler: () => void): void {
-    const playerRaster = new paper.Raster(player.currentHp > 0 ? player.character : CharacterName.Dead);
+    const playerRaster = new paper.Raster(getRasterStringForPlayer(player));
     playerRaster.position = circlePoint;
     const playerRasterScale = (getCellWidth() / playerRaster.width) * 0.8;
     playerRaster.scale(playerRasterScale);
