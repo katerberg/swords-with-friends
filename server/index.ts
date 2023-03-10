@@ -117,7 +117,7 @@ function createPlayer(socketId: string, game: Game, isHost = false): Player {
     name: getRandomName(),
     items: [
       {itemId: uuid(), type: ItemType.Potion, subtype: PotionType.Health},
-      {itemId: uuid(), type: ItemType.Potion, subtype: PotionType.Health},
+      {itemId: uuid(), type: ItemType.Potion, subtype: PotionType.Summon},
     ],
     socketId,
     minAttackStrength: 15,

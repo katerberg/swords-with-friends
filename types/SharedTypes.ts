@@ -78,6 +78,7 @@ export enum PotionType {
   Acid = 'Acid',
   Teleport = 'Teleport',
   Summon = 'Summon',
+  GoStone = 'Go Stone',
 }
 
 export type Item = {

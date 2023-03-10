@@ -143,6 +143,24 @@ function handlePlayerUsePotion(game: Game, player: Player, item: Item, targetX: 
       }
       target.currentHp -= getRandomInt(25, 35);
       break;
+    case PotionType.GoStone: {
+      if (!target && isFreeCell(targetX, targetY, game, player.mapLevel)) {
+        player.x = targetX;
+        player.y = targetY;
+        player.statusEffects.length = 0;
+      }
+      if (target) {
+        target.x = player.x;
+        target.y = player.y;
+        if ((target as Player).playerId) {
+          (target as Player).statusEffects.length = 0;
+        }
+        player.statusEffects.length = 0;
+        player.x = targetX;
+        player.y = targetY;
+      }
+      break;
+    }
     case PotionType.Summon: {
       const spiral = getSpiralAroundPoint({x: targetX, y: targetY});
       game.players
@@ -170,7 +188,6 @@ function handlePlayerUsePotion(game: Game, player: Player, item: Item, targetX: 
       const {x, y} = getRandomFreeLocation(game, player.mapLevel);
       target.x = x;
       target.y = y;
-      target.currentHp -= getRandomInt(25, 35);
       break;
     }
     default:
