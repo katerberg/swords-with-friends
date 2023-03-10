@@ -264,6 +264,7 @@ export class ClientGame {
       thisPlayer.y = updatedPlayer.y;
       thisPlayer.statusEffects = updatedPlayer.statusEffects;
       thisPlayer.items.length = 0;
+      thisPlayer.equipment = updatedPlayer.equipment;
       updatedPlayer.items.forEach((item) => {
         thisPlayer.items.push(item);
       });
@@ -555,6 +556,25 @@ export class ClientGame {
     this.drawMap();
   }
 
+  private getInventoryItem(item: Item, center: paper.Point): paper.Group {
+    const cellWidth = getCellWidth();
+    const raster = new paper.Raster(getRasterStringFromItems([item]));
+    raster.position = center;
+    const rasterScale = (getCellWidth() / raster.width) * 0.7;
+    raster.scale(rasterScale);
+    const backing = new paper.Shape.Circle(raster.position, (0.7 * cellWidth) / 2);
+    backing.fillColor = BLACK;
+    backing.strokeWidth = 0;
+    const label = new paper.PointText(center);
+    label.position.y += cellWidth * 0.55;
+    label.content = item.subtype;
+    label.fillColor = BLACK;
+    label.justification = 'center';
+    const group = new paper.Group([backing, raster, label]);
+    group.onClick = (): void => this.handleInventoryItemClick(item);
+    return group;
+  }
+
   private getInventoryItems(): paper.Group[] {
     const {items} = this.currentPlayer;
     const cellWidth = getCellWidth();
@@ -569,21 +589,7 @@ export class ClientGame {
       if (!cellPositions[i]) {
         return new paper.Group([]);
       }
-      const raster = new paper.Raster(getRasterStringFromItems([item]));
-      raster.position = cellPositions[i];
-      const rasterScale = (getCellWidth() / raster.width) * 0.7;
-      raster.scale(rasterScale);
-      const backing = new paper.Shape.Circle(raster.position, (0.7 * cellWidth) / 2);
-      backing.fillColor = BLACK;
-      backing.strokeWidth = 0;
-      const label = new paper.PointText(cellPositions[i]);
-      label.position.y += cellWidth * 0.55;
-      label.content = item.subtype;
-      label.fillColor = BLACK;
-      label.justification = 'center';
-      const group = new paper.Group([backing, raster, label]);
-      group.onClick = (): void => this.handleInventoryItemClick(item);
-      return group;
+      return this.getInventoryItem(item, cellPositions[i]);
     });
   }
 
@@ -609,6 +615,11 @@ export class ClientGame {
     this.getInventoryItems().forEach((item) => {
       this.drawnInventory?.addChild(item);
     });
+    const {equipment} = this.currentPlayer;
+    if (equipment) {
+      const playerCenter = this.drawnPlayers[`${0},${0}`].position;
+      this.getInventoryItem(equipment, new paper.Point(playerCenter.x, playerCenter.y));
+    }
   }
 
   private drawMap(): void {

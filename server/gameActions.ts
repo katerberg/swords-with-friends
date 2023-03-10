@@ -241,11 +241,17 @@ function handlePlayerUseItemAction(gameId: string, clientPlayer: Player): void {
   gamePlayer.currentAction = null;
 
   const {x: targetX, y: targetY} = coordsToNumberCoords(currentAction.target as Coordinate);
-  const itemIndex = gamePlayer.items.findIndex((i) => i.itemId === currentAction.item);
-  if (itemIndex === -1) {
-    return;
+  let item: Item;
+  if (gamePlayer.equipment?.itemId === currentAction.item) {
+    item = gamePlayer.equipment as GearItem;
+    gamePlayer.equipment = null;
+  } else {
+    const itemIndex = gamePlayer.items.findIndex((i) => i.itemId === currentAction.item);
+    if (itemIndex === -1) {
+      return;
+    }
+    [item] = gamePlayer.items.splice(itemIndex, 1);
   }
-  const [item] = gamePlayer.items.splice(itemIndex, 1);
   switch (item.type) {
     case ItemType.Potion:
       handlePlayerUsePotion(game, gamePlayer, item, targetX, targetY);
@@ -456,6 +462,17 @@ function checkTurnEnd(gameId: string, io: Server): void {
   }
 }
 
+function getItemFromPlayer(player: Player, itemId: string): Item | null {
+  if (player.equipment?.itemId === itemId) {
+    return player.equipment;
+  }
+  const index = player.items.findIndex((item) => itemId === item.itemId);
+  if (index > -1) {
+    return player.items[index];
+  }
+  return null;
+}
+
 export function handleGameActions(io: Server, socket: Socket): void {
   socket.on(Messages.UseItem, (gameId: string, x: number, y: number, itemId: string) => {
     const games = getGames();
@@ -464,7 +481,7 @@ export function handleGameActions(io: Server, socket: Socket): void {
       playerIndex !== undefined &&
       games[gameId].players[playerIndex].currentHp > 0 &&
       isValidCoordinate(x, y) &&
-      games[gameId].players[playerIndex].items.findIndex((item) => itemId === item.itemId) > -1
+      getItemFromPlayer(games[gameId].players[playerIndex], itemId) !== null
     ) {
       const action: PlayerAction = {
         name: PlayerActionName.UseItem,
