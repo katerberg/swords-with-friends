@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  http:
+    build: ./
+    restart: unless-stopped
+    env_file: ./.env
+    ports:
+      - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT
+    environment:
+      - CERT=$CERT_PATH
+      - KEY=$CERT_KEY_PATH
+    stdin_open: true
+    tty: true
