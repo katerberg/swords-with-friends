@@ -169,14 +169,6 @@ export function getInventoryItemSelectedMessage(): paper.Group {
   return new paper.Group([title]);
 }
 
-export function getFog(circlePoint: paper.Point): paper.Raster {
-  const raster = new paper.Raster('fog');
-  raster.position = circlePoint;
-  const rasterScale = getCellWidth() / raster.width;
-  raster.scale(rasterScale);
-  return raster;
-}
-
 export function getCellOffsetFromMouseEvent(e: paper.MouseEvent): NumberCoordinates {
   const cellWidth = getCellWidth();
   const zeroBasedX = Math.floor(e.point.x / cellWidth);
