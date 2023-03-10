@@ -244,7 +244,7 @@ function handlePlayerMovementAction(gameId: string, clientPlayer: Player): void 
     return;
   }
   const {x: targetX, y: targetY} = coordsToNumberCoords(gamePlayer.currentAction?.target as Coordinate);
-  // Stop player from walking into other player
+  // Stop player from walking into a wall
   if (!isPlayerPathableCell(targetX, targetY, game)) {
     gamePlayer.currentAction = null;
     return;
@@ -252,14 +252,14 @@ function handlePlayerMovementAction(gameId: string, clientPlayer: Player): void 
   // Next to goal
   if (Math.abs(targetX - gamePlayer.x) <= 1 && Math.abs(targetY - gamePlayer.y) <= 1) {
     const monster = getMonsterInCell(targetX, targetY, game);
-    if (!monster) {
+    if (!monster && isFreeCell(targetX, targetY, game, gamePlayer.mapLevel)) {
       playerMovesTo(targetX, targetY, gamePlayer, game);
       if (isOnExitCell(gamePlayer, game)) {
         gamePlayer.currentAction = {name: PlayerActionName.WaitOnExit};
       } else {
         gamePlayer.currentAction = null;
       }
-    } else {
+    } else if (monster) {
       handlePlayerAttackMonster(game, gamePlayer, monster);
       gamePlayer.currentAction = null;
     }
