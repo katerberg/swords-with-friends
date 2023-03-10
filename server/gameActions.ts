@@ -208,7 +208,11 @@ function handlePlayerUseGear(game: Game, player: Player, item: GearItem, targetX
     case GearType.Sword:
       if (targetPlayer !== undefined) {
         if (targetPlayer.playerId !== player.playerId) {
-          targetPlayer.items.push(item);
+          if (targetPlayer.equipment) {
+            targetPlayer.items.push(item);
+          } else {
+            targetPlayer.equipment = item;
+          }
         } else {
           if (targetPlayer.equipment) {
             targetPlayer.items.push(targetPlayer.equipment);
