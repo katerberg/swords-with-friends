@@ -9,7 +9,7 @@ import {
   Game,
   GamesHash,
   GameStatus,
-  EquipmentType,
+  GearType,
   ItemType,
   Messages,
   NumberCoordinates,
@@ -120,7 +120,7 @@ function createPlayer(socketId: string, isHost = false): Player {
     equipment: {
       itemId: uuid(),
       type: ItemType.Gear,
-      subtype: EquipmentType.SwordAcid,
+      subtype: GearType.SwordAcid,
       minAttack: 25,
       maxAttack: 35,
     },

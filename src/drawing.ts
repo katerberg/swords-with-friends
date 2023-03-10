@@ -2,7 +2,7 @@ import * as paper from 'paper';
 import {X_VISIBLE_CELLS, Y_VISIBLE_CELLS} from '../types/consts';
 import {
   CharacterName,
-  EquipmentType,
+  GearType,
   Item,
   ItemType,
   Monster,
@@ -110,10 +110,10 @@ export function getRasterStringFromItems(items: Item[]): string {
     return 'orb08';
   }
   if (items.some((item) => item.type === ItemType.Gear)) {
-    if (items.some((item) => item.subtype === EquipmentType.SwordAcid)) {
+    if (items.some((item) => item.subtype === GearType.SwordAcid)) {
       return 'sword23';
     }
-    if (items.some((item) => item.subtype === EquipmentType.SwordBasic)) {
+    if (items.some((item) => item.subtype === GearType.SwordBasic)) {
       return 'sword28';
     }
   }

@@ -65,7 +65,7 @@ export enum ItemType {
   Potion,
 }
 
-export enum EquipmentType {
+export enum GearType {
   SwordBasic = 'Basic',
   SwordAcid = 'Acid',
 }
@@ -85,15 +85,21 @@ export enum PotionType {
 export type GearItem = {
   itemId: string;
   type: ItemType.Gear;
-  subtype: EquipmentType;
+  subtype: GearType;
   minAttack: number;
   maxAttack: number;
+};
+
+export type PotionItem = {
+  itemId: string;
+  type: ItemType;
+  subtype: PotionType;
 };
 
 export type Item = {
   itemId: string;
   type: ItemType;
-  subtype: PotionType | EquipmentType | TrophyType;
+  subtype: PotionType | GearType | TrophyType;
   minAttack?: number;
   maxAttack?: number;
 };

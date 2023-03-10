@@ -14,6 +14,9 @@ import {
   VisiblityStatus,
   TrophyType,
   MonsterType,
+  PotionItem,
+  GearType,
+  GearItem,
 } from '../types/SharedTypes';
 import {randomEnum} from './data';
 import {isFreeCell} from './gameActions';
@@ -78,28 +81,63 @@ export function populateFov(game: Game): void {
   });
 }
 
+function getAttackStatsFromGear(type: GearType): {minAttack: number; maxAttack: number} {
+  switch (type) {
+    case GearType.SwordAcid:
+      return {minAttack: 25, maxAttack: 35};
+    case GearType.SwordBasic:
+    default:
+      return {minAttack: 15, maxAttack: 25};
+  }
+}
+
+function getRandomGear(): GearItem {
+  const randomGear = randomEnum(GearType);
+  return {
+    itemId: uuid(),
+    type: ItemType.Gear,
+    subtype: randomGear,
+    ...getAttackStatsFromGear(randomGear),
+  };
+}
+
+function getRandomPotion(game: Game): PotionItem {
+  let randomPotion = randomEnum(PotionType);
+  if (game.players.length === 1) {
+    while (randomPotion === PotionType.Summon) {
+      randomPotion = randomEnum(PotionType);
+    }
+  }
+  return {
+    itemId: uuid(),
+    type: ItemType.Potion,
+    subtype: randomPotion,
+  };
+}
+
+function getFreeSpaceCoords(game: Game, mapLevel: number): NumberCoordinates {
+  let freeSpaceCoords: NumberCoordinates | null = null;
+  while (freeSpaceCoords === null) {
+    const freeLocation = getRandomFreeLocation(game, mapLevel);
+    if (!game.players.some((p) => calculateDistanceBetween(freeLocation, p) < 4)) {
+      freeSpaceCoords = freeLocation;
+    }
+  }
+  return freeSpaceCoords;
+}
+
 export function populateItems(game: Game): void {
   game.dungeonMap.forEach((mapLevel, i) => {
     game.players.forEach(() => {
       for (let potionI = 0; potionI < 3; potionI++) {
-        let coords: NumberCoordinates | null = null;
-        while (coords === null) {
-          const freeLocation = getRandomFreeLocation(game, i);
-          if (!game.players.some((p) => calculateDistanceBetween(freeLocation, p) < 4)) {
-            coords = freeLocation;
-          }
-        }
-        let randomPotion = randomEnum(PotionType);
-        if (game.players.length === 1) {
-          while (randomPotion === PotionType.Summon) {
-            randomPotion = randomEnum(PotionType);
-          }
-        }
-        mapLevel.cells[`${coords.x},${coords.y}`].items.push({
-          itemId: uuid(),
-          type: ItemType.Potion,
-          subtype: randomPotion,
-        });
+        const freeSpaceCoords = getFreeSpaceCoords(game, i);
+        mapLevel.cells[`${freeSpaceCoords.x},${freeSpaceCoords.y}`].items.push(getRandomPotion(game));
+      }
+
+      // 50% chance of sword per player per level
+      if (Math.random() > 0.5) {
+        const freeSpaceCoords = getFreeSpaceCoords(game, i);
+        mapLevel.cells[`${freeSpaceCoords.x},${freeSpaceCoords.y}`].items.push(getRandomGear());
       }
     });
   });
