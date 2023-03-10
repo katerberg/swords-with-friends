@@ -119,7 +119,11 @@ function playerPicksUpItems(cell: Cell, player: Player): void {
   while (cell.items.length > 0) {
     const item = cell.items.pop();
     if (item) {
-      player.items.push(item);
+      if (item.type === ItemType.Gear && !player.equipment) {
+        player.equipment = item as GearItem;
+      } else {
+        player.items.push(item);
+      }
     }
   }
 }
