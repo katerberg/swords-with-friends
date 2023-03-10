@@ -148,10 +148,10 @@ export function getRasterStringForPlayer(player: Player): string {
   return player.character;
 }
 
-export function getInventoryItemSelectedMessage(): paper.Group {
+export function getMessage(content: string): paper.Group {
   const cellWidth = getCellWidth();
   const title = new paper.PointText(new paper.Point((cellWidth * (X_VISIBLE_CELLS - 1.5)) / 2, cellWidth));
-  title.content = 'Where?';
+  title.content = content;
   title.strokeColor = BLACK;
   title.fontSize = 20;
   title.fontWeight = 800;

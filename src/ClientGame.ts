@@ -20,7 +20,7 @@ import {
   getBacking,
   getCellOffsetFromMouseEvent,
   getHpBar,
-  getInventoryItemSelectedMessage,
+  getMessage,
   getMonster,
   getRasterStringForPlayer,
   getRasterStringFromItems,
@@ -189,6 +189,7 @@ export class ClientGame {
     if (player) {
       this.clearMessage();
       this.selectedInventoryItem = null;
+      this.message = getMessage(player.name);
       this.piggybackView = player;
       this.drawMap();
     }
@@ -267,6 +268,7 @@ export class ClientGame {
   private handleCellClick(xOffset: number, yOffset: number): void {
     const x = this.currentPlayer.x + xOffset;
     const y = this.currentPlayer.y + yOffset;
+    this.clearMessage();
     this.piggybackView = null;
     if (!this.dungeonMap[this.level].cells[`${x},${y}`].isPassable) {
       return;
@@ -276,7 +278,6 @@ export class ClientGame {
       globalThis.socket.emit(Messages.MovePlayer, globalThis.currentGameId, x, y);
     } else if (this.dungeonMap[this.level].cells[`${x},${y}`].visibilityStatus === VisiblityStatus.Visible) {
       globalThis.socket.emit(Messages.UseItem, globalThis.currentGameId, x, y, this.selectedInventoryItem.itemId);
-      this.clearMessage();
       this.selectedInventoryItem = null;
     }
   }
@@ -539,7 +540,7 @@ export class ClientGame {
   private handleInventoryItemClick(item: Item): void {
     this.toggleInventoryOpen();
     this.selectedInventoryItem = item;
-    this.message = getInventoryItemSelectedMessage();
+    this.message = getMessage('Where?');
     this.drawMap();
   }
 
