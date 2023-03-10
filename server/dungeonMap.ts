@@ -1,7 +1,7 @@
 import * as ROT from 'rot-js';
 import {v4 as uuid} from 'uuid';
 import {MAX_LEVEL, MAX_X, MAX_Y} from '../types/consts';
-import {coordsToNumberCoords} from '../types/math';
+import {calculateDistanceBetween, coordsToNumberCoords} from '../types/math';
 import {
   CellType,
   Coordinate,
@@ -82,14 +82,24 @@ export function populateItems(game: Game): void {
   game.dungeonMap.forEach((mapLevel, i) => {
     game.players.forEach(() => {
       for (let potionI = 0; potionI < 3; potionI++) {
-        const {x, y} = getRandomFreeLocation(game, i);
+        let coords: NumberCoordinates | null = null;
+        while (coords === null) {
+          const freeLocation = getRandomFreeLocation(game, i);
+          if (!game.players.some((p) => calculateDistanceBetween(freeLocation, p) < 4)) {
+            coords = freeLocation;
+          }
+        }
         let randomPotion = randomEnum(PotionType);
         if (game.players.length === 1) {
           while (randomPotion === PotionType.Summon) {
             randomPotion = randomEnum(PotionType);
           }
         }
-        mapLevel.cells[`${x},${y}`].items.push({itemId: uuid(), type: ItemType.Potion, subtype: randomPotion});
+        mapLevel.cells[`${coords.x},${coords.y}`].items.push({
+          itemId: uuid(),
+          type: ItemType.Potion,
+          subtype: randomPotion,
+        });
       }
     });
   });
@@ -153,16 +163,7 @@ export function createMap(game: Game): DungeonMap {
       });
     }
 
-    dungeonMap[i].monsterSpawn.forEach((ms) =>
-      dungeonMap[i].monsters.push(
-        createMonster(
-          ms,
-          //Random monster
-          randomEnum(MonsterType),
-          // MonsterType.Medusa,
-        ),
-      ),
-    );
+    dungeonMap[i].monsterSpawn.forEach((ms) => dungeonMap[i].monsters.push(createMonster(ms, randomEnum(MonsterType))));
   }
   return dungeonMap;
 }
