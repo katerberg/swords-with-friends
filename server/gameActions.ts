@@ -8,6 +8,7 @@ import {
   Game,
   GameStatus,
   GearItem,
+  GearType,
   Item,
   ItemType,
   Messages,
@@ -102,6 +103,15 @@ function handlePlayerAttackMonster(game: Game, player: Player, monster: Monster)
   }
 
   monster.currentHp -= damage;
+  if (player.equipment?.subtype === GearType.SwordVampire) {
+    player.currentHp += damage;
+    if (monster.currentHp < 0) {
+      player.currentHp += monster.currentHp;
+    }
+    if (player.currentHp > player.maxHp) {
+      player.currentHp = player.maxHp;
+    }
+  }
   if (monster.currentHp <= 0) {
     killMonster(game, player.mapLevel, monster.monsterId);
   } else if (monster.type === MonsterType.Slime) {

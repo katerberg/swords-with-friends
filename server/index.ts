@@ -18,7 +18,7 @@ import {
 } from '../types/SharedTypes';
 import {contrast, getRandomColor} from './color';
 import {getRandomInt, getRandomName} from './data';
-import {createMap, populateFov, populateItems} from './dungeonMap';
+import {createMap, getAttackStatsFromGear, populateFov, populateItems} from './dungeonMap';
 import {setup} from './express';
 import {handleGameActions, isFreeCell} from './gameActions';
 
@@ -120,9 +120,8 @@ function createPlayer(socketId: string, isHost = false): Player {
     equipment: {
       itemId: uuid(),
       type: ItemType.Gear,
-      subtype: GearType.SwordAcid,
-      minAttack: 25,
-      maxAttack: 35,
+      subtype: GearType.SwordVampire,
+      ...getAttackStatsFromGear(GearType.SwordVampire),
     },
     socketId,
     minAttackStrength: 15,

@@ -81,8 +81,10 @@ export function populateFov(game: Game): void {
   });
 }
 
-function getAttackStatsFromGear(type: GearType): {minAttack: number; maxAttack: number} {
+export function getAttackStatsFromGear(type: GearType): {minAttack: number; maxAttack: number} {
   switch (type) {
+    case GearType.SwordVampire:
+      return {minAttack: 15, maxAttack: 35};
     case GearType.SwordAcid:
       return {minAttack: 25, maxAttack: 35};
     case GearType.SwordBasic:
