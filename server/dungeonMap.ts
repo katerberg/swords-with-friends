@@ -148,6 +148,14 @@ export function populateItems(game: Game): void {
 }
 
 export function createMap(game: Game): DungeonMap {
+  // TEST RANDOM
+  // const blah: {[key: string]: number} = {};
+  // for (let i = 0; i < 10000; i++) {
+  //   const potion = randomEnum(MonsterType);
+  //   blah[potion] = blah[potion] ? blah[potion] + 1 : 1;
+  // }
+  // console.log(blah);
+
   const dungeonMap: DungeonMap = [];
 
   const map = new ROT.Map.Digger(MAX_X, MAX_Y, {dugPercentage: 0.1, corridorLength: [0, 5]});

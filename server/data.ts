@@ -267,7 +267,7 @@ export const getRandomInt = (min: number, max: number): number => Math.floor(Mat
 /* eslint-disable-next-line @typescript-eslint/ban-types */
 export function randomEnum<T extends Object>(anEnum: T): T[keyof T] {
   const enumValues = Object.keys(anEnum) as Array<keyof T>;
-  const randomIndex = Math.floor((Math.random() * enumValues.length) / 2 + enumValues.length / 2);
+  const randomIndex = Math.floor(Math.random() * enumValues.length);
   const randomEnumKey = enumValues[randomIndex];
   return anEnum[randomEnumKey];
 }
