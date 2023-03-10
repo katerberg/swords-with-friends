@@ -1,4 +1,6 @@
+import * as fs from 'fs';
 import * as http from 'http';
+import * as https from 'https';
 import {AddressInfo} from 'net';
 import {Server} from 'socket.io';
 import {v4 as uuid} from 'uuid';
@@ -22,8 +24,18 @@ import {createMap, getAttackStatsFromGear, populateFov, populateItems} from './d
 import {setup} from './express';
 import {handleGameActions, isFreeCell} from './gameActions';
 
+let server: http.Server | https.Server;
 const app = setup();
-const server = new http.Server(app);
+if (process.env.ENV === 'development') {
+  server = new http.Server(app);
+} else {
+  const httpsOptions = {
+    key: fs.readFileSync(process.env.KEY || 'creds/fastify.key'),
+    cert: fs.readFileSync(process.env.CERT || 'creds/fastify.crt'),
+  };
+  server = new https.Server(httpsOptions, app);
+}
+
 const io = new Server(server, {
   cors: {
     origin: [

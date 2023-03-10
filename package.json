@@ -46,7 +46,7 @@
     "start:stable-server": "tsc server/index.ts && node server/index.js 9081",
     "start:stable-ui": "NODE_ENV=production webpack-dev-server --config ./webpack.config.js --mode development",
     "start": "concurrently -k 'npm run start:server' 'npm run start:ui'",
-    "start:server": "nodemon server/index.ts -- 8081",
+    "start:server": "ENV=development nodemon server/index.ts -- 8081",
     "start:ui": "webpack-dev-server --config ./webpack.config.js --mode development",
     "lint": "npm run lint:base -- --fix",
     "lint:ci": "npm run lint:base",
