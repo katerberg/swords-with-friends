@@ -8,7 +8,6 @@ import {
   Game,
   GameStatus,
   GearItem,
-  GearType,
   Item,
   ItemType,
   Messages,
@@ -208,26 +207,24 @@ function handlePlayerUsePotion(game: Game, player: Player, item: Item, targetX: 
 
 function handlePlayerUseGear(game: Game, player: Player, item: GearItem, targetX: number, targetY: number): void {
   const targetPlayer = game.players.find((p) => p.x === targetX && p.y === targetY);
-  switch (item.subtype) {
-    case GearType.Sword:
-      if (targetPlayer !== undefined) {
-        if (targetPlayer.playerId !== player.playerId) {
-          if (targetPlayer.equipment) {
-            targetPlayer.items.push(item);
-          } else {
-            targetPlayer.equipment = item;
-          }
-        } else {
-          if (targetPlayer.equipment) {
-            targetPlayer.items.push(targetPlayer.equipment);
-          }
-          targetPlayer.equipment = item;
-        }
-        break;
-      }
-      game.dungeonMap[player.mapLevel].cells[`${targetX},${targetY}`].items.push(item);
-      break;
-    default:
+  if (targetPlayer === undefined) {
+    game.dungeonMap[player.mapLevel].cells[`${targetX},${targetY}`].items.push(item);
+    return;
+  }
+
+  // other player
+  if (targetPlayer.playerId !== player.playerId) {
+    if (targetPlayer.equipment) {
+      targetPlayer.items.push(item);
+    } else {
+      targetPlayer.equipment = item;
+    }
+  } else {
+    // current player
+    if (targetPlayer.equipment) {
+      targetPlayer.items.push(targetPlayer.equipment);
+    }
+    targetPlayer.equipment = item;
   }
 }
 

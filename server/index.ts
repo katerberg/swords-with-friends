@@ -9,7 +9,7 @@ import {
   Game,
   GamesHash,
   GameStatus,
-  GearType,
+  EquipmentType,
   ItemType,
   Messages,
   NumberCoordinates,
@@ -107,7 +107,7 @@ export function getStartLocationNearHost(game: Game): NumberCoordinates {
   return firstFree ? firstFree : getRandomFreeLocation(game);
 }
 
-function createPlayer(socketId: string, game: Game, isHost = false): Player {
+function createPlayer(socketId: string, isHost = false): Player {
   const color = getRandomColor();
   return {
     playerId: uuid(),
@@ -117,7 +117,13 @@ function createPlayer(socketId: string, game: Game, isHost = false): Player {
     character: CharacterName.SwordsWoman,
     name: getRandomName(),
     items: [{itemId: uuid(), type: ItemType.Potion, subtype: PotionType.Health}],
-    equipment: {itemId: uuid(), type: ItemType.Gear, subtype: GearType.Sword, minAttack: 25, maxAttack: 35},
+    equipment: {
+      itemId: uuid(),
+      type: ItemType.Gear,
+      subtype: EquipmentType.SwordAcid,
+      minAttack: 25,
+      maxAttack: 35,
+    },
     socketId,
     minAttackStrength: 15,
     maxAttackStrength: 25,
@@ -219,7 +225,8 @@ app.post('/api/games', (req, res) => {
     turn: 0,
     dungeonMap: [],
   };
-  games[gameId].players.push(createPlayer(req.query.socketId, games[gameId], true));
+  const player = createPlayer(req.query.socketId, true);
+  games[gameId].players.push(player);
   console.log('new game', gameId); //eslint-disable-line no-console
   io.emit(Messages.CurrentGames, getAvailableGames());
   res.send(games[gameId]);
@@ -235,7 +242,7 @@ app.post('/api/games/:gameId', (req, res) => {
   if (!req.query.socketId || typeof req.query.socketId !== 'string' || req.query.socketId === 'undefined') {
     return res.status(400).send({text: 'socketId is required'});
   }
-  const player = createPlayer(req.query.socketId, games[gameId]);
+  const player = createPlayer(req.query.socketId);
   games[gameId].players.push(player);
   console.log('joined game', player.name, gameId); //eslint-disable-line no-console
   io.emit(Messages.PlayersChangedInGame, games[gameId]);
