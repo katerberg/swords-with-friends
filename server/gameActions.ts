@@ -262,6 +262,8 @@ function handlePlayerMovementAction(gameId: string, clientPlayer: Player): void 
     } else if (monster) {
       handlePlayerAttackMonster(game, gamePlayer, monster);
       gamePlayer.currentAction = null;
+    } else {
+      gamePlayer.currentAction = null;
     }
   } else if (gamePlayer.currentAction?.path?.length && gamePlayer.currentAction?.path?.length > 0) {
     const target = gamePlayer.currentAction.path.shift();
