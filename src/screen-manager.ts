@@ -8,14 +8,8 @@ export function swapScreens(currentScreen: string, newScreen: string): void {
 }
 
 export function winGame(): void {
-  const newScreenElement = document.getElementById('win-screen');
-  if (newScreenElement) {
-    newScreenElement.classList.add('visible');
-  }
+  swapScreens('game-canvas', 'win-screen');
 }
 export function loseGame(): void {
-  const newScreenElement = document.getElementById('lose-screen');
-  if (newScreenElement) {
-    newScreenElement.classList.add('visible');
-  }
+  swapScreens('game-canvas', 'lose-screen');
 }

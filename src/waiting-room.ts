@@ -21,10 +21,7 @@ function leaveGame(): void {
 }
 
 async function startGame(game: Game): Promise<void> {
-  const gameLobby = document.getElementById('waiting-room');
-  if (gameLobby) {
-    gameLobby.classList.remove('visible');
-  }
+  swapScreens('waiting-room', 'game-canvas');
   globalThis.clientGame = new ClientGame(game);
 }
 
@@ -45,10 +42,7 @@ export function handleStartGame(): void {
   }
 
   globalThis.socket.emit(Messages.StartGame, globalThis.currentGameId);
-  const gameLobby = document.getElementById('waiting-room');
-  if (gameLobby) {
-    gameLobby.classList.remove('visible');
-  }
+  swapScreens('waiting-room', 'game-canvas');
 }
 
 function getSrcFromCharacterName(character: CharacterName): string {
@@ -78,7 +72,9 @@ export function populatePlayerList(players: Player[]): void {
           player.color
         };" class="character-change-icon" src="${getSrcFromCharacterName(
           player.character,
-        )}" /><input id="name-change-input" value="${player.name}" ></div>`;
+        )}" /><span class="character-change-chevron">›</span><input id="name-change-input" value="${
+          player.name
+        }" ><span role="button" class="save-button">💾</span></div>`;
         ({isHost} = player);
       } else {
         playerList += `<div class="player-list-row"><img class="character-change-icon" style="background-color: ${

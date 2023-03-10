@@ -358,7 +358,8 @@ function getGameStatus(gameId: string): GameStatus {
 
 function checkLevelEnd(gameId: string): void {
   const game = getGames()[gameId];
-  if (game.players.filter((p) => p.currentHp > 0).every((p) => isOnExitCell(p, game))) {
+  const standingPlayers = game.players.filter((p) => p.currentHp > 0);
+  if (standingPlayers.length > 0 && standingPlayers.every((p) => isOnExitCell(p, game))) {
     const host = game.players.find((p) => p.isHost);
     if (host) {
       host.mapLevel++;

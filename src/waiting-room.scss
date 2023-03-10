@@ -27,8 +27,24 @@
   .player-list-row {
     display: flex;
     flex-direction: row;
+    align-items: center;
+    margin-bottom: 3vw;
+    position: relative;
+
+    .save-button {
+      margin-left: 2vw;
+      font-size: 5vw;
+    }
+
+    .character-change-chevron {
+      color: white;
+      position: absolute;
+      left: 8vw;
+      font-size: 6vw;
+    }
+
     .character-change-icon {
-      width: 10vw;
+      width: 12vw;
       margin-right: 2vw;
       border-radius: 4px;
     }
