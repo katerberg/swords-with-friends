@@ -192,6 +192,8 @@ export enum Messages {
   TryToReconnect = 'tryToReconnect',
   ReconnectFailed = 'reconnectFailed',
   ReconnectSuccessful = 'reconnectSuccessful',
+  PlayerDisconnected = 'playerDisconnected',
+  PlayerReconnected = 'playerReconnected',
 }
 
 export enum VisiblityStatus {

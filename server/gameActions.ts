@@ -113,16 +113,18 @@ function handlePlayerAttackMonster(game: Game, player: Player, monster: Monster)
     }
   }
   if (player.equipment?.subtype === GearType.SwordAngel) {
-    game.players.forEach((p) => {
-      if (p.playerId === player.playerId) {
-        p.currentHp += getRandomInt(1, 5);
-      } else if (calculateDistanceBetween(player, p) <= 4) {
-        p.currentHp += getRandomInt(1, 15);
-      }
-      if (p.currentHp > p.maxHp) {
-        p.currentHp = p.maxHp;
-      }
-    });
+    game.players
+      .filter((p) => p.socketId)
+      .forEach((p) => {
+        if (p.playerId === player.playerId) {
+          p.currentHp += getRandomInt(1, 5);
+        } else if (calculateDistanceBetween(player, p) <= 4) {
+          p.currentHp += getRandomInt(1, 15);
+        }
+        if (p.currentHp > p.maxHp) {
+          p.currentHp = p.maxHp;
+        }
+      });
     if (player.currentHp > player.maxHp) {
       player.currentHp = player.maxHp;
     }
@@ -415,18 +417,20 @@ function checkLevelEnd(gameId: string): void {
       host.currentAction = null;
       host.x = spawn.x;
       host.y = spawn.y;
-      game.players.forEach((p) => {
-        if (!p.isHost) {
-          p.mapLevel = host.mapLevel;
-          const startLocation = getStartLocationNearHost(game);
-          p.currentAction = null;
-          p.x = startLocation.x;
-          p.y = startLocation.y;
-        }
-        if (p.currentHp <= 0) {
-          p.currentHp = 1;
-        }
-      });
+      game.players
+        .filter((p) => p.socketId)
+        .forEach((p) => {
+          if (!p.isHost) {
+            p.mapLevel = host.mapLevel;
+            const startLocation = getStartLocationNearHost(game);
+            p.currentAction = null;
+            p.x = startLocation.x;
+            p.y = startLocation.y;
+          }
+          if (p.currentHp <= 0) {
+            p.currentHp = 1;
+          }
+        });
     }
   }
 }

@@ -11,16 +11,16 @@ import {
   Game,
   GamesHash,
   GameStatus,
-  GearType,
   ItemType,
   Messages,
   NumberCoordinates,
   Player,
+  PlayerActionName,
   PotionType,
 } from '../types/SharedTypes';
 import {contrast, getRandomColor} from './color';
 import {getRandomInt, getRandomName} from './data';
-import {createMap, getAttackStatsFromGear, populateFov, populateItems} from './dungeonMap';
+import {createMap, populateFov, populateItems} from './dungeonMap';
 import {setup} from './express';
 import {handleGameActions, isFreeCell} from './gameActions';
 
@@ -131,12 +131,7 @@ function createPlayer(socketId: string, isHost = false): Player {
     character: CharacterName.SwordsWoman,
     name: getRandomName(),
     items: [{itemId: uuid(), type: ItemType.Potion, subtype: PotionType.Health}],
-    equipment: {
-      itemId: uuid(),
-      type: ItemType.Gear,
-      subtype: GearType.SwordAngel,
-      ...getAttackStatsFromGear(GearType.SwordAngel),
-    },
+    equipment: null,
     socketId,
     minAttackStrength: 15,
     maxAttackStrength: 25,
@@ -172,6 +167,40 @@ function deleteOldGames(): void {
   gamesToDelete.forEach((gid) => delete games[gid]);
 }
 
+function removePlayerFromWaitingGame(gameId: string, playerIndex: number): void {
+  console.log('removing player from ', gameId); //eslint-disable-line no-console
+  if (games[gameId].players[playerIndex]?.isHost) {
+    delete games[gameId];
+    io.emit(Messages.GameClosed, gameId);
+    io.emit(Messages.CurrentGames, getAvailableGames());
+  } else {
+    games[gameId].players.splice(playerIndex, 1);
+    io.emit(Messages.PlayersChangedInGame, games[gameId]);
+  }
+}
+
+function killPlayerIfGone(gameId: string, playerId: string): void {
+  const player = games[gameId]?.players.find((p) => p.playerId === playerId);
+  if (player && player.socketId === null) {
+    if (games[gameId].gameStatus === GameStatus.WaitingForPlayers) {
+      removePlayerFromWaitingGame(
+        gameId,
+        games[gameId].players.findIndex((p) => p.playerId === playerId),
+      );
+    }
+    if (games[gameId].gameStatus === GameStatus.Ongoing) {
+      player.currentHp = 0;
+      player.currentAction = {name: PlayerActionName.LayDead};
+      io.emit(Messages.PlayerActionQueued, gameId, {
+        action: player.currentAction,
+        playerId,
+      });
+    }
+  } else {
+    console.debug('Did not kill player', gameId, playerId, player?.socketId); //eslint-disable-line no-console
+  }
+}
+
 io.on('connection', (socket) => {
   console.log('a user connected', socket.id); //eslint-disable-line no-console
   deleteOldGames();
@@ -182,6 +211,8 @@ io.on('connection', (socket) => {
       const player = game.players.find((p) => p.socketId === socket.id);
       if (player) {
         player.socketId = null;
+        socket.broadcast.emit(Messages.PlayerDisconnected, game.gameId, player.playerId);
+        setTimeout(() => killPlayerIfGone(game.gameId, player.playerId), 15_000);
       }
     }
   });
@@ -200,15 +231,7 @@ io.on('connection', (socket) => {
   socket.on(Messages.LeaveGame, (gameId: string) => {
     const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
     if (playerIndex !== undefined) {
-      console.log('removing player from ', gameId); //eslint-disable-line no-console
-      if (games[gameId].players[playerIndex]?.isHost) {
-        delete games[gameId];
-        io.emit(Messages.GameClosed, gameId);
-        io.emit(Messages.CurrentGames, getAvailableGames());
-      } else {
-        games[gameId].players.splice(playerIndex, 1);
-        io.emit(Messages.PlayersChangedInGame, games[gameId]);
-      }
+      removePlayerFromWaitingGame(gameId, playerIndex);
     }
   });
 
