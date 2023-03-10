@@ -291,6 +291,9 @@ function executeQueuedActions(gameId: string, io: Server): void {
   game.lastActionTime = executionDate;
   game.players.forEach((player) => {
     if (!player.statusEffects.some((se) => se.name === StatusEffectName.Frozen)) {
+      if (player.currentHp <= 0) {
+        player.currentAction = {name: PlayerActionName.LayDead};
+      }
       switch (player.currentAction?.name) {
         case PlayerActionName.LayDead:
           break;
@@ -324,6 +327,8 @@ function executeMonsterActions(gameId: string): void {
     const closestPlayer = getClosestVisiblePlayerToMonster(monster, game);
     if (closestPlayer) {
       monster.target = `${closestPlayer.x},${closestPlayer.y}`;
+    } else if (monster.target && game.players.some((p) => p.currentHp <= 0 && `${p.x},${p.y}` === monster.target)) {
+      monster.target = null;
     }
     if (monster.target) {
       handleMonsterActionTowardsTarget(monster, game);
@@ -359,18 +364,18 @@ function checkLevelEnd(gameId: string): void {
       host.currentAction = null;
       host.x = spawn.x;
       host.y = spawn.y;
-      game.players
-        .filter((p) => !p.isHost)
-        .forEach((p) => {
+      game.players.forEach((p) => {
+        if (!p.isHost) {
           p.mapLevel = host.mapLevel;
           const startLocation = getStartLocationNearHost(game);
           p.currentAction = null;
           p.x = startLocation.x;
           p.y = startLocation.y;
-          if (p.currentHp <= 0) {
-            p.currentHp = 1;
-          }
-        });
+        }
+        if (p.currentHp <= 0) {
+          p.currentHp = 1;
+        }
+      });
     }
   }
 }
@@ -394,7 +399,7 @@ function reduceCooldowns(game: Game): void {
 
 function checkTurnEnd(gameId: string, io: Server): void {
   const games = getGames();
-  if (games[gameId]?.players.every((player) => player.currentAction !== null)) {
+  if (games[gameId]?.players.filter((p) => p.currentHp > 0).every((player) => player.currentAction !== null)) {
     const dungeonMap = games[gameId].dungeonMap[getMapLevel(games[gameId])];
     const previouslyVisibleMonsterIds = dungeonMap.monsters
       .filter((m) => dungeonMap.cells[`${m.x},${m.y}`].visibilityStatus === VisiblityStatus.Visible)
