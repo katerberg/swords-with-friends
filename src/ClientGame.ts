@@ -197,6 +197,8 @@ export class ClientGame {
   // eslint-disable-next-line class-methods-use-this
   private handleWonGame(gameId: string): void {
     if (gameId === globalThis.currentGameId) {
+      this.clearExistingDrawings();
+      globalThis.socket.removeAllListeners();
       winGame();
     }
   }
@@ -204,6 +206,8 @@ export class ClientGame {
   // eslint-disable-next-line class-methods-use-this
   private handleLostGame(gameId: string): void {
     if (gameId === globalThis.currentGameId) {
+      this.clearExistingDrawings();
+      globalThis.socket.removeAllListeners();
       loseGame();
     }
   }

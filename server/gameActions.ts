@@ -198,8 +198,11 @@ function handlePlayerUseGear(game: Game, player: Player, item: Item, targetX: nu
   const targetPlayer = game.players.find((p) => p.x === targetX && p.y === targetY);
   switch (item.subtype) {
     case GearType.Sword:
-      if (targetPlayer && !targetPlayer.items.some((targetItem) => targetItem.subtype === GearType.Sword)) {
-        targetPlayer?.items.push(item);
+      if (targetPlayer !== undefined) {
+        if (targetPlayer.playerId !== player.playerId) {
+          targetPlayer.items.push(item);
+        }
+
         break;
       }
       game.dungeonMap[player.mapLevel].cells[`${targetX},${targetY}`].items.push(item);
@@ -452,7 +455,7 @@ export function handleGameActions(io: Server, socket: Socket): void {
   socket.on(Messages.MovePlayer, (gameId: string, x: number, y: number) => {
     const games = getGames();
     const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
-    if (playerIndex !== undefined && games[gameId].players[playerIndex].currentHp > 0 && isValidCoordinate(x, y)) {
+    if (playerIndex !== undefined && games[gameId].players[playerIndex]?.currentHp > 0 && isValidCoordinate(x, y)) {
       const action: PlayerAction = {
         name: PlayerActionName.Move,
         target: `${x},${y}`,
