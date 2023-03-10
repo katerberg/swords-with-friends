@@ -18,6 +18,10 @@ export enum CharacterName {
   Pinned = 'character-pinned',
   SwordsMan = 'character-swordsman',
   SwordsWoman = 'character-swordswoman',
+  Pikeman = 'character-pikeman',
+  Caveman = 'character-caveman',
+  HighKick = 'character-high-kick',
+  HoodedAssassin = 'character-hooded-assassin',
 }
 
 export enum StatusEffectName {

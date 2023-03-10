@@ -51,9 +51,53 @@ function getSrcFromCharacterName(character: CharacterName): string {
       return './images/characters/swordsman.png';
     case CharacterName.SwordsWoman:
       return './images/characters/swordswoman.png';
+    case CharacterName.Pikeman:
+      return './images/characters/pikeman.png';
+    case CharacterName.HoodedAssassin:
+      return './images/characters/hooded-assassin.png';
+    case CharacterName.HighKick:
+      return './images/characters/high-kick.png';
+    case CharacterName.Caveman:
+      return './images/characters/caveman.png';
     default:
       return './images/characters/dead.png';
   }
+}
+
+function changeToNextCharacter(currentCharacter: string): string {
+  if (currentCharacter.includes('swordswoman')) {
+    characterChange(CharacterName.SwordsMan);
+    return './images/characters/swordsman.png';
+  }
+  if (currentCharacter.includes('swordsman')) {
+    characterChange(CharacterName.Caveman);
+    return './images/characters/caveman.png';
+  }
+  if (currentCharacter.includes('caveman')) {
+    characterChange(CharacterName.HighKick);
+    return './images/characters/high-kick.png';
+  }
+  if (currentCharacter.includes('high-kick')) {
+    characterChange(CharacterName.HoodedAssassin);
+    return './images/characters/hooded-assassin.png';
+  }
+  if (currentCharacter.includes('hooded-assassin')) {
+    characterChange(CharacterName.Pikeman);
+    return './images/characters/pikeman.png';
+  }
+  characterChange(CharacterName.SwordsWoman);
+  return './images/characters/swordswoman.png';
+
+  // let newImage: string;
+  // switch () {
+  //   case `${window.location.href}images/characters/swordswoman.png`:
+  //     newImage = '';
+  //     characterChange(CharacterName.SwordsMan);
+  //     break;
+  //   default:
+  //     newImage = './images/characters/swordswoman.png';
+  //     characterChange(CharacterName.SwordsWoman);
+  // }
 }
 
 export function populatePlayerList(players: Player[]): void {
@@ -106,16 +150,7 @@ export function populatePlayerList(players: Player[]): void {
     const characterChevron = document.getElementById('character-change-chevron');
     if (characterIcon && characterChevron) {
       const callback = (): void => {
-        let newImage: string;
-        switch ((characterIcon as HTMLImageElement).src) {
-          case `${window.location.href}images/characters/swordswoman.png`:
-            newImage = './images/characters/swordsman.png';
-            characterChange(CharacterName.SwordsMan);
-            break;
-          default:
-            characterChange(CharacterName.SwordsWoman);
-            newImage = './images/characters/swordswoman.png';
-        }
+        const newImage = changeToNextCharacter((characterIcon as HTMLImageElement).src);
         (characterIcon as HTMLImageElement).src = newImage;
       };
       characterIcon.ontouchend = callback;

@@ -139,7 +139,7 @@ export function populateItems(game: Game): void {
       }
 
       // 50% chance of sword per player per level
-      if (Math.random() > 0.5) {
+      if (Math.random() < 0.5) {
         const freeSpaceCoords = getFreeSpaceCoords(game, i);
         mapLevel.cells[`${freeSpaceCoords.x},${freeSpaceCoords.y}`].items.push(getRandomGear());
       }
@@ -213,6 +213,7 @@ export function createMap(game: Game): DungeonMap {
       });
     }
 
+    // const monstersToSpawn = getMonstersByLevel(i);
     dungeonMap[i].monsterSpawn.forEach((ms) => dungeonMap[i].monsters.push(createMonster(ms, randomEnum(MonsterType))));
   }
   return dungeonMap;
