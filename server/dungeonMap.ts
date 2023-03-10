@@ -83,6 +83,8 @@ export function populateFov(game: Game): void {
 
 export function getAttackStatsFromGear(type: GearType): {minAttack: number; maxAttack: number} {
   switch (type) {
+    case GearType.SwordAngel:
+      return {minAttack: 15, maxAttack: 30};
     case GearType.SwordVampire:
       return {minAttack: 15, maxAttack: 35};
     case GearType.SwordAcid:

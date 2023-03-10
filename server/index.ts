@@ -120,8 +120,8 @@ function createPlayer(socketId: string, isHost = false): Player {
     equipment: {
       itemId: uuid(),
       type: ItemType.Gear,
-      subtype: GearType.SwordVampire,
-      ...getAttackStatsFromGear(GearType.SwordVampire),
+      subtype: GearType.SwordAngel,
+      ...getAttackStatsFromGear(GearType.SwordAngel),
     },
     socketId,
     minAttackStrength: 15,

@@ -1,7 +1,7 @@
 import * as ROT from 'rot-js';
 import {Server, Socket} from 'socket.io';
 import {AUTO_MOVE_DELAY} from '../types/consts';
-import {coordsToNumberCoords} from '../types/math';
+import {calculateDistanceBetween, coordsToNumberCoords} from '../types/math';
 import {
   Cell,
   Coordinate,
@@ -108,6 +108,21 @@ function handlePlayerAttackMonster(game: Game, player: Player, monster: Monster)
     if (monster.currentHp < 0) {
       player.currentHp += monster.currentHp;
     }
+    if (player.currentHp > player.maxHp) {
+      player.currentHp = player.maxHp;
+    }
+  }
+  if (player.equipment?.subtype === GearType.SwordAngel) {
+    game.players.forEach((p) => {
+      if (p.playerId === player.playerId) {
+        p.currentHp += getRandomInt(1, 5);
+      } else if (calculateDistanceBetween(player, p) <= 4) {
+        p.currentHp += getRandomInt(1, 15);
+      }
+      if (p.currentHp > p.maxHp) {
+        p.currentHp = p.maxHp;
+      }
+    });
     if (player.currentHp > player.maxHp) {
       player.currentHp = player.maxHp;
     }

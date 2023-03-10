@@ -110,6 +110,9 @@ export function getRasterStringFromItems(items: Item[]): string {
     return 'orb08';
   }
   if (items.some((item) => item.type === ItemType.Gear)) {
+    if (items.some((item) => item.subtype === GearType.SwordAngel)) {
+      return 'swordAngel';
+    }
     if (items.some((item) => item.subtype === GearType.SwordVampire)) {
       return 'sword83';
     }

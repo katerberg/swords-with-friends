@@ -69,6 +69,7 @@ export enum GearType {
   SwordBasic = 'Basic',
   SwordAcid = 'Acid',
   SwordVampire = 'Vampiric',
+  SwordAngel = 'Angelic',
 }
 
 export enum TrophyType {
