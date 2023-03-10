@@ -42,6 +42,8 @@ const io = new Server(server, {
       'http://localhost:8080',
       'http://0.0.0.0:8080',
       'http://192.168.50.132:8080',
+      'http://swordswithfriends.org',
+      'https://swordswithfriends.org',
       'http://localhost:9080',
       'http://0.0.0.0:9080',
       'http://192.168.50.132:9080',
