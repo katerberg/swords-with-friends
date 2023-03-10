@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-types */
 import * as ROT from 'rot-js';
 import {v4 as uuid} from 'uuid';
 import {MAX_LEVEL, MAX_X, MAX_Y} from '../types/consts';
@@ -16,6 +15,7 @@ import {
   TrophyType,
   MonsterType,
 } from '../types/SharedTypes';
+import {randomEnum} from './data';
 import {isFreeCell} from './gameActions';
 import {createMonster} from './monsters';
 import {getRandomFreeLocation, getSpiralAroundPoint} from '.';
@@ -81,15 +81,8 @@ export function populateFov(game: Game): void {
 export function populateItems(game: Game): void {
   game.dungeonMap.forEach((mapLevel, i) => {
     const {x, y} = getRandomFreeLocation(game, i);
-    mapLevel.cells[`${x},${y}`].items.push({itemId: uuid(), type: ItemType.Potion, subtype: PotionType.Acid});
+    mapLevel.cells[`${x},${y}`].items.push({itemId: uuid(), type: ItemType.Potion, subtype: randomEnum(PotionType)});
   });
-}
-
-function randomEnum<T extends Object>(anEnum: T): T[keyof T] {
-  const enumValues = Object.keys(anEnum) as Array<keyof T>;
-  const randomIndex = Math.floor((Math.random() * enumValues.length) / 2 + enumValues.length / 2);
-  const randomEnumKey = enumValues[randomIndex];
-  return anEnum[randomEnumKey];
 }
 
 export function createMap(game: Game): DungeonMap {

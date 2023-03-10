@@ -115,6 +115,9 @@ export function getRasterStringFromItems(items: Item[]): string {
     }
   }
   if (items.some((item) => item.type === ItemType.Potion)) {
+    if (items.some((item) => item.subtype === PotionType.Teleport)) {
+      return 'gem29';
+    }
     if (items.some((item) => item.subtype === PotionType.Health)) {
       return 'gem91';
     }

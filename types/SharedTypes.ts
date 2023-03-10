@@ -76,6 +76,7 @@ export enum TrophyType {
 export enum PotionType {
   Health = 'Health',
   Acid = 'Acid',
+  Teleport = 'Teleport',
 }
 
 export type Item = {

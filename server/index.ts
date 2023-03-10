@@ -106,7 +106,10 @@ function createPlayer(socketId: string, game: Game, isHost = false): Player {
     isHost,
     character: CharacterName.SwordsWoman,
     name: getRandomName(),
-    items: [{itemId: uuid(), type: ItemType.Potion, subtype: PotionType.Health}],
+    items: [
+      {itemId: uuid(), type: ItemType.Potion, subtype: PotionType.Health},
+      {itemId: uuid(), type: ItemType.Potion, subtype: PotionType.Teleport},
+    ],
     socketId,
     minAttackStrength: 15,
     maxAttackStrength: 25,

@@ -263,3 +263,11 @@ export function getRandomName(): string {
 }
 
 export const getRandomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
+
+/* eslint-disable-next-line @typescript-eslint/ban-types */
+export function randomEnum<T extends Object>(anEnum: T): T[keyof T] {
+  const enumValues = Object.keys(anEnum) as Array<keyof T>;
+  const randomIndex = Math.floor((Math.random() * enumValues.length) / 2 + enumValues.length / 2);
+  const randomEnumKey = enumValues[randomIndex];
+  return anEnum[randomEnumKey];
+}

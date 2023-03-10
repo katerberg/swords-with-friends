@@ -30,7 +30,7 @@ import {
   handleMonsterActionTowardsTarget,
   handleMonsterWander,
 } from './monsters';
-import {getGames, getSpiralAroundPoint, getStartLocationNearHost} from '.';
+import {getGames, getRandomFreeLocation, getSpiralAroundPoint, getStartLocationNearHost} from '.';
 
 function isFreeOfStandingPlayers(x: number, y: number, game: Game): boolean {
   return game.players.every((player) => player.currentHp <= 0 || player.x !== x || player.y !== y);
@@ -136,6 +136,13 @@ function handlePlayerUsePotion(game: Game, player: Player, item: Item, targetX: 
     case PotionType.Acid:
       target.currentHp -= getRandomInt(25, 35);
       break;
+    case PotionType.Teleport: {
+      const {x, y} = getRandomFreeLocation(game, player.mapLevel);
+      target.x = x;
+      target.y = y;
+      target.currentHp -= getRandomInt(25, 35);
+      break;
+    }
     default:
   }
 }
