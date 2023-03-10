@@ -223,6 +223,7 @@ io.on('connection', (socket) => {
       console.debug('reconnecting', player.name, 'to', gameId); //eslint-disable-line no-console
       player.socketId = socket.id;
       socket.emit(Messages.ReconnectSuccessful, games[gameId]);
+      socket.broadcast.emit(Messages.PlayerReconnected, gameId, player.playerId);
     } else {
       socket.emit(Messages.ReconnectFailed);
     }

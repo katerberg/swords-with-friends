@@ -88,6 +88,9 @@ export class ClientGame {
     globalThis.socket.on(Messages.GameLost, this.handleLostGame.bind(this));
     globalThis.socket.on(Messages.TurnEnd, this.handleTurnEnd.bind(this));
     globalThis.socket.on(Messages.PlayerActionQueued, this.handlePlayerActionQueue.bind(this));
+    globalThis.socket.on(Messages.PlayerDisconnected, this.handlePlayerDisconnected.bind(this));
+    globalThis.socket.on(Messages.PlayerReconnected, this.handlePlayerReconnected.bind(this));
+
     this.drawMap();
   }
 
@@ -237,6 +240,25 @@ export class ClientGame {
   private setBadgeContent(playerId: string, content: string): void {
     const text = this.playerBadges[playerId].lastChild as paper.PointText;
     text.content = content;
+  }
+
+  private handlePlayerDisconnected(gameId: string, playerId: string): void {
+    if (gameId !== globalThis.currentGameId) {
+      return;
+    }
+    if (this.playerBadges[playerId]) {
+      (this.playerBadges[playerId].lastChild as paper.PointText).content = '⚠';
+    }
+  }
+
+  private handlePlayerReconnected(gameId: string, playerId: string): void {
+    if (gameId !== globalThis.currentGameId) {
+      return;
+    }
+    const player = this.getPlayer(playerId);
+    if (this.playerBadges[playerId] && player) {
+      (this.playerBadges[playerId].lastChild as paper.PointText).content = player.currentAction ? '✓' : '...';
+    }
   }
 
   private handlePlayerActionQueue(gameId: string, actionQueued: {action: PlayerAction; playerId: string}): void {
