@@ -80,8 +80,16 @@ export function populateFov(game: Game): void {
 
 export function populateItems(game: Game): void {
   game.dungeonMap.forEach((mapLevel, i) => {
-    const {x, y} = getRandomFreeLocation(game, i);
-    mapLevel.cells[`${x},${y}`].items.push({itemId: uuid(), type: ItemType.Potion, subtype: randomEnum(PotionType)});
+    game.players.forEach(() => {
+      const {x, y} = getRandomFreeLocation(game, i);
+      let randomPotion = randomEnum(PotionType);
+      if (game.players.length === 1) {
+        while (randomPotion === PotionType.Summon) {
+          randomPotion = randomEnum(PotionType);
+        }
+      }
+      mapLevel.cells[`${x},${y}`].items.push({itemId: uuid(), type: ItemType.Potion, subtype: randomPotion});
+    });
   });
 }
 

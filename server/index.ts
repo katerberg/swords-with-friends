@@ -86,14 +86,23 @@ function getSpiral(): NumberCoordinates[] {
   }
   return points;
 }
+
 export function getSpiralAroundPoint({x, y}: NumberCoordinates): NumberCoordinates[] {
   return getSpiral().map(({x: spiralX, y: spiralY}) => ({x: x + spiralX, y: y + spiralY}));
+}
+
+export function getFreePointAroundPoint(
+  coords: NumberCoordinates,
+  game: Game,
+  mapLevel: number,
+): NumberCoordinates | null {
+  return getSpiralAroundPoint(coords).find((coord) => isFreeCell(coord.x, coord.y, game, mapLevel)) || null;
 }
 
 export function getStartLocationNearHost(game: Game): NumberCoordinates {
   const {x, y} = game.players.find((p) => p.isHost) as Player;
 
-  const firstFree = getSpiralAroundPoint({x, y}).find(({x: spiralX, y: spiralY}) => isFreeCell(spiralX, spiralY, game));
+  const firstFree = getFreePointAroundPoint({x, y}, game, game.players[0].mapLevel);
   return firstFree ? firstFree : getRandomFreeLocation(game);
 }
 
@@ -108,7 +117,7 @@ function createPlayer(socketId: string, game: Game, isHost = false): Player {
     name: getRandomName(),
     items: [
       {itemId: uuid(), type: ItemType.Potion, subtype: PotionType.Health},
-      {itemId: uuid(), type: ItemType.Potion, subtype: PotionType.Teleport},
+      {itemId: uuid(), type: ItemType.Potion, subtype: PotionType.Health},
     ],
     socketId,
     minAttackStrength: 15,

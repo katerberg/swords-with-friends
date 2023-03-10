@@ -30,7 +30,13 @@ import {
   handleMonsterActionTowardsTarget,
   handleMonsterWander,
 } from './monsters';
-import {getGames, getRandomFreeLocation, getSpiralAroundPoint, getStartLocationNearHost} from '.';
+import {
+  getFreePointAroundPoint,
+  getGames,
+  getRandomFreeLocation,
+  getSpiralAroundPoint,
+  getStartLocationNearHost,
+} from '.';
 
 function isFreeOfStandingPlayers(x: number, y: number, game: Game): boolean {
   return game.players.every((player) => player.currentHp <= 0 || player.x !== x || player.y !== y);
@@ -92,9 +98,7 @@ function handlePlayerAttackMonster(game: Game, player: Player, monster: Monster)
   if (monster.currentHp <= 0) {
     killMonster(game, player.mapLevel, monster.monsterId);
   } else if (monster.type === MonsterType.Slime) {
-    const firstFree = getSpiralAroundPoint({x: monster.x, y: monster.y}).find(({x: spiralX, y: spiralY}) =>
-      isFreeCell(spiralX, spiralY, game),
-    );
+    const firstFree = getFreePointAroundPoint({x: monster.x, y: monster.y}, game, game.players[0].mapLevel);
     if (firstFree) {
       const newSlime = createMonster(`${firstFree.x},${firstFree.y}`, MonsterType.Slime);
       newSlime.currentHp = monster.currentHp;
@@ -126,17 +130,43 @@ function handlePlayerUsePotion(game: Game, player: Player, item: Item, targetX: 
   const targetPlayer = game.players.find((p) => p.x === targetX && p.y === targetY);
   const targetMonster = game.dungeonMap[player.mapLevel].monsters.find((m) => m.x === targetX && m.y === targetY);
   const target = targetPlayer || targetMonster;
-  if (!target) {
-    return;
-  }
   switch (item.subtype) {
     case PotionType.Health:
+      if (!target) {
+        return;
+      }
       target.currentHp = target.maxHp;
       break;
     case PotionType.Acid:
+      if (!target) {
+        return;
+      }
       target.currentHp -= getRandomInt(25, 35);
       break;
+    case PotionType.Summon: {
+      const spiral = getSpiralAroundPoint({x: targetX, y: targetY});
+      game.players
+        .filter((p) => p.playerId !== player.playerId)
+        .forEach((p) => {
+          let newCoords = spiral.shift();
+          while (newCoords !== undefined) {
+            if (newCoords && isFreeCell(newCoords.x, newCoords.y, game, p.mapLevel)) {
+              p.x = newCoords.x;
+              p.y = newCoords.y;
+              p.currentAction = {name: PlayerActionName.Move, target: `${p.x},${p.y}`, path: []};
+              newCoords = undefined;
+            } else {
+              newCoords = spiral.shift();
+            }
+          }
+        });
+
+      break;
+    }
     case PotionType.Teleport: {
+      if (!target) {
+        return;
+      }
       const {x, y} = getRandomFreeLocation(game, player.mapLevel);
       target.x = x;
       target.y = y;
