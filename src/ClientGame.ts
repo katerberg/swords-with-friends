@@ -604,6 +604,7 @@ export class ClientGame {
     };
     const tlPoint = new paper.Point(cellWidth * 0.5, cellWidth * 0.5);
     const brPoint = new paper.Point(cellWidth * (X_VISIBLE_CELLS - 0.5), cellWidth * 4);
+
     const inventoryBackground = new paper.Shape.Rectangle(tlPoint, brPoint);
     inventoryBackground.fillColor = INVENTORY_BACKGROUND;
     const title = new paper.PointText(new paper.Point((cellWidth * (X_VISIBLE_CELLS - 1.5)) / 2, cellWidth));
@@ -611,13 +612,33 @@ export class ClientGame {
     title.strokeColor = BLACK;
     title.fontSize = 20;
     title.fontWeight = 100;
+    const playerCenter = this.drawnPlayers[`${0},${0}`].position;
+    const blPoint = new paper.Point(tlPoint);
+    blPoint.y = brPoint.y;
+    const inventoryBackgroundSwoop = new paper.Path();
+    inventoryBackgroundSwoop.add(
+      new paper.Segment(
+        brPoint,
+        new paper.Point(playerCenter.x + cellWidth / 2, playerCenter.y - cellWidth / 2),
+        undefined,
+      ),
+    );
+    inventoryBackgroundSwoop.add(
+      new paper.Segment(
+        blPoint,
+        new paper.Point(playerCenter.x - cellWidth / 2, playerCenter.y - cellWidth / 2),
+        undefined,
+      ),
+    );
+    inventoryBackgroundSwoop.smooth();
+    inventoryBackgroundSwoop.fillColor = INVENTORY_BACKGROUND;
+
     this.drawnInventory = new paper.Group([transparentBackground, inventoryBackground, title]);
     this.getInventoryItems().forEach((item) => {
       this.drawnInventory?.addChild(item);
     });
     const {equipment} = this.currentPlayer;
     if (equipment) {
-      const playerCenter = this.drawnPlayers[`${0},${0}`].position;
       this.getInventoryItem(equipment, new paper.Point(playerCenter.x, playerCenter.y));
     }
   }
