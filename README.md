@@ -19,4 +19,18 @@ npm start
 
 ## Deploying
 
-TBD.
+This requires both an API and a UI.
+
+## API
+
+Log into the Digital Ocean Server.
+
+Clone the project.
+
+Update the `.env` to have the correct ports.
+
+Run `./deploy-cloud.sh`
+
+## UI
+
+Deploys automagically with Github actions
