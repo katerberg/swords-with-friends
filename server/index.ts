@@ -150,8 +150,52 @@ function createPlayer(socketId: string, isHost = false): Player {
   };
 }
 
+function findGame(socketId: string): Game | null {
+  const foundGameId = Object.keys(games).find((gameId) => games[gameId].players.some((p) => p.socketId === socketId));
+  return foundGameId ? games[foundGameId] : null;
+}
+
+function deleteOldGames(): void {
+  const gamesToDelete: string[] = [];
+  Object.keys(games).forEach((gameId) => {
+    const game = games[gameId];
+    const msSinceLastAction = new Date().getTime() - game.lastActionTime.getTime();
+    // Old games where no one is around
+    if (game.players.every((p) => p.socketId === null) && msSinceLastAction > 60_000) {
+      gamesToDelete.push(gameId);
+    }
+    // Really old games
+    if (msSinceLastAction > 3_600_000) {
+      gamesToDelete.push(gameId);
+    }
+  });
+  gamesToDelete.forEach((gid) => delete games[gid]);
+}
+
 io.on('connection', (socket) => {
   console.log('a user connected', socket.id); //eslint-disable-line no-console
+  deleteOldGames();
+
+  socket.on('disconnect', () => {
+    const game = findGame(socket.id);
+    if (game) {
+      const player = game.players.find((p) => p.socketId === socket.id);
+      if (player) {
+        player.socketId = null;
+      }
+    }
+  });
+
+  socket.on(Messages.TryToReconnect, (gameId: string, playerId: string) => {
+    const player = games[gameId]?.players.find((p) => p.socketId === null && p.playerId === playerId);
+    if (player && [GameStatus.Ongoing, GameStatus.WaitingForPlayers].includes(games[gameId]?.gameStatus)) {
+      console.debug('reconnecting', player.name, 'to', gameId); //eslint-disable-line no-console
+      player.socketId = socket.id;
+      socket.emit(Messages.ReconnectSuccessful, games[gameId]);
+    } else {
+      socket.emit(Messages.ReconnectFailed);
+    }
+  });
 
   socket.on(Messages.LeaveGame, (gameId: string) => {
     const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);

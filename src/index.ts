@@ -5,10 +5,11 @@ import './end-screen.scss';
 import './games-lobby.scss';
 import * as paper from 'paper';
 import {io} from 'socket.io-client';
-import {Game, Messages} from '../types/SharedTypes';
-import {API_BASE, SOCKET_BASE} from './consts';
+import {Game, GameStatus, Messages} from '../types/SharedTypes';
+import {ClientGame} from './ClientGame';
+import {API_BASE, LOCAL_STORAGE_GAME_ID, LOCAL_STORAGE_PLAYER_ID, SOCKET_BASE} from './consts';
 import {isDebug} from './debug';
-import {loseGame, swapScreens, winGame} from './screen-manager';
+import {clearLocalStorage, loseGame, swapScreens, winGame} from './screen-manager';
 import {handleStartGame, populatePlayerList} from './waiting-room';
 
 // screen.orientation?.lock('portrait');
@@ -26,6 +27,20 @@ function initCanvasSize(canvas: HTMLCanvasElement): void {
 function populateGameGlobals(gameId: string, playerId: string): void {
   globalThis.playerId = playerId;
   globalThis.currentGameId = gameId;
+  localStorage.setItem(LOCAL_STORAGE_GAME_ID, gameId);
+  localStorage.setItem(LOCAL_STORAGE_PLAYER_ID, playerId);
+}
+
+function goToWaitingRoom(createdGame: Game): void {
+  globalThis.socket.on(Messages.PlayersChangedInGame, (game) => {
+    populatePlayerList(game.players);
+  });
+  const waitingRoomTitle = document.getElementById('waiting-room-title');
+  if (waitingRoomTitle) {
+    waitingRoomTitle.innerHTML = 'Waiting Room';
+  }
+  swapScreens('start-screen', 'waiting-room');
+  populatePlayerList(createdGame.players);
 }
 
 async function handleCreateGame(): Promise<void> {
@@ -36,15 +51,7 @@ async function handleCreateGame(): Promise<void> {
     },
   }).then((response) => response.json());
   populateGameGlobals(createdGame.gameId, createdGame.players[createdGame.players.length - 1].playerId);
-  globalThis.socket.on(Messages.PlayersChangedInGame, (game) => {
-    populatePlayerList(game.players);
-  });
-  const waitingRoomTitle = document.getElementById('waiting-room-title');
-  if (waitingRoomTitle) {
-    waitingRoomTitle.innerHTML = 'Waiting Room';
-  }
-  swapScreens('start-screen', 'waiting-room');
-  populatePlayerList(createdGame.players);
+  goToWaitingRoom(createdGame);
 }
 
 async function joinGame(gameId: string): Promise<void> {
@@ -191,7 +198,30 @@ window.addEventListener('load', () => {
     }
 
     globalThis.socket = io(SOCKET_BASE);
+    globalThis.socket.on('connect', () => {
+      const storedGameId = window.localStorage.getItem(LOCAL_STORAGE_GAME_ID);
+      const storedPlayerId = window.localStorage.getItem(LOCAL_STORAGE_PLAYER_ID);
+      if (storedGameId && storedPlayerId) {
+        globalThis.socket.on(Messages.ReconnectFailed, () => {
+          clearLocalStorage();
+        });
+        globalThis.socket.on(Messages.ReconnectSuccessful, (game: Game) => {
+          populateGameGlobals(game.gameId, storedPlayerId);
+          if (game.gameStatus === GameStatus.WaitingForPlayers) {
+            goToWaitingRoom(game);
+          }
+          if (game.gameStatus === GameStatus.Ongoing) {
+            swapScreens('start-screen', 'game-canvas');
+            globalThis.clientGame = new ClientGame(game);
+          }
+        });
+        globalThis.socket.emit(Messages.TryToReconnect, storedGameId, storedPlayerId);
+      }
+    });
 
+    if (isDebug()) {
+      clearLocalStorage();
+    }
     if (isDebug('newGame')) {
       setTimeout(jumpToNewGame, 1);
     }

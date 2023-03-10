@@ -39,7 +39,7 @@ export type Player = {
   equipment: GearItem | null;
   name: string;
   isHost: boolean;
-  socketId?: string;
+  socketId: string | null;
   maxHp: number;
   currentHp: number;
   minAttackStrength: number;
@@ -189,6 +189,9 @@ export enum Messages {
   PlayerActionQueued = 'playerActionQueued',
   TurnEnd = 'turnEnd',
   UseItem = 'useItem',
+  TryToReconnect = 'tryToReconnect',
+  ReconnectFailed = 'reconnectFailed',
+  ReconnectSuccessful = 'reconnectSuccessful',
 }
 
 export enum VisiblityStatus {
