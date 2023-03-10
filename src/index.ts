@@ -146,6 +146,12 @@ async function jumpToNewGame(): Promise<void> {
 }
 
 window.addEventListener('load', () => {
+  const lazyImages = document.querySelectorAll('img.lazy');
+  (lazyImages as NodeListOf<HTMLImageElement>).forEach((img: HTMLImageElement) => {
+    img.src = img.dataset.src || '';
+    img.classList.remove('lazy');
+  });
+
   const gameElement = document.getElementById('game-canvas') as HTMLCanvasElement;
   if (gameElement) {
     gameElement.onwheel = (event): void => {
