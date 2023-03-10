@@ -7,6 +7,7 @@ import {
   Coordinate,
   Game,
   GameStatus,
+  GearItem,
   GearType,
   Item,
   ItemType,
@@ -94,7 +95,14 @@ function killMonster(game: Game, mapLevel: number, monsterId: string): void {
 }
 
 function handlePlayerAttackMonster(game: Game, player: Player, monster: Monster): void {
-  monster.currentHp -= getRandomInt(player.minAttackStrength, player.maxAttackStrength);
+  let damage: number;
+  if (player.equipment) {
+    damage = getRandomInt(player.equipment.minAttack, player.equipment.maxAttack);
+  } else {
+    damage = getRandomInt(player.minAttackStrength, player.maxAttackStrength);
+  }
+
+  monster.currentHp -= damage;
   if (monster.currentHp <= 0) {
     killMonster(game, player.mapLevel, monster.monsterId);
   } else if (monster.type === MonsterType.Slime) {
@@ -194,15 +202,19 @@ function handlePlayerUsePotion(game: Game, player: Player, item: Item, targetX: 
   }
 }
 
-function handlePlayerUseGear(game: Game, player: Player, item: Item, targetX: number, targetY: number): void {
+function handlePlayerUseGear(game: Game, player: Player, item: GearItem, targetX: number, targetY: number): void {
   const targetPlayer = game.players.find((p) => p.x === targetX && p.y === targetY);
   switch (item.subtype) {
     case GearType.Sword:
       if (targetPlayer !== undefined) {
         if (targetPlayer.playerId !== player.playerId) {
           targetPlayer.items.push(item);
+        } else {
+          if (targetPlayer.equipment) {
+            targetPlayer.items.push(targetPlayer.equipment);
+          }
+          targetPlayer.equipment = item;
         }
-
         break;
       }
       game.dungeonMap[player.mapLevel].cells[`${targetX},${targetY}`].items.push(item);
@@ -231,7 +243,7 @@ function handlePlayerUseItemAction(gameId: string, clientPlayer: Player): void {
       handlePlayerUsePotion(game, gamePlayer, item, targetX, targetY);
       break;
     case ItemType.Gear:
-      handlePlayerUseGear(game, gamePlayer, item, targetX, targetY);
+      handlePlayerUseGear(game, gamePlayer, item as GearItem, targetX, targetY);
       break;
     default:
   }

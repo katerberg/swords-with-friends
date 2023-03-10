@@ -36,6 +36,7 @@ export type Player = {
   items: Item[];
   playerId: string;
   character: CharacterName;
+  equipment: GearItem | null;
   name: string;
   isHost: boolean;
   socketId?: string;
@@ -81,10 +82,20 @@ export enum PotionType {
   GoStone = 'Go Stone',
 }
 
+export type GearItem = {
+  itemId: string;
+  type: ItemType.Gear;
+  subtype: GearType;
+  minAttack: number;
+  maxAttack: number;
+};
+
 export type Item = {
   itemId: string;
   type: ItemType;
   subtype: PotionType | GearType | TrophyType;
+  minAttack?: number;
+  maxAttack?: number;
 };
 
 export type Cell = {
