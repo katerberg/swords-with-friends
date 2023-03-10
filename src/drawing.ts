@@ -181,3 +181,20 @@ export function getCellOffsetFromMouseEvent(e: paper.MouseEvent): NumberCoordina
     y: -1 * (zeroBasedY - centerY),
   };
 }
+
+export function getFist(center: paper.Point): paper.Group {
+  const cellWidth = getCellWidth();
+  const raster = new paper.Raster('fist');
+  raster.position = center;
+  const rasterScale = (getCellWidth() / raster.width) * 0.7;
+  raster.scale(rasterScale);
+  const backing = new paper.Shape.Circle(raster.position, (0.7 * cellWidth) / 2);
+  backing.fillColor = BLACK;
+  backing.strokeWidth = 0;
+  const label = new paper.PointText(center);
+  label.position.y += cellWidth * 0.55;
+  label.content = 'Fists';
+  label.fillColor = BLACK;
+  label.justification = 'center';
+  return new paper.Group([backing, raster, label]);
+}

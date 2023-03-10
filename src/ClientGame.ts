@@ -19,6 +19,7 @@ import {BLACK, FOV_SEEN_OVERLAY, INVENTORY_BACKGROUND, TRANSPARENT, WHITE} from 
 import {
   getBacking,
   getCellOffsetFromMouseEvent,
+  getFist,
   getHpBar,
   getMessage,
   getMonster,
@@ -639,7 +640,9 @@ export class ClientGame {
     });
     const {equipment} = this.currentPlayer;
     if (equipment) {
-      this.getInventoryItem(equipment, new paper.Point(playerCenter.x, playerCenter.y));
+      this.drawnInventory.addChild(this.getInventoryItem(equipment, new paper.Point(playerCenter.x, playerCenter.y)));
+    } else {
+      this.drawnInventory.addChild(getFist(new paper.Point(playerCenter.x, playerCenter.y)));
     }
   }
 
