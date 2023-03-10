@@ -72,7 +72,7 @@ export function populatePlayerList(players: Player[]): void {
           player.color
         };" class="character-change-icon" src="${getSrcFromCharacterName(
           player.character,
-        )}" /><span class="character-change-chevron">›</span><input id="name-change-input" value="${
+        )}" /><span id="character-change-chevron" class="character-change-chevron">›</span><input id="name-change-input" value="${
           player.name
         }" ><span role="button" class="save-button">💾</span></div>`;
         ({isHost} = player);
@@ -103,8 +103,9 @@ export function populatePlayerList(players: Player[]): void {
     }
 
     const characterIcon = document.getElementById('character-change-icon');
-    if (characterIcon) {
-      characterIcon.ontouchend = (): void => {
+    const characterChevron = document.getElementById('character-change-chevron');
+    if (characterIcon && characterChevron) {
+      const callback = (): void => {
         let newImage: string;
         switch ((characterIcon as HTMLImageElement).src) {
           case `${window.location.href}images/characters/swordswoman.png`:
@@ -117,6 +118,8 @@ export function populatePlayerList(players: Player[]): void {
         }
         (characterIcon as HTMLImageElement).src = newImage;
       };
+      characterIcon.ontouchend = callback;
+      characterChevron.ontouchend = callback;
     }
   }
   globalThis.socket.off(Messages.GameClosed);
