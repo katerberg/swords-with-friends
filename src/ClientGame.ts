@@ -151,14 +151,25 @@ export class ClientGame {
       circle.shadowBlur = 12;
       circle.fillColor = new paper.Color(player.color);
       circle.strokeColor = BLACK;
+      const playerNumberColor = new paper.Color(player.textColor);
+      playerNumberColor.alpha = 0.1;
+      const playerNumber = new paper.PointText({
+        point: circlePoint,
+        justification: 'center',
+        fontSize: 50,
+        fillColor: playerNumberColor,
+        content: game.players.findIndex((p) => p.playerId === player.playerId) + 1,
+      });
+      playerNumber.position.y += 15;
       const text = new paper.PointText({
         point: circlePoint,
         justification: 'center',
-        fontSize: 20,
+        fontSize: 30,
         fillColor: new paper.Color(player.textColor),
         content: '...',
       });
-      const group = new paper.Group([circle, text]);
+      text.position.y += 5;
+      const group = new paper.Group([circle, playerNumber, text]);
       group.onClick = (): void => this.handleBadgeClick(player.playerId);
       badges[player.playerId] = group;
     });
