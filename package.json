@@ -43,7 +43,7 @@
     "prebuild": "mkdir -p dist && cp -r src/images/ dist/images/",
     "build": "webpack --config ./webpack.config.js --mode production",
     "start:stable": "concurrently -k 'npm run start:stable-server' 'npm run start:stable-ui'",
-    "start:stable-server": "nodemon server/index.ts -i . -- 9081",
+    "start:stable-server": "tsc server/index.ts && node server/index.js 9081",
     "start:stable-ui": "NODE_ENV=production webpack-dev-server --config ./webpack.config.js --mode development",
     "start": "concurrently -k 'npm run start:server' 'npm run start:ui'",
     "start:server": "nodemon server/index.ts -- 8081",

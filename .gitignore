@@ -2,3 +2,5 @@
 /dist
 .DS_STORE
 /creds
+/server/**/*.js
+/types/**/*.js
