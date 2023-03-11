@@ -19,11 +19,12 @@ import {
   PotionItem,
   GearType,
   GearItem,
+  MapLevel,
 } from '../types/SharedTypes';
-import {randomEnum} from './data';
+import {getRandomInt, randomEnum} from './data';
 import {isFreeCell} from './gameActions';
 import {createMonster} from './monsters';
-import {getRandomFreeLocation, getSpiralAroundPoint} from '.';
+import {getFreePointAroundPoint, getRandomFreeLocation, getSpiralAroundPoint} from '.';
 export function isValidCoordinate(x: number, y: number): boolean {
   return x >= 0 && x <= MAX_X && y >= 0 && y <= MAX_Y;
 }
@@ -158,6 +159,54 @@ export function populateItems(game: Game): void {
   });
 }
 
+function populateMonsters(dungeonMap: DungeonMap, level: number, players: Player[]): void {
+  const playerCount = players.length;
+  let numberOfMonsters: number;
+  let monsterOptions: MonsterType[];
+  switch (level) {
+    default:
+    case 0:
+      numberOfMonsters = 5 * playerCount;
+      monsterOptions = [MonsterType.Goblin, MonsterType.Tarball];
+      break;
+    case 1:
+      numberOfMonsters = 7 * playerCount;
+      monsterOptions = [MonsterType.Goblin, MonsterType.Tarball, MonsterType.Medusa];
+      break;
+    case 2:
+      numberOfMonsters = 8 * playerCount;
+      monsterOptions = [MonsterType.Goblin, MonsterType.Tarball, MonsterType.Medusa, MonsterType.Slime];
+      break;
+    case 3:
+      numberOfMonsters = 8 * playerCount;
+      monsterOptions = [MonsterType.Goblin, MonsterType.Medusa, MonsterType.Slime, MonsterType.Vampire];
+      break;
+    case 4:
+      numberOfMonsters = 8 * playerCount;
+      monsterOptions = [MonsterType.Medusa, MonsterType.Slime, MonsterType.Vampire, MonsterType.Orc];
+      break;
+  }
+
+  for (let i = 0; i < numberOfMonsters; i++) {
+    const spiral = getSpiralAroundPoint(
+      coordsToNumberCoords(dungeonMap[level].monsterSpawn[getRandomInt(0, dungeonMap[level].monsterSpawn.length - 1)]),
+    );
+    const [coords] = spiral.filter(
+      ({x, y}) =>
+        isValidCoordinate(x, y) &&
+        (!dungeonMap[level] || dungeonMap[level].monsters.every((monster) => monster.x !== x || monster.y !== y)) &&
+        players.every((player) => player.currentHp <= 0 || player.x !== x || player.y !== y) &&
+        (!dungeonMap[level] || dungeonMap[level].cells[`${x},${y}`]?.isPassable),
+    );
+
+    if (coords) {
+      dungeonMap[level].monsters.push(
+        createMonster(`${coords.x},${coords.y}`, monsterOptions[getRandomInt(0, monsterOptions.length - 1)]),
+      );
+    }
+  }
+}
+
 export function createMap(game: Game): DungeonMap {
   // TEST RANDOM
   // const blah: {[key: string]: number} = {};
@@ -224,9 +273,7 @@ export function createMap(game: Game): DungeonMap {
       });
     }
 
-    // const monstersToSpawn = getMonstersByLevel(i);
-
-    dungeonMap[i].monsterSpawn.forEach((ms) => dungeonMap[i].monsters.push(createMonster(ms, randomEnum(MonsterType))));
+    populateMonsters(dungeonMap, i, game.players);
   }
   return dungeonMap;
 }
