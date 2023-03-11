@@ -101,7 +101,7 @@ function getRandomGear(exclude?: GearType): GearItem {
   let randomGear: GearType;
   do {
     randomGear = randomEnum(GearType);
-  } while (randomGear !== exclude);
+  } while (randomGear === exclude);
   return {
     itemId: uuid(),
     type: ItemType.Gear,

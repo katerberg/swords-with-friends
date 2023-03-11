@@ -191,7 +191,7 @@ function handlePlayerUsePotion(game: Game, player: Player, item: Item, targetX: 
         game.dungeonMap[player.mapLevel].cells[`${targetX},${targetY}`].items.push(item);
         return;
       }
-      target.currentHp -= getRandomInt(25, 35);
+      target.currentHp -= getRandomInt(30, 40);
       break;
     case PotionType.GoStone: {
       if (!target && isFreeCell(targetX, targetY, game, player.mapLevel)) {
