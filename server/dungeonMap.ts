@@ -1,3 +1,5 @@
+/* eslint-disable operator-linebreak */
+/* eslint-disable multiline-ternary */
 import * as ROT from 'rot-js';
 import {v4 as uuid} from 'uuid';
 import {MAX_LEVEL, MAX_X, MAX_Y} from '../types/consts';
@@ -141,7 +143,16 @@ export function populateItems(game: Game): void {
       // 50% chance of sword per player per level
       if (Math.random() < 0.5) {
         const freeSpaceCoords = getFreeSpaceCoords(game, i);
-        mapLevel.cells[`${freeSpaceCoords.x},${freeSpaceCoords.y}`].items.push(getRandomGear());
+        mapLevel.cells[`${freeSpaceCoords.x},${freeSpaceCoords.y}`].items.push(
+          i === 0
+            ? {
+                itemId: uuid(),
+                type: ItemType.Gear,
+                subtype: GearType.SwordBasic,
+                ...getAttackStatsFromGear(GearType.SwordBasic),
+              }
+            : getRandomGear(),
+        );
       }
     });
   });
