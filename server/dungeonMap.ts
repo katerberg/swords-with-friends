@@ -164,11 +164,6 @@ function populateMonsters(dungeonMap: DungeonMap, level: number, players: Player
   let numberOfMonsters: number;
   let monsterOptions: MonsterType[];
   switch (level) {
-    default:
-    case 0:
-      numberOfMonsters = 5 * playerCount;
-      monsterOptions = [MonsterType.Goblin, MonsterType.Tarball];
-      break;
     case 1:
       numberOfMonsters = 7 * playerCount;
       monsterOptions = [MonsterType.Goblin, MonsterType.Tarball, MonsterType.Medusa];
@@ -184,6 +179,11 @@ function populateMonsters(dungeonMap: DungeonMap, level: number, players: Player
     case 4:
       numberOfMonsters = 8 * playerCount;
       monsterOptions = [MonsterType.Medusa, MonsterType.Slime, MonsterType.Vampire, MonsterType.Orc];
+      break;
+    default:
+    case 0:
+      numberOfMonsters = 5 * playerCount;
+      monsterOptions = [MonsterType.Goblin, MonsterType.Tarball];
       break;
   }
 
