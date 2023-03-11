@@ -167,14 +167,21 @@ export function getMessage(content: string): paper.Group {
   title.shadowColor = WHITE;
   title.shadowBlur = 22;
   title.fillColor = WHITE;
+  return new paper.Group([title]);
+}
 
-  const padding = 3;
-  const bl = new paper.Point(title.bounds.bottomLeft);
-  bl.x -= padding;
-  bl.y += padding;
-  const tr = new paper.Point(title.bounds.topRight);
-  tr.x += padding;
-  tr.y -= padding;
+export function getLevelMessage(level: number): paper.Group {
+  const {height} = globalThis.gameElement.getBoundingClientRect();
+  const cellWidth = getCellWidth();
+  const title = new paper.PointText(new paper.Point(cellWidth / 2, height - cellWidth));
+  title.content = `Level ${level}`;
+  title.strokeColor = BLACK;
+  title.fontSize = 20;
+  title.fontWeight = 800;
+  title.shadowColor = WHITE;
+  title.shadowBlur = 22;
+  title.fillColor = WHITE;
+  title.justification = 'left';
   return new paper.Group([title]);
 }
 

@@ -21,6 +21,7 @@ import {
   getCellOffsetFromMouseEvent,
   getFist,
   getHpBar,
+  getLevelMessage,
   getMessage,
   getMonster,
   getRasterStringForPlayer,
@@ -62,6 +63,8 @@ export class ClientGame {
 
   message: paper.Group | null;
 
+  levelMessage: paper.Group;
+
   playerBadges: {[playerId: string]: paper.Group};
 
   piggybackView: Player | null;
@@ -83,6 +86,7 @@ export class ClientGame {
     this.selectedInventoryItem = null;
     this.message = null;
     this.dungeonMap = game.dungeonMap;
+    this.levelMessage = getLevelMessage(this.currentPlayer.mapLevel);
 
     globalThis.socket.on(Messages.GameWon, this.handleWonGame.bind(this));
     globalThis.socket.on(Messages.GameLost, this.handleLostGame.bind(this));
@@ -128,6 +132,10 @@ export class ClientGame {
       this.drawMap();
     };
     return group;
+  }
+
+  private updateLevelMessage(level: number): void {
+    (this.levelMessage.lastChild as paper.PointText).content = `Level ${level}`;
   }
 
   private getPlayerBadges(game: Game): {[playerId: string]: paper.Group} {
@@ -711,5 +719,7 @@ export class ClientGame {
       this.drawInventory();
     }
     this.inventoryButton.bringToFront();
+    this.updateLevelMessage(this.currentPlayer.mapLevel);
+    this.levelMessage.bringToFront();
   }
 }
