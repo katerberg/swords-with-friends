@@ -1,7 +1,7 @@
 .games-lobby {
   height: 100%;
   width: 100%;
-  background-color: #0bffff;
+  background-color: #3deb48;
   z-index: 100;
   display: none;
 
@@ -21,6 +21,7 @@
   #games-lobby-no-games {
     display: none;
     &.visible {
+      font-size: 3vh;
       display: flex;
       flex-direction: column;
     }
