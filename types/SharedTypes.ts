@@ -123,12 +123,12 @@ export type Cell = {
 };
 
 export enum MonsterType {
+  Goblin = 'Goblin',
+  Tarball = 'Tar Ball',
   Medusa = 'Gorgon',
   Slime = 'Slime',
-  Goblin = 'Goblin',
-  Orc = 'Orc',
   Vampire = 'Vampire',
-  Tarball = 'Tar Ball',
+  Orc = 'Orc',
 }
 
 export type Monster = {

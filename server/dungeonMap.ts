@@ -225,6 +225,7 @@ export function createMap(game: Game): DungeonMap {
     }
 
     // const monstersToSpawn = getMonstersByLevel(i);
+
     dungeonMap[i].monsterSpawn.forEach((ms) => dungeonMap[i].monsters.push(createMonster(ms, randomEnum(MonsterType))));
   }
   return dungeonMap;
