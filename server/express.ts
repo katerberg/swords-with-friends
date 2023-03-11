@@ -15,6 +15,7 @@ export function setup(): express.Express {
       'http://192.168.50.132:9080',
       'http://swordswithfriends.org',
       'https://swordswithfriends.org',
+      'https://katerberg.itch.io',
     ];
     const {origin} = req.headers;
     if (origin) {

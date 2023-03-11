@@ -44,6 +44,7 @@ const io = new Server(server, {
       'http://192.168.50.132:8080',
       'http://swordswithfriends.org',
       'https://swordswithfriends.org',
+      'https://katerberg.itch.io',
       'http://localhost:9080',
       'http://0.0.0.0:9080',
       'http://192.168.50.132:9080',
