@@ -143,7 +143,7 @@ export function createMonster<Type extends MonsterType>(coordinate: Coordinate, 
       maxAttack = 10;
       break;
     case MonsterType.Slime:
-      hp = 50;
+      hp = 40;
       minAttack = 5;
       maxAttack = 10;
       break;

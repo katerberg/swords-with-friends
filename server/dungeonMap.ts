@@ -97,8 +97,11 @@ export function getAttackStatsFromGear(type: GearType): {minAttack: number; maxA
   }
 }
 
-function getRandomGear(): GearItem {
-  const randomGear = randomEnum(GearType);
+function getRandomGear(exclude?: GearType): GearItem {
+  let randomGear: GearType;
+  do {
+    randomGear = randomEnum(GearType);
+  } while (randomGear !== exclude);
   return {
     itemId: uuid(),
     type: ItemType.Gear,
@@ -156,7 +159,7 @@ export function populateItems(game: Game): void {
                 subtype: GearType.SwordBasic,
                 ...getAttackStatsFromGear(GearType.SwordBasic),
               }
-            : getRandomGear(),
+            : getRandomGear(GearType.SwordBasic),
         );
       }
     });
@@ -212,14 +215,6 @@ function populateMonsters(dungeonMap: DungeonMap, level: number, players: Player
 }
 
 export function createMap(game: Game): DungeonMap {
-  // TEST RANDOM
-  // const blah: {[key: string]: number} = {};
-  // for (let i = 0; i < 10000; i++) {
-  //   const potion = randomEnum(MonsterType);
-  //   blah[potion] = blah[potion] ? blah[potion] + 1 : 1;
-  // }
-  // console.log(blah);
-
   const dungeonMap: DungeonMap = [];
 
   const map = new ROT.Map.Digger(MAX_X, MAX_Y, {dugPercentage: 0.1, corridorLength: [0, 5]});
