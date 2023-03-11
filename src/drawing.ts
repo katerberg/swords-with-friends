@@ -174,7 +174,7 @@ export function getLevelMessage(level: number): paper.Group {
   const {height} = globalThis.gameElement.getBoundingClientRect();
   const cellWidth = getCellWidth();
   const title = new paper.PointText(new paper.Point(cellWidth / 2, height - cellWidth));
-  title.content = `Level ${level}`;
+  title.content = `Level ${level + 1}`;
   title.strokeColor = BLACK;
   title.fontSize = 20;
   title.fontWeight = 800;

@@ -7,7 +7,7 @@ export enum PlayerActionName {
 
 export type PlayerAction = {
   name: PlayerActionName;
-  target?: Coordinate;
+  target?: Coordinate | Player | Monster;
   path?: Coordinate[];
   item?: string;
 };

@@ -3,7 +3,7 @@
 import * as ROT from 'rot-js';
 import {v4 as uuid} from 'uuid';
 import {MAX_LEVEL, MAX_X, MAX_Y} from '../types/consts';
-import {calculateDistanceBetween, coordsToNumberCoords} from '../types/math';
+import {calculateDistanceBetween, coordsToNumberCoords, numberCoordsToCoords} from '../types/math';
 import {
   CellType,
   Coordinate,
@@ -45,7 +45,7 @@ function getExits(centerPoint: NumberCoordinates, game: Game): Coordinate[] {
   while (exits.length < game.players.length) {
     if (exitI < spacesAroundExit.length) {
       if (isFreeCell(spacesAroundExit[exitI].x, spacesAroundExit[exitI].y, game)) {
-        exits.push(`${spacesAroundExit[exitI].x},${spacesAroundExit[exitI].y}`);
+        exits.push(numberCoordsToCoords(spacesAroundExit[exitI]));
       }
       exitI++;
     } else {

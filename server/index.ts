@@ -210,6 +210,7 @@ io.on('connection', (socket) => {
     if (game) {
       const player = game.players.find((p) => p.socketId === socket.id);
       if (player) {
+        console.debug(player.name, 'disconnected from', game.gameId); //eslint-disable-line no-console
         player.socketId = null;
         socket.broadcast.emit(Messages.PlayerDisconnected, game.gameId, player.playerId);
         setTimeout(() => killPlayerIfGone(game.gameId, player.playerId), 15_000);

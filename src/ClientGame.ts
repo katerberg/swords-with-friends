@@ -1,6 +1,11 @@
 import * as paper from 'paper';
 import {MAX_X, MAX_Y, X_VISIBLE_CELLS, Y_VISIBLE_CELLS} from '../types/consts';
-import {calculateDistanceBetween, coordsToNumberCoords} from '../types/math';
+import {
+  calculateDistanceBetween,
+  coordsToNumberCoords,
+  getCoordinatesForTarget,
+  numberCoordsToCoords,
+} from '../types/math';
 import {
   Cell,
   CellType,
@@ -9,6 +14,7 @@ import {
   Game,
   Item,
   Messages,
+  Monster,
   NumberCoordinates,
   Player,
   PlayerAction,
@@ -135,7 +141,7 @@ export class ClientGame {
   }
 
   private updateLevelMessage(level: number): void {
-    (this.levelMessage.lastChild as paper.PointText).content = `Level ${level}`;
+    (this.levelMessage.lastChild as paper.PointText).content = `Level ${level + 1}`;
   }
 
   private getPlayerBadges(game: Game): {[playerId: string]: paper.Group} {
@@ -346,7 +352,11 @@ export class ClientGame {
     clickHandler: () => void,
   ): void {
     const player = this.players.find(
-      (p) => p.currentAction?.name === PlayerActionName.UseItem && p.currentAction.target === `${cell.x},${cell.y}`,
+      (p) =>
+        p.currentAction?.name === PlayerActionName.UseItem &&
+        p.currentAction.target &&
+        numberCoordsToCoords(this.getCoordinatesForTarget(p.currentAction.target) || {x: 0, y: 0}) ===
+          `${cell.x},${cell.y}`,
     );
     if (player) {
       const cellWidth = getCellWidth();
@@ -681,6 +691,10 @@ export class ClientGame {
     }
   }
 
+  private getCoordinatesForTarget(target: Monster | Player | Coordinate): NumberCoordinates | null {
+    return getCoordinatesForTarget(target, this.players, this.dungeonMap[this.currentPlayer.mapLevel].monsters);
+  }
+
   private drawMap(): void {
     this.clearExistingDrawings();
 
@@ -702,7 +716,10 @@ export class ClientGame {
     if (
       this.players.length > 1 ||
       (this.players[0].currentAction?.target &&
-        calculateDistanceBetween(this.players[0], coordsToNumberCoords(this.players[0].currentAction.target)) >= 2)
+        calculateDistanceBetween(
+          this.players[0],
+          this.getCoordinatesForTarget(this.players[0].currentAction.target) || {x: 0, y: 0},
+        ) >= 2)
     ) {
       this.players.forEach((p) => {
         if (p.currentAction?.name === PlayerActionName.Move && p.currentAction?.path?.length) {

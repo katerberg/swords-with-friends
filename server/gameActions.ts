@@ -1,7 +1,12 @@
 import * as ROT from 'rot-js';
 import {Server, Socket} from 'socket.io';
 import {AUTO_MOVE_DELAY} from '../types/consts';
-import {calculateDistanceBetween, coordsToNumberCoords} from '../types/math';
+import {
+  calculateDistanceBetween,
+  coordsToNumberCoords,
+  getCoordinatesForTarget,
+  numberCoordsToCoords,
+} from '../types/math';
 import {
   Cell,
   Coordinate,
@@ -28,6 +33,7 @@ import {
   createMonster,
   getClosestVisiblePlayerToMonster,
   getMonsterInCell,
+  getPlayerInCell,
   handleMonsterActionTowardsTarget,
   handleMonsterWander,
 } from './monsters';
@@ -270,7 +276,12 @@ function handlePlayerUseItemAction(gameId: string, clientPlayer: Player): void {
   const {currentAction} = gamePlayer;
   gamePlayer.currentAction = null;
 
-  const {x: targetX, y: targetY} = coordsToNumberCoords(currentAction.target as Coordinate);
+  const {x: targetX, y: targetY} =
+    getCoordinatesForTarget(
+      currentAction.target || gamePlayer,
+      game.players,
+      game.dungeonMap[gamePlayer.mapLevel].monsters,
+    ) || gamePlayer;
   let item: Item;
   if (gamePlayer.equipment?.itemId === currentAction.item) {
     item = gamePlayer.equipment as GearItem;
@@ -296,10 +307,15 @@ function handlePlayerUseItemAction(gameId: string, clientPlayer: Player): void {
 function handlePlayerMovementAction(gameId: string, clientPlayer: Player): void {
   const game = getGames()[gameId];
   const gamePlayer = game.players.find((loopPlayer) => loopPlayer.playerId === clientPlayer.playerId);
-  if (!gamePlayer || !gamePlayer.currentAction) {
+  if (!gamePlayer?.currentAction) {
     return;
   }
-  const {x: targetX, y: targetY} = coordsToNumberCoords(gamePlayer.currentAction?.target as Coordinate);
+  const {x: targetX, y: targetY} =
+    getCoordinatesForTarget(
+      gamePlayer.currentAction.target || gamePlayer,
+      game.players,
+      game.dungeonMap[gamePlayer.mapLevel].monsters,
+    ) || gamePlayer;
   // Stop player from walking into a wall
   if (!isPlayerPathableCell(targetX, targetY, game)) {
     gamePlayer.currentAction = null;
@@ -384,8 +400,11 @@ function executeMonsterActions(gameId: string): void {
   game.dungeonMap[mapLevel].monsters.forEach((monster) => {
     const closestPlayer = getClosestVisiblePlayerToMonster(monster, game);
     if (closestPlayer) {
-      monster.target = `${closestPlayer.x},${closestPlayer.y}`;
-    } else if (monster.target && game.players.some((p) => p.currentHp <= 0 && `${p.x},${p.y}` === monster.target)) {
+      monster.target = numberCoordsToCoords(closestPlayer);
+    } else if (
+      monster.target &&
+      game.players.some((p) => p.currentHp <= 0 && numberCoordsToCoords(p) === monster.target)
+    ) {
       monster.target = null;
     }
     if (monster.target) {
@@ -458,12 +477,37 @@ function reduceCooldowns(game: Game): void {
   });
 }
 
+function recalculateComplexPaths(game: Game): void {
+  game.players.forEach((player) => {
+    if (player.currentAction?.target && typeof player.currentAction.target !== 'string') {
+      let newTargetX = player.x;
+      let newTargetY = player.y;
+      if ('playerId' in player.currentAction.target) {
+        const targetPlayer = game.players.find((p) => (player.currentAction?.target as Player).playerId === p.playerId);
+        if (targetPlayer) {
+          newTargetX = targetPlayer.x;
+          newTargetY = targetPlayer.y;
+        }
+      } else if ('monsterId' in player.currentAction.target) {
+        const targetMonster = game.dungeonMap[player.mapLevel].monsters.find(
+          (m) => (player.currentAction?.target as Monster).monsterId === m.monsterId,
+        );
+        if (targetMonster) {
+          newTargetX = targetMonster.x;
+          newTargetY = targetMonster.y;
+        }
+      }
+      player.currentAction.path = calculatePath(game, player, newTargetX, newTargetY, isPlayerPathableCell);
+    }
+  });
+}
+
 function checkTurnEnd(gameId: string, io: Server): void {
   const games = getGames();
   if (games[gameId]?.players.filter((p) => p.currentHp > 0).every((player) => player.currentAction !== null)) {
     const dungeonMap = games[gameId].dungeonMap[getMapLevel(games[gameId])];
     const previouslyVisibleMonsterIds = dungeonMap.monsters
-      .filter((m) => dungeonMap.cells[`${m.x},${m.y}`].visibilityStatus === VisiblityStatus.Visible)
+      .filter((m) => dungeonMap.cells[numberCoordsToCoords(m)].visibilityStatus === VisiblityStatus.Visible)
       .map((m) => m.monsterId);
     executeQueuedActions(gameId, io);
     checkMonsterDeaths(games[gameId]);
@@ -472,7 +516,7 @@ function checkTurnEnd(gameId: string, io: Server): void {
     checkLevelEnd(gameId);
     populateFov(games[gameId]);
     const currentlyVisibleMonsters = dungeonMap.monsters.filter(
-      (m) => dungeonMap.cells[`${m.x},${m.y}`].visibilityStatus === VisiblityStatus.Visible,
+      (m) => dungeonMap.cells[numberCoordsToCoords(m)].visibilityStatus === VisiblityStatus.Visible,
     );
     currentlyVisibleMonsters
       .filter((m) => !previouslyVisibleMonsterIds.includes(m.monsterId))
@@ -482,6 +526,7 @@ function checkTurnEnd(gameId: string, io: Server): void {
           player.currentAction = null;
         }
       });
+    recalculateComplexPaths(games[gameId]);
 
     const status = getGameStatus(gameId);
     if (status === GameStatus.Lost) {
@@ -515,9 +560,14 @@ export function handleGameActions(io: Server, socket: Socket): void {
       isValidCoordinate(x, y) &&
       getItemFromPlayer(games[gameId].players[playerIndex], itemId) !== null
     ) {
+      const monsterTarget = getMonsterInCell(x, y, games[gameId]);
+      let playerTarget = getPlayerInCell(x, y, games[gameId]);
+      if (playerTarget?.playerId === games[gameId].players[playerIndex].playerId) {
+        playerTarget = null;
+      }
       const action: PlayerAction = {
         name: PlayerActionName.UseItem,
-        target: `${x},${y}`,
+        target: monsterTarget || playerTarget || `${x},${y}`,
         item: itemId,
       };
       games[gameId].players[playerIndex].currentAction = action;
@@ -533,9 +583,14 @@ export function handleGameActions(io: Server, socket: Socket): void {
     const games = getGames();
     const playerIndex = games[gameId]?.players.findIndex((player) => player.socketId === socket.id);
     if (playerIndex !== undefined && games[gameId].players[playerIndex]?.currentHp > 0 && isValidCoordinate(x, y)) {
+      const monsterTarget = getMonsterInCell(x, y, games[gameId]);
+      let playerTarget = getPlayerInCell(x, y, games[gameId]);
+      if (playerTarget?.playerId === games[gameId].players[playerIndex].playerId) {
+        playerTarget = null;
+      }
       const action: PlayerAction = {
         name: PlayerActionName.Move,
-        target: `${x},${y}`,
+        target: monsterTarget || playerTarget || `${x},${y}`,
         path: calculatePath(games[gameId], games[gameId].players[playerIndex], x, y, isPlayerPathableCell),
       };
       games[gameId].players[playerIndex].currentAction = action;
