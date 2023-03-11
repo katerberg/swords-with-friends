@@ -73,7 +73,7 @@ export function getRandomFreeLocation(game: Game, mapLevel?: number): NumberCoor
   if (isFreeCell(x, y, game, mapLevel)) {
     return {x, y};
   }
-  return getRandomFreeLocation(game);
+  return getRandomFreeLocation(game, mapLevel);
 }
 
 function getSpiral(): NumberCoordinates[] {
