@@ -148,14 +148,14 @@ export function createMonster<Type extends MonsterType>(coordinate: Coordinate, 
       maxAttack = 10;
       break;
     case MonsterType.Vampire:
-      hp = 50;
+      hp = 40;
       minAttack = 10;
       maxAttack = 15;
       break;
     case MonsterType.Orc:
       hp = 50;
       minAttack = 25;
-      maxAttack = 45;
+      maxAttack = 40;
       break;
     case MonsterType.Goblin:
     default:
