@@ -1,4 +1,4 @@
-# MRogue
+# Swords With Friends
 
 Multiplayer mobile rogue-like created for the 2023 `7 Day RogueLike` game dev event.
 
