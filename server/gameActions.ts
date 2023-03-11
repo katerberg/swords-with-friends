@@ -23,7 +23,7 @@ import {
   VisiblityStatus,
 } from '../types/SharedTypes';
 import {getRandomInt} from './data';
-import {getMapLevel, isOnExitCell, isValidCoordinate, populateFov} from './dungeonMap';
+import {getMapLevel, isOnExitCell, isValidCoordinate, populateFov, spawnRandomPotion} from './dungeonMap';
 import {
   createMonster,
   getClosestVisiblePlayerToMonster,
@@ -90,6 +90,10 @@ function killMonster(game: Game, mapLevel: number, monsterId: string): void {
   const monsterList = game.dungeonMap[mapLevel].monsters;
   const index = monsterList.findIndex((m) => m.monsterId === monsterId);
   if (index >= 0) {
+    const {x, y} = monsterList[index];
+    if (Math.random() > 0.9) {
+      spawnRandomPotion(x, y, game);
+    }
     monsterList.splice(index, 1);
   }
 }

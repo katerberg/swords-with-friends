@@ -19,12 +19,11 @@ import {
   PotionItem,
   GearType,
   GearItem,
-  MapLevel,
 } from '../types/SharedTypes';
 import {getRandomInt, randomEnum} from './data';
 import {isFreeCell} from './gameActions';
 import {createMonster} from './monsters';
-import {getFreePointAroundPoint, getRandomFreeLocation, getSpiralAroundPoint} from '.';
+import {getRandomFreeLocation, getSpiralAroundPoint} from '.';
 export function isValidCoordinate(x: number, y: number): boolean {
   return x >= 0 && x <= MAX_X && y >= 0 && y <= MAX_Y;
 }
@@ -122,6 +121,11 @@ function getRandomPotion(game: Game): PotionItem {
   };
 }
 
+export function spawnRandomPotion(x: number, y: number, game: Game): void {
+  const mapLevel = getMapLevel(game);
+  game.dungeonMap[mapLevel].cells[`${x},${y}`].items.push(getRandomPotion(game));
+}
+
 function getFreeSpaceCoords(game: Game, mapLevel: number): NumberCoordinates {
   let freeSpaceCoords: NumberCoordinates | null = null;
   while (freeSpaceCoords === null) {
@@ -165,19 +169,19 @@ function populateMonsters(dungeonMap: DungeonMap, level: number, players: Player
   let monsterOptions: MonsterType[];
   switch (level) {
     case 1:
-      numberOfMonsters = 7 * playerCount;
+      numberOfMonsters = 6 * playerCount + 2;
       monsterOptions = [MonsterType.Goblin, MonsterType.Tarball, MonsterType.Medusa];
       break;
     case 2:
-      numberOfMonsters = 8 * playerCount;
+      numberOfMonsters = 6 * playerCount + 3;
       monsterOptions = [MonsterType.Goblin, MonsterType.Tarball, MonsterType.Medusa, MonsterType.Slime];
       break;
     case 3:
-      numberOfMonsters = 8 * playerCount;
+      numberOfMonsters = 6 * playerCount + 3;
       monsterOptions = [MonsterType.Goblin, MonsterType.Medusa, MonsterType.Slime, MonsterType.Vampire];
       break;
     case 4:
-      numberOfMonsters = 8 * playerCount;
+      numberOfMonsters = 6 * playerCount + 3;
       monsterOptions = [MonsterType.Medusa, MonsterType.Slime, MonsterType.Vampire, MonsterType.Orc];
       break;
     default:
