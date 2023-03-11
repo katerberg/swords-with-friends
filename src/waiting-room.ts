@@ -90,6 +90,10 @@ function changeToNextCharacter(currentCharacter: string): string {
 }
 
 export function populatePlayerList(players: Player[]): void {
+  const startGameButton = document.getElementById('start-game');
+  if (startGameButton) {
+    startGameButton.classList.remove('visible');
+  }
   playerCount = players.length;
   const playerLobbyList = document.getElementById('waiting-room-list');
   if (playerLobbyList) {
@@ -115,17 +119,15 @@ export function populatePlayerList(players: Player[]): void {
         }" src="${getSrcFromCharacterName(player.character)}" />${player.name}${player.isHost ? '*' : ''}</div>`;
       }
     });
-    playerList += '</div>';
-    if (isHost) {
-      playerList += '<button id="start-game">Start Game</button>';
+    if (players.length === 1 && !warned) {
+      playerList += '<p class="helper-text">Ask some friends to join.</p>';
     }
+    playerList += '</div>';
 
     playerLobbyList.innerHTML = playerList;
-    if (isHost) {
-      const startGameButton = document.getElementById('start-game');
-      if (startGameButton) {
-        startGameButton.ontouchend = handleStartGame;
-      }
+    if (isHost && startGameButton) {
+      startGameButton.classList.add('visible');
+      startGameButton.ontouchend = handleStartGame;
     }
     const input = document.getElementById('name-change-input');
     if (input) {

@@ -12,12 +12,17 @@
     <img class="image-lock" src="./images/image-lock.png" />
     <div class="mobile-only">Only built for phones</div>
     <div id="start-screen" class="start-screen visible room">
-      <button type="button" id="create-game">Create Game</button>
+      <h1>Swords With Friends</h1>
+      <p>A game where you and your friends sit on couches together staring at your phones.</p>
       <button type="button" id="open-games-list">Join Game</button>
+      <button type="button" id="create-game">Create Game</button>
     </div>
     <div id="games-lobby" class="games-lobby room">
       <div class="title">Games List</div>
-      <div id="games-lobby-no-games" class="visible">No games waiting for players</div>
+      <div id="games-lobby-no-games" class="visible">
+        <p>No games waiting for players.</p>
+        <p>Ask your friend to create one and wait for you before starting.</p>
+      </div>
       <div id="games-lobby-list"></div>
       <button id="games-lobby-cancel-button">Cancel</button>
     </div>
@@ -25,6 +30,7 @@
       <div id="waiting-room-title" class="title">Waiting Room</div>
       <div id="waiting-room-list"></div>
       <button id="waiting-room-cancel-button">Cancel</button>
+      <button id="start-game">Start Game</button>
     </div>
     <div id="lose-screen" class="end-screen room">
       <div class="title">End of Game</div>

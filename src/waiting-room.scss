@@ -17,11 +17,22 @@
   #waiting-room-list {
     display: flex;
     flex-direction: column;
+    flex-grow: 1;
   }
 
   #start-game {
     margin-top: 2vh;
     font-size: 5vh;
+    display: none;
+    &.visible {
+      display: block;
+    }
+  }
+
+  .player-list {
+    margin-top: 5vw;
+    flex-grow: 1;
+    margin-left: 3vw;
   }
 
   .player-list-row {

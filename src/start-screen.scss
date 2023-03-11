@@ -1,13 +1,22 @@
 .start-screen {
   height: 100%;
   width: 100%;
-  background-color: tomato;
+  background-color: rgb(232, 172, 53);
   z-index: 100;
   display: none;
   padding: 2vh;
 
+  h1 {
+    font-size: 10vh;
+  }
+
+  p {
+    font-size: 3vh;
+    flex-grow: 1;
+  }
+
   &.visible {
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
   }
 }
