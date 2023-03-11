@@ -182,13 +182,13 @@ function removePlayerFromWaitingGame(gameId: string, playerIndex: number): void 
 function killPlayerIfGone(gameId: string, playerId: string): void {
   const player = games[gameId]?.players.find((p) => p.playerId === playerId);
   if (player && player.socketId === null) {
-    if (games[gameId].gameStatus === GameStatus.WaitingForPlayers) {
+    if (games[gameId]?.gameStatus === GameStatus.WaitingForPlayers) {
       removePlayerFromWaitingGame(
         gameId,
         games[gameId].players.findIndex((p) => p.playerId === playerId),
       );
     }
-    if (games[gameId].gameStatus === GameStatus.Ongoing) {
+    if (games[gameId]?.gameStatus === GameStatus.Ongoing) {
       player.currentHp = 0;
       player.currentAction = {name: PlayerActionName.LayDead};
       io.emit(Messages.PlayerActionQueued, gameId, {
