@@ -87,17 +87,6 @@ function changeToNextCharacter(currentCharacter: string): string {
   }
   characterChange(CharacterName.SwordsWoman);
   return './images/characters/swordswoman.png';
-
-  // let newImage: string;
-  // switch () {
-  //   case `${window.location.href}images/characters/swordswoman.png`:
-  //     newImage = '';
-  //     characterChange(CharacterName.SwordsMan);
-  //     break;
-  //   default:
-  //     newImage = './images/characters/swordswoman.png';
-  //     characterChange(CharacterName.SwordsWoman);
-  // }
 }
 
 export function populatePlayerList(players: Player[]): void {

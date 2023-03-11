@@ -656,7 +656,12 @@ export class ClientGame {
     inventoryBackgroundSwoop.smooth();
     inventoryBackgroundSwoop.fillColor = INVENTORY_BACKGROUND;
 
-    this.drawnInventory = new paper.Group([transparentBackground, inventoryBackground, title]);
+    this.drawnInventory = new paper.Group([
+      transparentBackground,
+      inventoryBackground,
+      inventoryBackgroundSwoop,
+      title,
+    ]);
     this.getInventoryItems().forEach((item) => {
       this.drawnInventory?.addChild(item);
     });
