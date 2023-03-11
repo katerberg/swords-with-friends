@@ -49,6 +49,7 @@ const io = new Server(server, {
       'http://localhost:9080',
       'http://0.0.0.0:9080',
       'http://192.168.50.132:9080',
+      'https://v6p9d9t4.ssl.hwcdn.net',
     ],
     methods: ['GET', 'POST'],
   },

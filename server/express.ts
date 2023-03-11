@@ -16,7 +16,7 @@ export function setup(): express.Express {
       'http://swordswithfriends.org',
       'https://swordswithfriends.org',
       'https://katerberg.itch.io',
-      'katerberg.itch.io',
+      'https://v6p9d9t4.ssl.hwcdn.net',
     ];
     const {origin} = req.headers;
     if (origin) {
