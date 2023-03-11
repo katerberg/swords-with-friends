@@ -171,12 +171,14 @@ function handlePlayerUsePotion(game: Game, player: Player, item: Item, targetX: 
   switch (item.subtype) {
     case PotionType.Health:
       if (!target) {
+        game.dungeonMap[player.mapLevel].cells[`${targetX},${targetY}`].items.push(item);
         return;
       }
       target.currentHp = target.maxHp;
       break;
     case PotionType.Acid:
       if (!target) {
+        game.dungeonMap[player.mapLevel].cells[`${targetX},${targetY}`].items.push(item);
         return;
       }
       target.currentHp -= getRandomInt(25, 35);
